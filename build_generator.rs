@@ -159,6 +159,7 @@ pub fn gen_wrapper(opencv_header_dir: &Path, generator_build: Option<Child>) -> 
 	if !module_dir.exists() {
 		fs::create_dir_all(&module_dir)?;
 	}
+	eprintln!("=== DBG done with module dir creation: {:?}", module_dir);
 
 	for entry in read_dir(&module_dir)? {
 		let path = entry.path();
@@ -166,31 +167,40 @@ pub fn gen_wrapper(opencv_header_dir: &Path, generator_build: Option<Child>) -> 
 			let _ = fs::remove_file(path);
 		}
 	}
+	eprintln!("=== DBG done with module dir cleanup: {:?}", module_dir);
 
 	if !cpp_hub_dir.exists() {
 		fs::create_dir_all(&cpp_hub_dir)?;
 	}
+	eprintln!("=== DBG done with cpp hub dir creation: {:?}", cpp_hub_dir);
 	for entry in read_dir(&cpp_hub_dir)? {
 		let path = entry.path();
 		if path.is_file() {
 			let _ = fs::remove_file(path);
 		}
 	}
+	eprintln!("=== DBG done with cpp hub dir cleanup: {:?}", cpp_hub_dir);
 
 	for module in modules {
+		eprintln!("=== DBG processing module: {:?}", module);
 		let module_cpp = OUT_DIR.join(format!("{}.cpp", module));
 		if module_cpp.is_file() {
 			file_copy_to_dir(&module_cpp, &cpp_hub_dir)?;
+			eprintln!("=== DBG copied module file: {:?} to {:?}", module_cpp, cpp_hub_dir);
 			let module_types_cpp = OUT_DIR.join(format!("{}_types.hpp", module));
 			let mut module_types_file = OpenOptions::new().create(true).truncate(true).write(true).open(&module_types_cpp)?;
 			let mut type_files: Vec<PathBuf> = glob(&format!("{}/???-{}-*.type.cpp", out_dir_as_str, module))?
 				.collect::<Result<_, glob::GlobError>>()?;
+			eprintln!("=== DBG collected type files: {:?}", type_files);
 			type_files.sort_unstable();
 			for entry in type_files.into_iter() {
-				io::copy(&mut File::open(entry)?, &mut module_types_file)?;
+				io::copy(&mut File::open(&entry)?, &mut module_types_file)?;
+				eprintln!("=== DBG copied type file: {:?} to {:?}", entry, module_types_file);
 			}
 			file_copy_to_dir(&module_types_cpp, &cpp_hub_dir)?;
+			eprintln!("=== DBG copied types file: {:?} to {:?}", module_types_cpp, cpp_hub_dir);
 		}
+		eprintln!("=== DBG processed module: {:?}", module);
 	}
 
 	let add_manual = |file: &mut File, mod_name: &str| -> Result<bool> {
@@ -204,14 +214,18 @@ pub fn gen_wrapper(opencv_header_dir: &Path, generator_build: Option<Child>) -> 
 
 	{
 		let mut hub_rs = File::create(rust_hub_dir.join("hub.rs"))?;
+		eprintln!("=== DBG created hub.rs: {:?}", hub_rs);
 
 		let mut types_rs = File::create(module_dir.join("types.rs"))?;
 		writeln!(&mut types_rs)?;
+		eprintln!("=== DBG created types.rs: {:?}", types_rs);
 
 		let mut sys_rs = File::create(module_dir.join("sys.rs"))?;
+		eprintln!("=== DBG created sys.rs: {:?}", types_rs);
 		writeln!(&mut sys_rs, "use crate::{{mod_prelude_types::*, core}};")?;
 		writeln!(&mut sys_rs)?;
 		for module in modules {
+			eprintln!("=== DBG processing module: {:?} for sys.rs", module);
 			let is_core_module = is_core_module(module.as_str());
 			let write_if_contrib = |write: &mut File| -> Result<()> {
 				if !is_core_module {
@@ -264,6 +278,7 @@ pub fn gen_wrapper(opencv_header_dir: &Path, generator_build: Option<Child>) -> 
 			write_if_contrib(&mut sys_rs)?;
 			writeln!(&mut sys_rs, "pub use {}_sys::*;", module)?;
 			writeln!(&mut sys_rs)?;
+			eprintln!("=== DBG done processing module: {:?} for sys.rs", module);
 		}
 		writeln!(&mut hub_rs, "pub mod types;")?;
 		writeln!(&mut hub_rs, "#[doc(hidden)]")?;

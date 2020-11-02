@@ -774,14 +774,17 @@ fn install_wrapper() -> Result<()> {
 	for entry in glob(&format!("{}/*.cpp", cpp_hub_dir.to_str().unwrap()))? {
 		let entry = entry?;
 		file_copy_to_dir(&entry, &OUT_DIR)?;
+		eprintln!("=== DBG copied cpp {:?} to {:?}", entry, OUT_DIR);
 	}
 	for entry in glob(&format!("{}/*.hpp", cpp_hub_dir.to_str().unwrap()))? {
 		let entry = entry?;
 		file_copy_to_dir(&entry, &OUT_DIR)?;
+		eprintln!("=== DBG copied hpp {:?} to {:?}", entry, OUT_DIR);
 	}
 
 	if !cfg!(feature = "docs-only") {
 		for entry in glob(&format!("{}/*.rs", target_module_dir.to_str().unwrap()))? {
+			eprintln!("=== DBG removing rs {:?}", entry);
 			let _ = fs::remove_file(entry?);
 		}
 		for entry in glob(&format!("{}/**/*.rs", rust_hub_dir.to_str().unwrap())).unwrap() {
@@ -793,6 +796,7 @@ fn install_wrapper() -> Result<()> {
 				}
 			}
 			fs::copy(&entry, target_file)?;
+			eprintln!("=== DBG copied rs {:?} to {:?}", entry, OUT_DIR);
 		}
 	}
 	Ok(())
@@ -887,8 +891,11 @@ fn main() -> Result<()> {
 
 	#[cfg(feature = "buildtime-bindgen")]
 	generator::gen_wrapper(&opencv_header_dir, generator_build)?;
+	eprintln!("=== DBG get_wrapper done");
 	install_wrapper()?;
+	eprintln!("=== DBG install_wrapper done");
 	build_wrapper(&opencv)?;
+	eprintln!("=== DBG build_wrapper done");
 	// -l linker args should be emitted after -l static
 	opencv.emit_cargo_metadata();
 	cleanup()?;
