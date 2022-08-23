@@ -10,21 +10,12 @@ The API is usable, but unstable and not very battle-tested; use at your own risk
 
 ## Quickstart
 
-Make sure the supported OpenCV version (3.2, 3.4 or 4.x) is installed in your system.
+Make sure the supported OpenCV version (3.2, 3.4 or 4.x) and Clang (part of LLVM, needed for automatic binding
+generation) are installed in your system.
 
 Update your Cargo.toml
 ```toml
-opencv = "0.49"
-```
-
-Select OpenCV version if different from default (opencv-4) in Cargo.toml:
-```toml
-opencv = {version = "0.49", default-features = false, features = ["opencv-34", "buildtime-bindgen"]}
-```
-
-Or enable usage of `contrib` modules:
-```toml
-opencv = {version = "0.49", features = ["contrib"]}
+opencv = "0.66"
 ```
 
 Import prelude
@@ -97,9 +88,8 @@ You need to set up the following environment variables to point to the installed
 
 1. One of the common problems is link errors in the end of the build.
 
-   Make sure you're building with `buildtime-bindgen` feature enabled (requires installed clang/llvm), it will
-   recreate rust and cpp files to match the version you have installed. Please be sure to also set up the
-   relevant environment variables that will allow the linker to find the libraries it needs (see below).
+   Be sure to set up the relevant environment variables that will allow the linker to find the libraries it
+   needs (see below).
 
 2. You're getting runtime errors like:
    ```
@@ -118,8 +108,6 @@ You need to set up the following environment variables to point to the installed
 
    Be sure to import ```use opencv::prelude::*;```. The crate contains a lot of traits that need to be imported
    first.
-
-   Also check that if you're using a contrib module that the `contrib` feature is enabled for the crate. 
 
 4. On Windows, you're getting the `(exit code: 0xc0000135, STATUS_DLL_NOT_FOUND)` error when running the
    compiled binary.
@@ -148,15 +136,18 @@ You need to set up the following environment variables to point to the installed
    export DYLD_FALLBACK_LIBRARY_PATH="$(xcode-select --print-path)/Toolchains/XcodeDefault.xctoolchain/usr/lib/"
    ```
 
+   You might be running into the issue on the recent macOS versions where this environment variable remains empty after setting,
+   please check [this issue](https://github.com/twistedfall/opencv-rust/issues/343) for some workarounds.
+
 7. You're getting the panic: ```a `libclang` shared library is not loaded on this thread```.
 
-   Enable the `clang-runtime` feature. The reason for the issue is that some crates (like `bindgen`) depend on
-   `clang-sys` with hard-enabled `runtime` feature and because of that cargo makes this feature also enabled
-   for every other crate that depends on `clang-sys` (`opencv` in this case). During binding generation phase
+   Enable the `clang-runtime` feature or use crate version `0.66` and newer. The reason for the issue is that some crates
+   (like `bindgen`) depend on `clang-sys` with hard-enabled `runtime` feature and because of that cargo makes this feature also 
+   enabled for every other crate that depends on `clang-sys` (`opencv` in this case). During binding generation phase
    `opencv` crate tries to use multiple threads and `clang-sys` with `runtime` feature enabled doesn't like
    that (hence the panic). Enabling `clang-runtime` feature switches to using multiple processes instead of
    multiple threads. This makes the build a bit longer because of the need to build the helper binary, but the
-   end result is the same.
+   end result is the same. Additionally since crate version `0.66` this behavior is now the default.
 
 ## Reporting issues
 
@@ -203,12 +194,6 @@ on any platform, the specified values will override those automatically discover
 
 The following variables are rarely used, but you might need them under some circumstances:
 
-* `OPENCV_HEADER_DIR`
-  During crate build it uses OpenCV headers bundled with the crate. If you want to use your own (system)
-  headers supply `OPENCV_HEADER_DIR` environment variable.
-  The directory in that environment variable should contain `opencv2` dir, e.g. set it `/usr/include` for
-  OpenCV-3.4.x or `/usr/include/opencv4` for OpenCV-4.x.
-
 * `OPENCV_PACKAGE_NAME`
   In some cases you might want to override the pkg-config, cmake or vcpkg package name, you can use this
   environment variable for that. If you set it pkg-config will expect to find the file with that name and `.pc`
@@ -234,16 +219,9 @@ The following variables are rarely used, but you might need them under some circ
       cmake (cmake related environment variables are applicable with this probe)
     * vcpkg
 
-* `OPENCV_CLANG_STDLIB_PATH`
-  Path that contains the stdlib headers for parsing with libclang. Should be used only as a workaround for
-  the rare cases where it doesn't get picked up automatically. Should help with issues like
-  [this](https://github.com/twistedfall/opencv-rust/issues/125).
-
 * `OPENCV_MODULE_WHITELIST` and `OPENCV_MODULE_BLACKLIST`
-  Comma separated lists that affect modules that get their bindings generated. Setting whitelist will only
-  generate the specified modules, setting blacklist will exclude the specified modules from generation. If the
-  same module is specified in both list it will be excluded (i.e. blacklist has precedence). E.g.
-  "core,dnn,features2d" .
+  Not used anymore. These used to be used to select modules that get their binding generated. We have switched to
+  using cargo features for module selection. Please see the section on features to learn how to switch.
 
 The following variables affect the building the of the `opencv` crate, but belong to external components:
 
@@ -278,18 +256,13 @@ The following variables affect the building the of the `opencv` crate, but belon
   See crate's [README](https://github.com/KyleMayes/clang-sys/blob/master/README.md#environment-variables)
 
 ## Cargo features
-* `opencv-32` - build against OpenCV 3.2.0, this feature is aimed primarily on stable Debian and
-  Ubuntu users who can install OpenCV from the repository without having to compile it from the
-  source
-* `opencv-34` - build against OpenCV 3.4.x
-* `opencv-4` (default) - build against OpenCV 4.x
-* `contrib` - enable the usage of OpenCV contrib modules for corresponding OpenCV version
-* `buildtime-bindgen` (default) - regenerate all bindings, requires installed clang/llvm (minimum supported
-  version is 6.0), with this feature enabled the bundled headers are no longer used for the code generation,
-  the ones from the installed OpenCV are used instead
-* `clang-runtime` - only useful with the combination with `buildtime-bindgen`, enables the runtime detection
-  of libclang (`runtime` feature of `clang-sys`). Useful as a workaround for when your dependencies (like
-  `bindgen`) pull in `clang-sys` with hard `runtime` feature.
+* There is a feature named after each OpenCV module (e.g. `imgproc`, `highgui`, etc.). They are all enabled by
+  default, but if a corresponding module is not found then it will silently be ignored. If you need to select a
+  specific set of modules be sure to disable the default features and provide the required feature set:
+  ```
+  opencv = { version = ..., default-features = false, features = ["calib3d", "features2d", "flann"]}
+  ```
+* `rgb` - allow using [`rgb`](https://crates.io/crates/rgb) crate types as `Mat` elements
 * `docs-only` - internal usage, for building docs on [docs.rs](https://docs.rs/opencv)
 
 ## API details
@@ -301,15 +274,13 @@ as well.
 ### OpenCV version support
 
 The following OpenCV versions are supported at the moment:
-* 3.2 - enabled by `opencv-32` feature
-* 3.4 - enabled by `opencv-34` feature
-* 4.3 - enabled by the default `opencv-4` feature
-
-If you need support for `contrib` modules, also enable `contrib` feature.
+* 3.2
+* 3.4
+* 4.x
 
 ### Minimum rustc version
 
-Generally you should use the latest stable rustc to compile this crate.
+Currently, version 1.53.0 is required, but generally you should use the latest stable rustc to compile this crate.
 
 ### Platform support
 
@@ -340,6 +311,17 @@ or functions that are marked CV_NOEXCEPT in the OpenCV headers are infallible an
 Properties of OpenCV classes are accessible through setters and getters. Those functions are infallible, they
 return the value directly instead of `Result`.
 
+### C++ operators
+Some C++ operators are supported, they are converted to the corresponding functions on Rust side. Here is the
+list with the corresponding function name:
+* `[]` → `get()` or `get_mut()`
+* `+` → `add()`
+* `-` → `sub()`
+* `*` → `mul()`
+* `/` → `div()`
+* `==` → `equals()`
+* `*` (deref) → `deref()` or `deref_mut()`
+
 ### Infallible functions
 
 For infallible functions (like setters) that accept `&str` values the following logic applies: if a Rust
@@ -366,7 +348,7 @@ of the crate's API as you would treat one of C++, use `clone()` when needed.
 ## Contrib modules
 
 To be able to use some modules you need to have [`opencv_contrib`](https://github.com/opencv/opencv_contrib)
-installed. You can find the full list of contrib modules [here](https://github.com/opencv/opencv_contrib/tree/master/modules) with the exception that `dnn` module is also considered contrib for OpenCV 3.2.
+installed. You can find the full list of contrib modules [here](https://github.com/opencv/opencv_contrib/tree/master/modules).
 
 ## Missing modules and functions
 
@@ -396,9 +378,8 @@ version because the crate has gone through the considerable rewrite since.
 ## Contributor's Guide
 
 The binding generator code lives in a separate crate under [binding-generator](binding-generator). During the
-build phase (with `buildtime-bindgen` feature enabled) it creates bindings from the header files and puts them
-into [bindings](bindings) directory. Those are then transferred to [src](src) for the consumption by the
-crate users. 
+build phase it creates bindings from the header files and puts them into [bindings](bindings) directory. Those
+are then transferred to [src](src) for the consumption by the crate users. 
 
 The crate itself, as imported by users, consists of generated rust code in [src](src) committed to the repo.
 This way, users don't have to handle the code generation overhead in their builds. When developing this crate,

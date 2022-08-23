@@ -10,12 +10,13 @@ use crate::{
 	Element,
 	settings,
 	StrExt,
+	type_ref::FishStyle,
 	Vector,
 };
 
 use super::RustNativeGeneratedElement;
 
-impl RustNativeGeneratedElement for Vector<'_> {
+impl RustNativeGeneratedElement for Vector<'_, '_> {
 	fn element_safe_id(&self) -> String {
 		format!("{}-{}", self.rust_module(), self.rust_localalias())
 	}
@@ -48,16 +49,16 @@ impl RustNativeGeneratedElement for Vector<'_> {
 		let element_type = self.element_type();
 		let mut inter_vars = hashmap! {
 			"rust_localalias" => self.rust_localalias(),
-			"rust_full" => self.rust_fullname(),
-			"rust_extern_const" => vec_type.rust_extern_with_const(ConstnessOverride::Yes(Constness::Const)),
-			"rust_extern_mut" => vec_type.rust_extern_with_const(ConstnessOverride::Yes(Constness::Mut)),
+			"rust_full" => self.rust_fullname(FishStyle::No),
+			"rust_extern_const" => vec_type.rust_extern(ConstnessOverride::Yes(Constness::Const)),
+			"rust_extern_mut" => vec_type.rust_extern(ConstnessOverride::Yes(Constness::Mut)),
 			"inner_rust_full" => element_type.rust_full(),
 			"inner_rust_extern_return" => element_type.rust_extern_return(),
 		};
 		if element_type.as_typedef().is_some()
 			&& !element_type.is_data_type()
 			&& !element_type.as_string().is_some()
-			&& !settings::FORCE_VECTOR_TYPEDEF_GENERATION.contains(element_type.cpp_full().as_ref())
+			&& !settings::PREVENT_VECTOR_TYPEDEF_GENERATION.contains(element_type.cpp_full().as_ref())
 		{
 			&TYPE_ALIAS_TPL
 		} else {
@@ -112,12 +113,12 @@ impl RustNativeGeneratedElement for Vector<'_> {
 		let mut inter_vars = hashmap! {
 			"rust_localalias" => self.rust_localalias(),
 			"cpp_full" => vec_type.cpp_full(),
-			"cpp_extern_return" => vec_type.cpp_extern_return(),
+			"cpp_extern_return" => vec_type.cpp_extern_return(ConstnessOverride::No),
 			"inner_cpp_full" => element_type.cpp_full(),
 			"inner_cpp_func_decl" => element_type.cpp_arg_func_decl("val").into(),
 			"inner_cpp_func_call" => element_type.cpp_arg_func_call("val"),
-			"inner_cpp_extern_return" => element_type.cpp_extern_return(),
-			"inner_cpp_extern_return_wrapper" => element_type.cpp_extern_return_wrapper_full(),
+			"inner_cpp_extern_return" => element_type.cpp_extern_return(ConstnessOverride::No),
+			"inner_cpp_extern_return_wrapper" => element_type.cpp_extern_return_wrapper_full(ConstnessOverride::No),
 			"swap_func" => swap_func.into(),
 		};
 

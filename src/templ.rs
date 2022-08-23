@@ -1,7 +1,10 @@
 use std::{
 	ffi::CStr,
 	os::raw::c_char,
+	slice,
 };
+
+use crate::platform_types::size_t;
 
 macro_rules! extern_container_arg {
 	(nofail mut $name: ident) => {
@@ -25,10 +28,16 @@ macro_rules! string_arg_output_send {
 }
 
 macro_rules! string_arg_output_receive {
-	($result: ident, $name_via: ident => $name: ident) => {
-		if $result.is_ok() {
-			*$name = unsafe { $crate::templ::receive_string($name_via as *mut String) };
-		}
+	($name_via: ident => $name: ident) => {
+		*$name = unsafe { $crate::templ::receive_string($name_via as *mut String) };
+	};
+}
+
+// currently only used in objdetect::decodeQRCode function in OpenCV 3.4
+#[allow(unused_macros)]
+macro_rules! byte_string_arg_output_receive {
+	($name_via: ident => $name: ident) => {
+		*$name = unsafe { $crate::templ::receive_byte_string($name_via as *mut Vec<u8>) };
 	};
 }
 
@@ -79,25 +88,60 @@ macro_rules! input_output_array_arg {
 
 macro_rules! string_array_arg {
 	($name: ident) => {
-		let $name = $name.iter().map(|x| x.as_ptr() as _).collect::<Vec<_>>();
+		let $name = $name.iter().map(|x| x.as_ptr() as _).collect::<::std::vec::Vec<_>>();
 	};
 }
 
 macro_rules! string_array_arg_mut {
 	($name: ident) => {
-		let mut $name = $name.iter().map(|x| x.as_ptr() as _).collect::<Vec<_>>();
+		let mut $name = $name.iter().map(|x| x.as_ptr() as _).collect::<::std::vec::Vec<_>>();
 	};
 }
 
+macro_rules! return_send {
+	(via $name: ident) => {
+		let mut $name = ::std::mem::MaybeUninit::uninit();
+	};
+}
+
+macro_rules! return_receive {
+	(unsafe $name_via: ident => $name: ident) => {
+		let $name = unsafe { $name_via.assume_init() };
+	};
+	($name_via: ident => $name: ident) => {
+		let $name = $name_via.assume_init();
+	};
+}
+
+/// The return type of this function goes into `receive_string`
 #[no_mangle]
-extern "C" fn ocvrs_create_string(s: *const c_char) -> *mut String {
-	Box::into_raw(Box::new(unsafe { CStr::from_ptr(s) }.to_string_lossy().into_owned()))
+unsafe extern "C" fn ocvrs_create_string(s: *const c_char) -> *mut String {
+	let s = CStr::from_ptr(s)
+		.to_string_lossy()
+		.into_owned();
+	Box::into_raw(Box::new(s))
+}
+
+/// The return type of this function goes into `receive_byte_string`
+#[no_mangle]
+unsafe extern "C" fn ocvrs_create_byte_string(v: *const u8, len: size_t) -> *mut Vec<u8> {
+	let v = slice::from_raw_parts(v, len)
+		.to_vec();
+	Box::into_raw(Box::new(v))
 }
 
 #[inline]
 pub unsafe fn receive_string(s: *mut String) -> String {
 	if s.is_null() {
 		panic!("Got null pointer for receive_string()");
+	}
+	*Box::from_raw(s)
+}
+
+#[inline]
+pub unsafe fn receive_byte_string(s: *mut Vec<u8>) -> Vec<u8> {
+	if s.is_null() {
+		panic!("Got null pointer for receive_byte_vec()");
 	}
 	*Box::from_raw(s)
 }

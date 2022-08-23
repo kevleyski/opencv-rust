@@ -14,7 +14,7 @@
 //!       # Arithm Operations on Matrices
 use crate::{mod_prelude::*, core, sys, types};
 pub mod prelude {
-	pub use { super::LookUpTable, super::DFT, super::Convolution };
+	pub use { super::LookUpTableConst, super::LookUpTable, super::DFTConst, super::DFT, super::ConvolutionConst, super::Convolution };
 }
 
 /// Returns the sum of absolute values for matrix elements.
@@ -25,10 +25,15 @@ pub mod prelude {
 /// 
 /// ## C++ default parameters
 /// * mask: noArray()
+#[inline]
 pub fn abs_sum(src: &dyn core::ToInputArray, mask: &dyn core::ToInputArray) -> Result<core::Scalar> {
 	input_array_arg!(src);
 	input_array_arg!(mask);
-	unsafe { sys::cv_cuda_absSum_const__InputArrayR_const__InputArrayR(src.as_raw__InputArray(), mask.as_raw__InputArray()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_absSum_const__InputArrayR_const__InputArrayR(src.as_raw__InputArray(), mask.as_raw__InputArray(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes an absolute value of each matrix element.
@@ -42,10 +47,15 @@ pub fn abs_sum(src: &dyn core::ToInputArray, mask: &dyn core::ToInputArray) -> R
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn abs(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_abs_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_abs_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes per-element absolute difference of two matrices (or of a matrix and scalar).
@@ -60,11 +70,16 @@ pub fn abs(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, stre
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn absdiff(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src1);
 	input_array_arg!(src2);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_absdiff_const__InputArrayR_const__InputArrayR_const__OutputArrayR_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_absdiff_const__InputArrayR_const__InputArrayR_const__OutputArrayR_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes the weighted sum of two arrays.
@@ -92,11 +107,16 @@ pub fn absdiff(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, dst
 /// ## C++ default parameters
 /// * dtype: -1
 /// * stream: Stream::Null()
+#[inline]
 pub fn add_weighted(src1: &dyn core::ToInputArray, alpha: f64, src2: &dyn core::ToInputArray, beta: f64, gamma: f64, dst: &mut dyn core::ToOutputArray, dtype: i32, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src1);
 	input_array_arg!(src2);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_addWeighted_const__InputArrayR_double_const__InputArrayR_double_double_const__OutputArrayR_int_StreamR(src1.as_raw__InputArray(), alpha, src2.as_raw__InputArray(), beta, gamma, dst.as_raw__OutputArray(), dtype, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_addWeighted_const__InputArrayR_double_const__InputArrayR_double_double_const__OutputArrayR_int_StreamR(src1.as_raw__InputArray(), alpha, src2.as_raw__InputArray(), beta, gamma, dst.as_raw__OutputArray(), dtype, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes a matrix-matrix or matrix-scalar sum.
@@ -117,12 +137,17 @@ pub fn add_weighted(src1: &dyn core::ToInputArray, alpha: f64, src2: &dyn core::
 /// * mask: noArray()
 /// * dtype: -1
 /// * stream: Stream::Null()
+#[inline]
 pub fn add(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, mask: &dyn core::ToInputArray, dtype: i32, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src1);
 	input_array_arg!(src2);
 	output_array_arg!(dst);
 	input_array_arg!(mask);
-	unsafe { sys::cv_cuda_add_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__InputArrayR_int_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), dtype, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_add_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__InputArrayR_int_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), dtype, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Performs a per-element bitwise conjunction of two matrices (or of matrix and scalar).
@@ -138,12 +163,17 @@ pub fn add(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, dst: &m
 /// ## C++ default parameters
 /// * mask: noArray()
 /// * stream: Stream::Null()
+#[inline]
 pub fn bitwise_and(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, mask: &dyn core::ToInputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src1);
 	input_array_arg!(src2);
 	output_array_arg!(dst);
 	input_array_arg!(mask);
-	unsafe { sys::cv_cuda_bitwise_and_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_bitwise_and_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Performs a per-element bitwise inversion.
@@ -158,11 +188,16 @@ pub fn bitwise_and(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray,
 /// ## C++ default parameters
 /// * mask: noArray()
 /// * stream: Stream::Null()
+#[inline]
 pub fn bitwise_not(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, mask: &dyn core::ToInputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
 	input_array_arg!(mask);
-	unsafe { sys::cv_cuda_bitwise_not_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_bitwise_not_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Performs a per-element bitwise disjunction of two matrices (or of matrix and scalar).
@@ -178,12 +213,17 @@ pub fn bitwise_not(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArr
 /// ## C++ default parameters
 /// * mask: noArray()
 /// * stream: Stream::Null()
+#[inline]
 pub fn bitwise_or(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, mask: &dyn core::ToInputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src1);
 	input_array_arg!(src2);
 	output_array_arg!(dst);
 	input_array_arg!(mask);
-	unsafe { sys::cv_cuda_bitwise_or_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_bitwise_or_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Performs a per-element bitwise exclusive or operation of two matrices (or of matrix and scalar).
@@ -199,62 +239,102 @@ pub fn bitwise_or(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, 
 /// ## C++ default parameters
 /// * mask: noArray()
 /// * stream: Stream::Null()
+#[inline]
 pub fn bitwise_xor(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, mask: &dyn core::ToInputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src1);
 	input_array_arg!(src2);
 	output_array_arg!(dst);
 	input_array_arg!(mask);
-	unsafe { sys::cv_cuda_bitwise_xor_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_bitwise_xor_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
+/// This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts.
+/// 
 /// ## C++ default parameters
 /// * mask: noArray()
 /// * stream: Stream::Null()
+#[inline]
 pub fn calc_abs_sum(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, mask: &dyn core::ToInputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
 	input_array_arg!(mask);
-	unsafe { sys::cv_cuda_calcAbsSum_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_calcAbsSum_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
+/// This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts.
+/// 
 /// ## C++ default parameters
 /// * norm_type: NORM_L2
 /// * stream: Stream::Null()
+#[inline]
 pub fn calc_norm_diff(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, norm_type: i32, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src1);
 	input_array_arg!(src2);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_calcNormDiff_const__InputArrayR_const__InputArrayR_const__OutputArrayR_int_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), norm_type, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_calcNormDiff_const__InputArrayR_const__InputArrayR_const__OutputArrayR_int_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), norm_type, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
+/// This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts.
+/// 
 /// ## C++ default parameters
 /// * mask: noArray()
 /// * stream: Stream::Null()
+#[inline]
 pub fn calc_norm(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, norm_type: i32, mask: &dyn core::ToInputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
 	input_array_arg!(mask);
-	unsafe { sys::cv_cuda_calcNorm_const__InputArrayR_const__OutputArrayR_int_const__InputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), norm_type, mask.as_raw__InputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_calcNorm_const__InputArrayR_const__OutputArrayR_int_const__InputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), norm_type, mask.as_raw__InputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
+/// This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts.
+/// 
 /// ## C++ default parameters
 /// * mask: noArray()
 /// * stream: Stream::Null()
+#[inline]
 pub fn calc_sqr_sum(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, mask: &dyn core::ToInputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
 	input_array_arg!(mask);
-	unsafe { sys::cv_cuda_calcSqrSum_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_calcSqrSum_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
+/// This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts.
+/// 
 /// ## C++ default parameters
 /// * mask: noArray()
 /// * stream: Stream::Null()
+#[inline]
 pub fn calc_sum(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, mask: &dyn core::ToInputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
 	input_array_arg!(mask);
-	unsafe { sys::cv_cuda_calcSum_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_calcSum_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Converts Cartesian coordinates into polar.
@@ -272,12 +352,17 @@ pub fn calc_sum(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray,
 /// ## C++ default parameters
 /// * angle_in_degrees: false
 /// * stream: Stream::Null()
+#[inline]
 pub fn cart_to_polar(x: &dyn core::ToInputArray, y: &dyn core::ToInputArray, magnitude: &mut dyn core::ToOutputArray, angle: &mut dyn core::ToOutputArray, angle_in_degrees: bool, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(x);
 	input_array_arg!(y);
 	output_array_arg!(magnitude);
 	output_array_arg!(angle);
-	unsafe { sys::cv_cuda_cartToPolar_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__OutputArrayR_bool_StreamR(x.as_raw__InputArray(), y.as_raw__InputArray(), magnitude.as_raw__OutputArray(), angle.as_raw__OutputArray(), angle_in_degrees, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_cartToPolar_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__OutputArrayR_bool_StreamR(x.as_raw__InputArray(), y.as_raw__InputArray(), magnitude.as_raw__OutputArray(), angle.as_raw__OutputArray(), angle_in_degrees, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Compares elements of two matrices (or of a matrix and scalar).
@@ -299,11 +384,16 @@ pub fn cart_to_polar(x: &dyn core::ToInputArray, y: &dyn core::ToInputArray, mag
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn compare(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, cmpop: i32, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src1);
 	input_array_arg!(src2);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_compare_const__InputArrayR_const__InputArrayR_const__OutputArrayR_int_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), cmpop, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_compare_const__InputArrayR_const__InputArrayR_const__OutputArrayR_int_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), cmpop, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Forms a border around an image.
@@ -325,10 +415,15 @@ pub fn compare(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, dst
 /// ## C++ default parameters
 /// * value: Scalar()
 /// * stream: Stream::Null()
+#[inline]
 pub fn copy_make_border(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, top: i32, bottom: i32, left: i32, right: i32, border_type: i32, value: core::Scalar, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_copyMakeBorder_const__InputArrayR_const__OutputArrayR_int_int_int_int_int_Scalar_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), top, bottom, left, right, border_type, value.opencv_as_extern(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_copyMakeBorder_const__InputArrayR_const__OutputArrayR_int_int_int_int_int_Scalar_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), top, bottom, left, right, border_type, value.opencv_as_extern(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Counts non-zero matrix elements.
@@ -339,9 +434,14 @@ pub fn copy_make_border(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutp
 /// The function does not work with CV_64F images on GPUs with the compute capability \< 1.3.
 /// ## See also
 /// countNonZero
+#[inline]
 pub fn count_non_zero(src: &dyn core::ToInputArray) -> Result<i32> {
 	input_array_arg!(src);
-	unsafe { sys::cv_cuda_countNonZero_const__InputArrayR(src.as_raw__InputArray()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_countNonZero_const__InputArrayR(src.as_raw__InputArray(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Counts non-zero matrix elements.
@@ -357,10 +457,15 @@ pub fn count_non_zero(src: &dyn core::ToInputArray) -> Result<i32> {
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn count_non_zero_1(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_countNonZero_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_countNonZero_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Creates implementation for cuda::Convolution .
@@ -372,8 +477,14 @@ pub fn count_non_zero_1(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutp
 /// 
 /// ## C++ default parameters
 /// * user_block_size: Size()
-pub fn create_convolution(user_block_size: core::Size) -> Result<core::Ptr::<dyn crate::cudaarithm::Convolution>> {
-	unsafe { sys::cv_cuda_createConvolution_Size(user_block_size.opencv_as_extern()) }.into_result().map(|r| unsafe { core::Ptr::<dyn crate::cudaarithm::Convolution>::opencv_from_extern(r) } )
+#[inline]
+pub fn create_convolution(user_block_size: core::Size) -> Result<core::Ptr<dyn crate::cudaarithm::Convolution>> {
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_createConvolution_Size(user_block_size.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { core::Ptr::<dyn crate::cudaarithm::Convolution>::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
 /// Creates implementation for cuda::DFT.
@@ -389,17 +500,29 @@ pub fn create_convolution(user_block_size: core::Size) -> Result<core::Ptr::<dyn
 /// *   **DFT_COMPLEX_INPUT** Specifies that inputs will be complex with 2 channels.
 /// *   **DFT_REAL_OUTPUT** specifies the output as real. The source matrix is the result of
 /// real-complex transform, so the destination matrix must be real.
-pub fn create_dft(dft_size: core::Size, flags: i32) -> Result<core::Ptr::<dyn crate::cudaarithm::DFT>> {
-	unsafe { sys::cv_cuda_createDFT_Size_int(dft_size.opencv_as_extern(), flags) }.into_result().map(|r| unsafe { core::Ptr::<dyn crate::cudaarithm::DFT>::opencv_from_extern(r) } )
+#[inline]
+pub fn create_dft(dft_size: core::Size, flags: i32) -> Result<core::Ptr<dyn crate::cudaarithm::DFT>> {
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_createDFT_Size_int(dft_size.opencv_as_extern(), flags, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { core::Ptr::<dyn crate::cudaarithm::DFT>::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
 /// Creates implementation for cuda::LookUpTable .
 /// 
 /// ## Parameters
 /// * lut: Look-up table of 256 elements. It is a continuous CV_8U matrix.
-pub fn create_look_up_table(lut: &dyn core::ToInputArray) -> Result<core::Ptr::<dyn crate::cudaarithm::LookUpTable>> {
+#[inline]
+pub fn create_look_up_table(lut: &dyn core::ToInputArray) -> Result<core::Ptr<dyn crate::cudaarithm::LookUpTable>> {
 	input_array_arg!(lut);
-	unsafe { sys::cv_cuda_createLookUpTable_const__InputArrayR(lut.as_raw__InputArray()) }.into_result().map(|r| unsafe { core::Ptr::<dyn crate::cudaarithm::LookUpTable>::opencv_from_extern(r) } )
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_createLookUpTable_const__InputArrayR(lut.as_raw__InputArray(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { core::Ptr::<dyn crate::cudaarithm::LookUpTable>::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
 /// Performs a forward or inverse discrete Fourier transform (1D or 2D) of the floating point matrix.
@@ -441,10 +564,15 @@ pub fn create_look_up_table(lut: &dyn core::ToInputArray) -> Result<core::Ptr::<
 /// ## C++ default parameters
 /// * flags: 0
 /// * stream: Stream::Null()
+#[inline]
 pub fn dft(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, dft_size: core::Size, flags: i32, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_dft_const__InputArrayR_const__OutputArrayR_Size_int_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), dft_size.opencv_as_extern(), flags, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_dft_const__InputArrayR_const__OutputArrayR_Size_int_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), dft_size.opencv_as_extern(), flags, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes a matrix-matrix or matrix-scalar division.
@@ -466,11 +594,16 @@ pub fn dft(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, dft_
 /// * scale: 1
 /// * dtype: -1
 /// * stream: Stream::Null()
+#[inline]
 pub fn divide(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, scale: f64, dtype: i32, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src1);
 	input_array_arg!(src2);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_divide_const__InputArrayR_const__InputArrayR_const__OutputArrayR_double_int_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), scale, dtype, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_divide_const__InputArrayR_const__InputArrayR_const__OutputArrayR_double_int_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), scale, dtype, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes an exponent of each matrix element.
@@ -484,31 +617,50 @@ pub fn divide(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, dst:
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn exp(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_exp_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_exp_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
+/// This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts.
+/// 
 /// ## C++ default parameters
 /// * mask: noArray()
 /// * stream: Stream::Null()
+#[inline]
 pub fn find_min_max_loc(src: &dyn core::ToInputArray, min_max_vals: &mut dyn core::ToOutputArray, loc: &mut dyn core::ToOutputArray, mask: &dyn core::ToInputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(min_max_vals);
 	output_array_arg!(loc);
 	input_array_arg!(mask);
-	unsafe { sys::cv_cuda_findMinMaxLoc_const__InputArrayR_const__OutputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src.as_raw__InputArray(), min_max_vals.as_raw__OutputArray(), loc.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_findMinMaxLoc_const__InputArrayR_const__OutputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src.as_raw__InputArray(), min_max_vals.as_raw__OutputArray(), loc.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
+/// This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts.
+/// 
 /// ## C++ default parameters
 /// * mask: noArray()
 /// * stream: Stream::Null()
+#[inline]
 pub fn find_min_max(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, mask: &dyn core::ToInputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
 	input_array_arg!(mask);
-	unsafe { sys::cv_cuda_findMinMax_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_findMinMax_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Flips a 2D matrix around vertical, horizontal, or both axes.
@@ -527,10 +679,15 @@ pub fn find_min_max(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputAr
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn flip(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, flip_code: i32, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_flip_const__InputArrayR_const__OutputArrayR_int_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), flip_code, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_flip_const__InputArrayR_const__OutputArrayR_int_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), flip_code, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Performs generalized matrix multiplication.
@@ -563,12 +720,54 @@ pub fn flip(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, fli
 /// ## C++ default parameters
 /// * flags: 0
 /// * stream: Stream::Null()
+#[inline]
 pub fn gemm(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, alpha: f64, src3: &dyn core::ToInputArray, beta: f64, dst: &mut dyn core::ToOutputArray, flags: i32, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src1);
 	input_array_arg!(src2);
 	input_array_arg!(src3);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_gemm_const__InputArrayR_const__InputArrayR_double_const__InputArrayR_double_const__OutputArrayR_int_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), alpha, src3.as_raw__InputArray(), beta, dst.as_raw__OutputArray(), flags, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_gemm_const__InputArrayR_const__InputArrayR_double_const__InputArrayR_double_const__OutputArrayR_int_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), alpha, src3.as_raw__InputArray(), beta, dst.as_raw__OutputArray(), flags, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
+}
+
+/// Checks if array elements lie between two scalars.
+/// 
+/// The function checks the range as follows:
+/// *   For every element of a single-channel input array:
+///    ![block formula](https://latex.codecogs.com/png.latex?%5Ctexttt%7Bdst%7D%20%28I%29%3D%20%5Ctexttt%7Blowerb%7D%5F0%20%20%5Cleq%20%5Ctexttt%7Bsrc%7D%20%28I%29%5F0%20%5Cleq%20%20%5Ctexttt%7Bupperb%7D%5F0)
+/// *   For two-channel arrays:
+///    ![block formula](https://latex.codecogs.com/png.latex?%5Ctexttt%7Bdst%7D%20%28I%29%3D%20%5Ctexttt%7Blowerb%7D%5F0%20%20%5Cleq%20%5Ctexttt%7Bsrc%7D%20%28I%29%5F0%20%5Cleq%20%20%5Ctexttt%7Bupperb%7D%5F0%20%20%5Cland%20%5Ctexttt%7Blowerb%7D%5F1%20%20%5Cleq%20%5Ctexttt%7Bsrc%7D%20%28I%29%5F1%20%5Cleq%20%20%5Ctexttt%7Bupperb%7D%5F1)
+/// *   and so forth.
+/// 
+/// That is, dst (I) is set to 255 (all 1 -bits) if src (I) is within the
+/// specified 1D, 2D, 3D, ... box and 0 otherwise.
+/// 
+/// Note that unlike the CPU inRange, this does NOT accept an array for lowerb or
+/// upperb, only a cv::Scalar.
+/// 
+/// ## Parameters
+/// * src: first input array.
+/// * lowerb: inclusive lower boundary cv::Scalar.
+/// * upperb: inclusive upper boundary cv::Scalar.
+/// * dst: output array of the same size as src and CV_8U type.
+/// * stream: Stream for the asynchronous version.
+/// ## See also
+/// cv::inRange
+/// 
+/// ## C++ default parameters
+/// * stream: Stream::Null()
+#[inline]
+pub fn in_range(src: &dyn core::ToInputArray, lowerb: core::Scalar, upperb: core::Scalar, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
+	input_array_arg!(src);
+	output_array_arg!(dst);
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_inRange_const__InputArrayR_const_ScalarR_const_ScalarR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), &lowerb, &upperb, dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes an integral image.
@@ -582,10 +781,15 @@ pub fn gemm(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, alpha:
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn integral(src: &dyn core::ToInputArray, sum: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(sum);
-	unsafe { sys::cv_cuda_integral_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), sum.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_integral_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), sum.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes a natural logarithm of absolute value of each matrix element.
@@ -599,10 +803,15 @@ pub fn integral(src: &dyn core::ToInputArray, sum: &mut dyn core::ToOutputArray,
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn log(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_log_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_log_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Performs pixel by pixel right left of an image by a constant value.
@@ -616,18 +825,28 @@ pub fn log(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, stre
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn lshift(src: &dyn core::ToInputArray, val: core::Scalar_<i32>, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_lshift_const__InputArrayR_Scalar__int__const__OutputArrayR_StreamR(src.as_raw__InputArray(), val.opencv_as_extern(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_lshift_const__InputArrayR_Scalar__int__const__OutputArrayR_StreamR(src.as_raw__InputArray(), val.opencv_as_extern(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn lshift_1(src: &dyn core::ToInputArray, val: core::Scalar, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_lshift_const__InputArrayR_Scalar_const__OutputArrayR_StreamR(src.as_raw__InputArray(), val.opencv_as_extern(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_lshift_const__InputArrayR_Scalar_const__OutputArrayR_StreamR(src.as_raw__InputArray(), val.opencv_as_extern(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes squared magnitudes of complex matrix elements.
@@ -648,11 +867,16 @@ pub fn lshift_1(src: &dyn core::ToInputArray, val: core::Scalar, dst: &mut dyn c
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn magnitude_sqr_1(x: &dyn core::ToInputArray, y: &dyn core::ToInputArray, magnitude: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(x);
 	input_array_arg!(y);
 	output_array_arg!(magnitude);
-	unsafe { sys::cv_cuda_magnitudeSqr_const__InputArrayR_const__InputArrayR_const__OutputArrayR_StreamR(x.as_raw__InputArray(), y.as_raw__InputArray(), magnitude.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_magnitudeSqr_const__InputArrayR_const__InputArrayR_const__OutputArrayR_StreamR(x.as_raw__InputArray(), y.as_raw__InputArray(), magnitude.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes squared magnitudes of complex matrix elements.
@@ -664,10 +888,15 @@ pub fn magnitude_sqr_1(x: &dyn core::ToInputArray, y: &dyn core::ToInputArray, m
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn magnitude_sqr(xy: &dyn core::ToInputArray, magnitude: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(xy);
 	output_array_arg!(magnitude);
-	unsafe { sys::cv_cuda_magnitudeSqr_const__InputArrayR_const__OutputArrayR_StreamR(xy.as_raw__InputArray(), magnitude.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_magnitudeSqr_const__InputArrayR_const__OutputArrayR_StreamR(xy.as_raw__InputArray(), magnitude.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes magnitudes of complex matrix elements.
@@ -690,11 +919,16 @@ pub fn magnitude_sqr(xy: &dyn core::ToInputArray, magnitude: &mut dyn core::ToOu
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn magnitude_1(x: &dyn core::ToInputArray, y: &dyn core::ToInputArray, magnitude: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(x);
 	input_array_arg!(y);
 	output_array_arg!(magnitude);
-	unsafe { sys::cv_cuda_magnitude_const__InputArrayR_const__InputArrayR_const__OutputArrayR_StreamR(x.as_raw__InputArray(), y.as_raw__InputArray(), magnitude.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_magnitude_const__InputArrayR_const__InputArrayR_const__OutputArrayR_StreamR(x.as_raw__InputArray(), y.as_raw__InputArray(), magnitude.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes magnitudes of complex matrix elements.
@@ -708,10 +942,15 @@ pub fn magnitude_1(x: &dyn core::ToInputArray, y: &dyn core::ToInputArray, magni
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn magnitude(xy: &dyn core::ToInputArray, magnitude: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(xy);
 	output_array_arg!(magnitude);
-	unsafe { sys::cv_cuda_magnitude_const__InputArrayR_const__OutputArrayR_StreamR(xy.as_raw__InputArray(), magnitude.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_magnitude_const__InputArrayR_const__OutputArrayR_StreamR(xy.as_raw__InputArray(), magnitude.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes the per-element maximum of two matrices (or a matrix and a scalar).
@@ -726,43 +965,121 @@ pub fn magnitude(xy: &dyn core::ToInputArray, magnitude: &mut dyn core::ToOutput
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn max(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src1);
 	input_array_arg!(src2);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_max_const__InputArrayR_const__InputArrayR_const__OutputArrayR_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_max_const__InputArrayR_const__InputArrayR_const__OutputArrayR_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes a mean value and a standard deviation of matrix elements.
 /// 
 /// ## Parameters
-/// * mtx: Source matrix. CV_8UC1 matrices are supported for now.
-/// * mean: Mean value.
-/// * stddev: Standard deviation value.
-/// ## See also
-/// meanStdDev
-pub fn mean_std_dev(mtx: &dyn core::ToInputArray, mean: &mut core::Scalar, stddev: &mut core::Scalar) -> Result<()> {
-	input_array_arg!(mtx);
-	unsafe { sys::cv_cuda_meanStdDev_const__InputArrayR_ScalarR_ScalarR(mtx.as_raw__InputArray(), mean, stddev) }.into_result()
-}
-
-/// Computes a mean value and a standard deviation of matrix elements.
-/// 
-/// ## Parameters
-/// * mtx: Source matrix. CV_8UC1 matrices are supported for now.
-/// * mean: Mean value.
-/// * stddev: Standard deviation value.
+/// * src: Source matrix. CV_8UC1 and CV_32FC1 matrices are supported for now.
+/// * dst: Target GpuMat with size 1x2 and type CV_64FC1. The first value is mean, the second - stddev.
+/// * mask: Operation mask.
+/// * stream: Stream for the asynchronous version.
 /// ## See also
 /// meanStdDev
 /// 
 /// ## Overloaded parameters
 /// 
+/// * mtx: Source matrix. CV_8UC1 and CV_32FC1 matrices are supported for now.
+/// * mean: Mean value.
+/// * stddev: Standard deviation value.
+#[inline]
+pub fn mean_std_dev_3(mtx: &dyn core::ToInputArray, mean: &mut core::Scalar, stddev: &mut core::Scalar) -> Result<()> {
+	input_array_arg!(mtx);
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_meanStdDev_const__InputArrayR_ScalarR_ScalarR(mtx.as_raw__InputArray(), mean, stddev, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
+}
+
+/// Computes a mean value and a standard deviation of matrix elements.
+/// 
+/// ## Parameters
+/// * src: Source matrix. CV_8UC1 and CV_32FC1 matrices are supported for now.
+/// * dst: Target GpuMat with size 1x2 and type CV_64FC1. The first value is mean, the second - stddev.
+/// * mask: Operation mask.
+/// * stream: Stream for the asynchronous version.
+/// ## See also
+/// meanStdDev
+/// 
+/// ## Overloaded parameters
+/// 
+/// * src: Source matrix. CV_8UC1 and CV_32FC1 matrices are supported for now.
+/// * mean: Mean value.
+/// * stddev: Standard deviation value.
+/// * mask: Operation mask.
+#[inline]
+pub fn mean_std_dev_2(src: &dyn core::ToInputArray, mean: &mut core::Scalar, stddev: &mut core::Scalar, mask: &dyn core::ToInputArray) -> Result<()> {
+	input_array_arg!(src);
+	input_array_arg!(mask);
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_meanStdDev_const__InputArrayR_ScalarR_ScalarR_const__InputArrayR(src.as_raw__InputArray(), mean, stddev, mask.as_raw__InputArray(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
+}
+
+/// Computes a mean value and a standard deviation of matrix elements.
+/// 
+/// ## Parameters
+/// * src: Source matrix. CV_8UC1 and CV_32FC1 matrices are supported for now.
+/// * dst: Target GpuMat with size 1x2 and type CV_64FC1. The first value is mean, the second - stddev.
+/// * mask: Operation mask.
+/// * stream: Stream for the asynchronous version.
+/// ## See also
+/// meanStdDev
+/// 
+/// ## Overloaded parameters
+/// 
+/// * mtx: Source matrix. CV_8UC1 and CV_32FC1 matrices are supported for now.
+/// * dst: Target GpuMat with size 1x2 and type CV_64FC1. The first value is mean, the second - stddev.
+/// * stream: Stream for the asynchronous version.
+/// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn mean_std_dev_1(mtx: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(mtx);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_meanStdDev_const__InputArrayR_const__OutputArrayR_StreamR(mtx.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_meanStdDev_const__InputArrayR_const__OutputArrayR_StreamR(mtx.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
+}
+
+/// Computes a mean value and a standard deviation of matrix elements.
+/// 
+/// ## Parameters
+/// * src: Source matrix. CV_8UC1 and CV_32FC1 matrices are supported for now.
+/// * dst: Target GpuMat with size 1x2 and type CV_64FC1. The first value is mean, the second - stddev.
+/// * mask: Operation mask.
+/// * stream: Stream for the asynchronous version.
+/// ## See also
+/// meanStdDev
+/// 
+/// ## C++ default parameters
+/// * stream: Stream::Null()
+#[inline]
+pub fn mean_std_dev(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, mask: &dyn core::ToInputArray, stream: &mut core::Stream) -> Result<()> {
+	input_array_arg!(src);
+	output_array_arg!(dst);
+	input_array_arg!(mask);
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_meanStdDev_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Makes a multi-channel matrix out of several single-channel matrices.
@@ -777,9 +1094,14 @@ pub fn mean_std_dev_1(mtx: &dyn core::ToInputArray, dst: &mut dyn core::ToOutput
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn merge(src: &core::GpuMat, n: size_t, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_merge_const_GpuMatX_size_t_const__OutputArrayR_StreamR(src.as_raw_GpuMat(), n, dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_merge_const_GpuMatX_size_t_const__OutputArrayR_StreamR(src.as_raw_GpuMat(), n, dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Makes a multi-channel matrix out of several single-channel matrices.
@@ -796,9 +1118,14 @@ pub fn merge(src: &core::GpuMat, n: size_t, dst: &mut dyn core::ToOutputArray, s
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
-pub fn merge_1(src: &core::Vector::<core::GpuMat>, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
+#[inline]
+pub fn merge_1(src: &core::Vector<core::GpuMat>, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_merge_const_vector_GpuMat_R_const__OutputArrayR_StreamR(src.as_raw_VectorOfGpuMat(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_merge_const_vector_GpuMat_R_const__OutputArrayR_StreamR(src.as_raw_VectorOfGpuMat(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Finds global minimum and maximum matrix elements and returns their values with locations.
@@ -817,10 +1144,15 @@ pub fn merge_1(src: &core::Vector::<core::GpuMat>, dst: &mut dyn core::ToOutputA
 /// 
 /// ## C++ default parameters
 /// * mask: noArray()
+#[inline]
 pub fn min_max_loc(src: &dyn core::ToInputArray, min_val: &mut f64, max_val: &mut f64, min_loc: &mut core::Point, max_loc: &mut core::Point, mask: &dyn core::ToInputArray) -> Result<()> {
 	input_array_arg!(src);
 	input_array_arg!(mask);
-	unsafe { sys::cv_cuda_minMaxLoc_const__InputArrayR_doubleX_doubleX_PointX_PointX_const__InputArrayR(src.as_raw__InputArray(), min_val, max_val, min_loc, max_loc, mask.as_raw__InputArray()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_minMaxLoc_const__InputArrayR_doubleX_doubleX_PointX_PointX_const__InputArrayR(src.as_raw__InputArray(), min_val, max_val, min_loc, max_loc, mask.as_raw__InputArray(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Finds global minimum and maximum matrix elements and returns their values.
@@ -837,10 +1169,15 @@ pub fn min_max_loc(src: &dyn core::ToInputArray, min_val: &mut f64, max_val: &mu
 /// 
 /// ## C++ default parameters
 /// * mask: noArray()
+#[inline]
 pub fn min_max(src: &dyn core::ToInputArray, min_val: &mut f64, max_val: &mut f64, mask: &dyn core::ToInputArray) -> Result<()> {
 	input_array_arg!(src);
 	input_array_arg!(mask);
-	unsafe { sys::cv_cuda_minMax_const__InputArrayR_doubleX_doubleX_const__InputArrayR(src.as_raw__InputArray(), min_val, max_val, mask.as_raw__InputArray()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_minMax_const__InputArrayR_doubleX_doubleX_const__InputArrayR(src.as_raw__InputArray(), min_val, max_val, mask.as_raw__InputArray(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes the per-element minimum of two matrices (or a matrix and a scalar).
@@ -855,11 +1192,16 @@ pub fn min_max(src: &dyn core::ToInputArray, min_val: &mut f64, max_val: &mut f6
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn min(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src1);
 	input_array_arg!(src2);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_min_const__InputArrayR_const__InputArrayR_const__OutputArrayR_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_min_const__InputArrayR_const__InputArrayR_const__OutputArrayR_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Performs a per-element multiplication of two Fourier spectrums and scales the result.
@@ -881,11 +1223,16 @@ pub fn min(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, dst: &m
 /// ## C++ default parameters
 /// * conj_b: false
 /// * stream: Stream::Null()
+#[inline]
 pub fn mul_and_scale_spectrums(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, flags: i32, scale: f32, conj_b: bool, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src1);
 	input_array_arg!(src2);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_mulAndScaleSpectrums_const__InputArrayR_const__InputArrayR_const__OutputArrayR_int_float_bool_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), flags, scale, conj_b, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_mulAndScaleSpectrums_const__InputArrayR_const__InputArrayR_const__OutputArrayR_int_float_bool_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), flags, scale, conj_b, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Performs a per-element multiplication of two Fourier spectrums.
@@ -906,11 +1253,16 @@ pub fn mul_and_scale_spectrums(src1: &dyn core::ToInputArray, src2: &dyn core::T
 /// ## C++ default parameters
 /// * conj_b: false
 /// * stream: Stream::Null()
+#[inline]
 pub fn mul_spectrums(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, flags: i32, conj_b: bool, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src1);
 	input_array_arg!(src2);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_mulSpectrums_const__InputArrayR_const__InputArrayR_const__OutputArrayR_int_bool_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), flags, conj_b, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_mulSpectrums_const__InputArrayR_const__InputArrayR_const__OutputArrayR_int_bool_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), flags, conj_b, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes a matrix-matrix or matrix-scalar per-element product.
@@ -930,11 +1282,16 @@ pub fn mul_spectrums(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArra
 /// * scale: 1
 /// * dtype: -1
 /// * stream: Stream::Null()
+#[inline]
 pub fn multiply(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, scale: f64, dtype: i32, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src1);
 	input_array_arg!(src2);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_multiply_const__InputArrayR_const__InputArrayR_const__OutputArrayR_double_int_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), scale, dtype, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_multiply_const__InputArrayR_const__InputArrayR_const__OutputArrayR_double_int_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), scale, dtype, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Returns the difference of two matrices.
@@ -948,10 +1305,15 @@ pub fn multiply(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, ds
 /// 
 /// ## C++ default parameters
 /// * norm_type: NORM_L2
+#[inline]
 pub fn norm_1(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, norm_type: i32) -> Result<f64> {
 	input_array_arg!(src1);
 	input_array_arg!(src2);
-	unsafe { sys::cv_cuda_norm_const__InputArrayR_const__InputArrayR_int(src1.as_raw__InputArray(), src2.as_raw__InputArray(), norm_type) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_norm_const__InputArrayR_const__InputArrayR_int(src1.as_raw__InputArray(), src2.as_raw__InputArray(), norm_type, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Returns the norm of a matrix (or difference of two matrices).
@@ -965,10 +1327,15 @@ pub fn norm_1(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, norm
 /// 
 /// ## C++ default parameters
 /// * mask: noArray()
+#[inline]
 pub fn norm(src1: &dyn core::ToInputArray, norm_type: i32, mask: &dyn core::ToInputArray) -> Result<f64> {
 	input_array_arg!(src1);
 	input_array_arg!(mask);
-	unsafe { sys::cv_cuda_norm_const__InputArrayR_int_const__InputArrayR(src1.as_raw__InputArray(), norm_type, mask.as_raw__InputArray()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_norm_const__InputArrayR_int_const__InputArrayR(src1.as_raw__InputArray(), norm_type, mask.as_raw__InputArray(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Normalizes the norm or value range of an array.
@@ -991,11 +1358,16 @@ pub fn norm(src1: &dyn core::ToInputArray, norm_type: i32, mask: &dyn core::ToIn
 /// ## C++ default parameters
 /// * mask: noArray()
 /// * stream: Stream::Null()
+#[inline]
 pub fn normalize(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, alpha: f64, beta: f64, norm_type: i32, dtype: i32, mask: &dyn core::ToInputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
 	input_array_arg!(mask);
-	unsafe { sys::cv_cuda_normalize_const__InputArrayR_const__OutputArrayR_double_double_int_int_const__InputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), alpha, beta, norm_type, dtype, mask.as_raw__InputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_normalize_const__InputArrayR_const__OutputArrayR_double_double_int_int_const__InputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), alpha, beta, norm_type, dtype, mask.as_raw__InputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes polar angles of complex matrix elements.
@@ -1012,11 +1384,16 @@ pub fn normalize(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray
 /// ## C++ default parameters
 /// * angle_in_degrees: false
 /// * stream: Stream::Null()
+#[inline]
 pub fn phase(x: &dyn core::ToInputArray, y: &dyn core::ToInputArray, angle: &mut dyn core::ToOutputArray, angle_in_degrees: bool, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(x);
 	input_array_arg!(y);
 	output_array_arg!(angle);
-	unsafe { sys::cv_cuda_phase_const__InputArrayR_const__InputArrayR_const__OutputArrayR_bool_StreamR(x.as_raw__InputArray(), y.as_raw__InputArray(), angle.as_raw__OutputArray(), angle_in_degrees, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_phase_const__InputArrayR_const__InputArrayR_const__OutputArrayR_bool_StreamR(x.as_raw__InputArray(), y.as_raw__InputArray(), angle.as_raw__OutputArray(), angle_in_degrees, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Converts polar coordinates into Cartesian.
@@ -1032,12 +1409,17 @@ pub fn phase(x: &dyn core::ToInputArray, y: &dyn core::ToInputArray, angle: &mut
 /// ## C++ default parameters
 /// * angle_in_degrees: false
 /// * stream: Stream::Null()
+#[inline]
 pub fn polar_to_cart(magnitude: &dyn core::ToInputArray, angle: &dyn core::ToInputArray, x: &mut dyn core::ToOutputArray, y: &mut dyn core::ToOutputArray, angle_in_degrees: bool, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(magnitude);
 	input_array_arg!(angle);
 	output_array_arg!(x);
 	output_array_arg!(y);
-	unsafe { sys::cv_cuda_polarToCart_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__OutputArrayR_bool_StreamR(magnitude.as_raw__InputArray(), angle.as_raw__InputArray(), x.as_raw__OutputArray(), y.as_raw__OutputArray(), angle_in_degrees, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_polarToCart_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__OutputArrayR_bool_StreamR(magnitude.as_raw__InputArray(), angle.as_raw__InputArray(), x.as_raw__OutputArray(), y.as_raw__OutputArray(), angle_in_degrees, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Raises every matrix element to a power.
@@ -1056,10 +1438,15 @@ pub fn polar_to_cart(magnitude: &dyn core::ToInputArray, angle: &dyn core::ToInp
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn pow(src: &dyn core::ToInputArray, power: f64, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_pow_const__InputArrayR_double_const__OutputArrayR_StreamR(src.as_raw__InputArray(), power, dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_pow_const__InputArrayR_double_const__OutputArrayR_StreamR(src.as_raw__InputArray(), power, dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes a standard deviation of integral images.
@@ -1067,17 +1454,22 @@ pub fn pow(src: &dyn core::ToInputArray, power: f64, dst: &mut dyn core::ToOutpu
 /// ## Parameters
 /// * src: Source image. Only the CV_32SC1 type is supported.
 /// * sqr: Squared source image. Only the CV_32FC1 type is supported.
-/// * dst: Destination image with the same type and size as src .
+/// * dst: Destination image with the same type and size as src.
 /// * rect: Rectangular window.
 /// * stream: Stream for the asynchronous version.
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn rect_std_dev(src: &dyn core::ToInputArray, sqr: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, rect: core::Rect, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	input_array_arg!(sqr);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_rectStdDev_const__InputArrayR_const__InputArrayR_const__OutputArrayR_Rect_StreamR(src.as_raw__InputArray(), sqr.as_raw__InputArray(), dst.as_raw__OutputArray(), rect.opencv_as_extern(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_rectStdDev_const__InputArrayR_const__InputArrayR_const__OutputArrayR_Rect_StreamR(src.as_raw__InputArray(), sqr.as_raw__InputArray(), dst.as_raw__OutputArray(), rect.opencv_as_extern(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Reduces a matrix to a vector.
@@ -1088,11 +1480,11 @@ pub fn rect_std_dev(src: &dyn core::ToInputArray, sqr: &dyn core::ToInputArray, 
 /// * dim: Dimension index along which the matrix is reduced. 0 means that the matrix is reduced
 /// to a single row. 1 means that the matrix is reduced to a single column.
 /// * reduceOp: Reduction operation that could be one of the following:
-/// *   **CV_REDUCE_SUM** The output is the sum of all rows/columns of the matrix.
-/// *   **CV_REDUCE_AVG** The output is the mean vector of all rows/columns of the matrix.
-/// *   **CV_REDUCE_MAX** The output is the maximum (column/row-wise) of all rows/columns of the
+/// *   **REDUCE_SUM** The output is the sum of all rows/columns of the matrix.
+/// *   **REDUCE_AVG** The output is the mean vector of all rows/columns of the matrix.
+/// *   **REDUCE_MAX** The output is the maximum (column/row-wise) of all rows/columns of the
 /// matrix.
-/// *   **CV_REDUCE_MIN** The output is the minimum (column/row-wise) of all rows/columns of the
+/// *   **REDUCE_MIN** The output is the minimum (column/row-wise) of all rows/columns of the
 /// matrix.
 /// * dtype: When it is negative, the destination vector will have the same type as the source
 /// matrix. Otherwise, its type will be CV_MAKE_TYPE(CV_MAT_DEPTH(dtype), mtx.channels()) .
@@ -1101,7 +1493,7 @@ pub fn rect_std_dev(src: &dyn core::ToInputArray, sqr: &dyn core::ToInputArray, 
 /// The function reduce reduces the matrix to a vector by treating the matrix rows/columns as a set of
 /// 1D vectors and performing the specified operation on the vectors until a single row/column is
 /// obtained. For example, the function can be used to compute horizontal and vertical projections of a
-/// raster image. In case of CV_REDUCE_SUM and CV_REDUCE_AVG , the output may have a larger element
+/// raster image. In case of REDUCE_SUM and REDUCE_AVG , the output may have a larger element
 /// bit-depth to preserve accuracy. And multi-channel arrays are also supported in these two reduction
 /// modes.
 /// ## See also
@@ -1110,10 +1502,15 @@ pub fn rect_std_dev(src: &dyn core::ToInputArray, sqr: &dyn core::ToInputArray, 
 /// ## C++ default parameters
 /// * dtype: -1
 /// * stream: Stream::Null()
+#[inline]
 pub fn reduce(mtx: &dyn core::ToInputArray, vec: &mut dyn core::ToOutputArray, dim: i32, reduce_op: i32, dtype: i32, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(mtx);
 	output_array_arg!(vec);
-	unsafe { sys::cv_cuda_reduce_const__InputArrayR_const__OutputArrayR_int_int_int_StreamR(mtx.as_raw__InputArray(), vec.as_raw__OutputArray(), dim, reduce_op, dtype, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_reduce_const__InputArrayR_const__OutputArrayR_int_int_int_StreamR(mtx.as_raw__InputArray(), vec.as_raw__OutputArray(), dim, reduce_op, dtype, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Performs pixel by pixel right shift of an image by a constant value.
@@ -1126,18 +1523,28 @@ pub fn reduce(mtx: &dyn core::ToInputArray, vec: &mut dyn core::ToOutputArray, d
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn rshift(src: &dyn core::ToInputArray, val: core::Scalar_<i32>, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_rshift_const__InputArrayR_Scalar__int__const__OutputArrayR_StreamR(src.as_raw__InputArray(), val.opencv_as_extern(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_rshift_const__InputArrayR_Scalar__int__const__OutputArrayR_StreamR(src.as_raw__InputArray(), val.opencv_as_extern(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn rshift_1(src: &dyn core::ToInputArray, val: core::Scalar, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_rshift_const__InputArrayR_Scalar_const__OutputArrayR_StreamR(src.as_raw__InputArray(), val.opencv_as_extern(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_rshift_const__InputArrayR_Scalar_const__OutputArrayR_StreamR(src.as_raw__InputArray(), val.opencv_as_extern(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Copies each plane of a multi-channel matrix into an array.
@@ -1151,9 +1558,14 @@ pub fn rshift_1(src: &dyn core::ToInputArray, val: core::Scalar, dst: &mut dyn c
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn split(src: &dyn core::ToInputArray, dst: &mut core::GpuMat, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
-	unsafe { sys::cv_cuda_split_const__InputArrayR_GpuMatX_StreamR(src.as_raw__InputArray(), dst.as_raw_mut_GpuMat(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_split_const__InputArrayR_GpuMatX_StreamR(src.as_raw__InputArray(), dst.as_raw_mut_GpuMat(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Copies each plane of a multi-channel matrix into an array.
@@ -1169,9 +1581,14 @@ pub fn split(src: &dyn core::ToInputArray, dst: &mut core::GpuMat, stream: &mut 
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
-pub fn split_1(src: &dyn core::ToInputArray, dst: &mut core::Vector::<core::GpuMat>, stream: &mut core::Stream) -> Result<()> {
+#[inline]
+pub fn split_1(src: &dyn core::ToInputArray, dst: &mut core::Vector<core::GpuMat>, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
-	unsafe { sys::cv_cuda_split_const__InputArrayR_vector_GpuMat_R_StreamR(src.as_raw__InputArray(), dst.as_raw_mut_VectorOfGpuMat(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_split_const__InputArrayR_vector_GpuMat_R_StreamR(src.as_raw__InputArray(), dst.as_raw_mut_VectorOfGpuMat(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes a squared integral image.
@@ -1184,10 +1601,15 @@ pub fn split_1(src: &dyn core::ToInputArray, dst: &mut core::Vector::<core::GpuM
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn sqr_integral(src: &dyn core::ToInputArray, sqsum: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(sqsum);
-	unsafe { sys::cv_cuda_sqrIntegral_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), sqsum.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_sqrIntegral_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), sqsum.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Returns the squared sum of matrix elements.
@@ -1198,10 +1620,15 @@ pub fn sqr_integral(src: &dyn core::ToInputArray, sqsum: &mut dyn core::ToOutput
 /// 
 /// ## C++ default parameters
 /// * mask: noArray()
+#[inline]
 pub fn sqr_sum(src: &dyn core::ToInputArray, mask: &dyn core::ToInputArray) -> Result<core::Scalar> {
 	input_array_arg!(src);
 	input_array_arg!(mask);
-	unsafe { sys::cv_cuda_sqrSum_const__InputArrayR_const__InputArrayR(src.as_raw__InputArray(), mask.as_raw__InputArray()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_sqrSum_const__InputArrayR_const__InputArrayR(src.as_raw__InputArray(), mask.as_raw__InputArray(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes a square value of each matrix element.
@@ -1213,10 +1640,15 @@ pub fn sqr_sum(src: &dyn core::ToInputArray, mask: &dyn core::ToInputArray) -> R
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn sqr(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_sqr_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_sqr_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes a square root of each matrix element.
@@ -1230,10 +1662,15 @@ pub fn sqr(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, stre
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn sqrt(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_sqrt_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_sqrt_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes a matrix-matrix or matrix-scalar difference.
@@ -1254,12 +1691,17 @@ pub fn sqrt(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, str
 /// * mask: noArray()
 /// * dtype: -1
 /// * stream: Stream::Null()
+#[inline]
 pub fn subtract(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, mask: &dyn core::ToInputArray, dtype: i32, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src1);
 	input_array_arg!(src2);
 	output_array_arg!(dst);
 	input_array_arg!(mask);
-	unsafe { sys::cv_cuda_subtract_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__InputArrayR_int_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), dtype, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_subtract_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__InputArrayR_int_StreamR(src1.as_raw__InputArray(), src2.as_raw__InputArray(), dst.as_raw__OutputArray(), mask.as_raw__InputArray(), dtype, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Returns the sum of matrix elements.
@@ -1272,10 +1714,15 @@ pub fn subtract(src1: &dyn core::ToInputArray, src2: &dyn core::ToInputArray, ds
 /// 
 /// ## C++ default parameters
 /// * mask: noArray()
+#[inline]
 pub fn sum(src: &dyn core::ToInputArray, mask: &dyn core::ToInputArray) -> Result<core::Scalar> {
 	input_array_arg!(src);
 	input_array_arg!(mask);
-	unsafe { sys::cv_cuda_sum_const__InputArrayR_const__InputArrayR(src.as_raw__InputArray(), mask.as_raw__InputArray()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_sum_const__InputArrayR_const__InputArrayR(src.as_raw__InputArray(), mask.as_raw__InputArray(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Applies a fixed-level threshold to each array element.
@@ -1293,10 +1740,15 @@ pub fn sum(src: &dyn core::ToInputArray, mask: &dyn core::ToInputArray) -> Resul
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn threshold(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, thresh: f64, maxval: f64, typ: i32, stream: &mut core::Stream) -> Result<f64> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_threshold_const__InputArrayR_const__OutputArrayR_double_double_int_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), thresh, maxval, typ, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_threshold_const__InputArrayR_const__OutputArrayR_double_double_int_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), thresh, maxval, typ, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Transposes a matrix.
@@ -1310,15 +1762,24 @@ pub fn threshold(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn transpose(src1: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src1);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_transpose_const__InputArrayR_const__OutputArrayR_StreamR(src1.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_transpose_const__InputArrayR_const__OutputArrayR_StreamR(src1.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Base class for convolution (or cross-correlation) operator. :
-pub trait Convolution: core::AlgorithmTrait {
+pub trait ConvolutionConst: core::AlgorithmTraitConst {
 	fn as_raw_Convolution(&self) -> *const c_void;
+
+}
+
+pub trait Convolution: core::AlgorithmTrait + crate::cudaarithm::ConvolutionConst {
 	fn as_raw_mut_Convolution(&mut self) -> *mut c_void;
 
 	/// Computes a convolution (or cross-correlation) of two images.
@@ -1335,18 +1796,27 @@ pub trait Convolution: core::AlgorithmTrait {
 	/// ## C++ default parameters
 	/// * ccorr: false
 	/// * stream: Stream::Null()
+	#[inline]
 	fn convolve(&mut self, image: &dyn core::ToInputArray, templ: &dyn core::ToInputArray, result: &mut dyn core::ToOutputArray, ccorr: bool, stream: &mut core::Stream) -> Result<()> {
 		input_array_arg!(image);
 		input_array_arg!(templ);
 		output_array_arg!(result);
-		unsafe { sys::cv_cuda_Convolution_convolve_const__InputArrayR_const__InputArrayR_const__OutputArrayR_bool_StreamR(self.as_raw_mut_Convolution(), image.as_raw__InputArray(), templ.as_raw__InputArray(), result.as_raw__OutputArray(), ccorr, stream.as_raw_mut_Stream()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_Convolution_convolve_const__InputArrayR_const__InputArrayR_const__OutputArrayR_bool_StreamR(self.as_raw_mut_Convolution(), image.as_raw__InputArray(), templ.as_raw__InputArray(), result.as_raw__OutputArray(), ccorr, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
 
 /// Base class for DFT operator as a cv::Algorithm. :
-pub trait DFT: core::AlgorithmTrait {
+pub trait DFTConst: core::AlgorithmTraitConst {
 	fn as_raw_DFT(&self) -> *const c_void;
+
+}
+
+pub trait DFT: core::AlgorithmTrait + crate::cudaarithm::DFTConst {
 	fn as_raw_mut_DFT(&mut self) -> *mut c_void;
 
 	/// Computes an FFT of a given image.
@@ -1358,17 +1828,26 @@ pub trait DFT: core::AlgorithmTrait {
 	/// 
 	/// ## C++ default parameters
 	/// * stream: Stream::Null()
+	#[inline]
 	fn compute(&mut self, image: &dyn core::ToInputArray, result: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 		input_array_arg!(image);
 		output_array_arg!(result);
-		unsafe { sys::cv_cuda_DFT_compute_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_DFT(), image.as_raw__InputArray(), result.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_DFT_compute_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_DFT(), image.as_raw__InputArray(), result.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
 
 /// Base class for transform using lookup table.
-pub trait LookUpTable: core::AlgorithmTrait {
+pub trait LookUpTableConst: core::AlgorithmTraitConst {
 	fn as_raw_LookUpTable(&self) -> *const c_void;
+
+}
+
+pub trait LookUpTable: core::AlgorithmTrait + crate::cudaarithm::LookUpTableConst {
 	fn as_raw_mut_LookUpTable(&mut self) -> *mut c_void;
 
 	/// Transforms the source matrix into the destination matrix using the given look-up table:
@@ -1381,10 +1860,15 @@ pub trait LookUpTable: core::AlgorithmTrait {
 	/// 
 	/// ## C++ default parameters
 	/// * stream: Stream::Null()
+	#[inline]
 	fn transform(&mut self, src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 		input_array_arg!(src);
 		output_array_arg!(dst);
-		unsafe { sys::cv_cuda_LookUpTable_transform_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_LookUpTable(), src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_LookUpTable_transform_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_LookUpTable(), src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }

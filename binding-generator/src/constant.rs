@@ -1,6 +1,6 @@
 use std::{
 	borrow::Cow,
-	fmt,
+	fmt::{self, Write},
 };
 
 use clang::{
@@ -15,6 +15,7 @@ use crate::{
 	Element,
 	EntityElement,
 	settings,
+	type_ref::FishStyle,
 };
 
 pub fn render_constant_rust<'f>(tokens: impl IntoIterator<Item=Token<'f>>) -> Option<Value> {
@@ -25,7 +26,7 @@ pub fn render_constant_rust<'f>(tokens: impl IntoIterator<Item=Token<'f>>) -> Op
 	for t in tokens {
 		match t.get_kind() {
 			TokenKind::Comment => {
-				out.value += &format!("/* {} */", t.get_spelling());
+				write!(&mut out.value, "/* {} */", t.get_spelling()).expect("write! to String shouldn't fail");
 			}
 			TokenKind::Identifier => {
 				let spelling = t.get_spelling();
@@ -185,7 +186,7 @@ impl Element for Const<'_> {
 	}
 
 	fn cpp_namespace(&self) -> Cow<str> {
-		DefaultElement::cpp_namespace(self)
+		DefaultElement::cpp_namespace(self).into()
 	}
 
 	fn cpp_localname(&self) -> Cow<str> {
@@ -196,12 +197,12 @@ impl Element for Const<'_> {
 		DefaultElement::rust_module(self)
 	}
 
-	fn rust_leafname(&self) -> Cow<str> {
+	fn rust_leafname(&self, _fish_style: FishStyle) -> Cow<str> {
 		self.cpp_localname()
 	}
 
-	fn rust_localname(&self) -> Cow<str> {
-		let mut out = DefaultElement::rust_localname(self);
+	fn rust_localname(&self, fish_style: FishStyle) -> Cow<str> {
+		let mut out = DefaultElement::rust_localname(self, fish_style);
 		const SUFFIX: &str = "_OCVRS_OVERRIDE";
 		if out.ends_with(SUFFIX) {
 			let suffix_start = out.len() - SUFFIX.len();

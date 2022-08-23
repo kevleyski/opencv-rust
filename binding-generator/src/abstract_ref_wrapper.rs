@@ -1,20 +1,16 @@
-use crate::{
-	GeneratorEnv,
-	TypeRef,
-};
+use crate::TypeRef;
 
 #[derive(Debug)]
-pub struct AbstractRefWrapper<'tu> {
-	type_ref: TypeRef<'tu>,
-	gen_env: &'tu GeneratorEnv<'tu>,
+pub struct AbstractRefWrapper<'tu, 'ge> {
+	type_ref: TypeRef<'tu, 'ge>,
 }
 
-impl<'tu> AbstractRefWrapper<'tu> {
-	pub fn new(type_ref: TypeRef<'tu>, gen_env: &'tu GeneratorEnv<'tu>) -> Self {
-		Self { type_ref, gen_env }
+impl<'tu, 'ge> AbstractRefWrapper<'tu, 'ge> {
+	pub fn new(type_ref: TypeRef<'tu, 'ge>) -> Self {
+		Self { type_ref }
 	}
 
-	pub fn type_ref(&self) -> &TypeRef<'tu> {
+	pub fn type_ref(&self) -> &TypeRef<'tu, 'ge> {
 		&self.type_ref
 	}
 }

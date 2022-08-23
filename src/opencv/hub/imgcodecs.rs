@@ -43,6 +43,28 @@ pub const IMREAD_REDUCED_GRAYSCALE_4: i32 = 32;
 pub const IMREAD_REDUCED_GRAYSCALE_8: i32 = 64;
 /// If set, return the loaded image as is (with alpha channel, otherwise it gets cropped). Ignore EXIF orientation.
 pub const IMREAD_UNCHANGED: i32 = -1;
+/// override EXR compression type (ZIP_COMPRESSION = 3 is default)
+pub const IMWRITE_EXR_COMPRESSION: i32 = 49;
+/// lossy 4-by-4 pixel block compression, fixed compression rate
+pub const IMWRITE_EXR_COMPRESSION_B44: i32 = 6;
+/// lossy 4-by-4 pixel block compression, flat fields are compressed more
+pub const IMWRITE_EXR_COMPRESSION_B44A: i32 = 7;
+/// lossy DCT based compression, in blocks of 32 scanlines. More efficient for partial buffer access. Supported since OpenEXR 2.2.0.
+pub const IMWRITE_EXR_COMPRESSION_DWAA: i32 = 8;
+/// lossy DCT based compression, in blocks of 256 scanlines. More efficient space wise and faster to decode full frames than DWAA_COMPRESSION. Supported since OpenEXR 2.2.0.
+pub const IMWRITE_EXR_COMPRESSION_DWAB: i32 = 9;
+/// no compression
+pub const IMWRITE_EXR_COMPRESSION_NO: i32 = 0;
+/// piz-based wavelet compression
+pub const IMWRITE_EXR_COMPRESSION_PIZ: i32 = 4;
+/// lossy 24-bit float compression
+pub const IMWRITE_EXR_COMPRESSION_PXR24: i32 = 5;
+/// run length encoding
+pub const IMWRITE_EXR_COMPRESSION_RLE: i32 = 1;
+/// zlib compression, in blocks of 16 scan lines
+pub const IMWRITE_EXR_COMPRESSION_ZIP: i32 = 3;
+/// zlib compression, one scan line at a time
+pub const IMWRITE_EXR_COMPRESSION_ZIPS: i32 = 2;
 /// override EXR storage type (FLOAT (FP32) is default)
 pub const IMWRITE_EXR_TYPE: i32 = 48;
 /// store as FP32 (default)
@@ -51,9 +73,9 @@ pub const IMWRITE_EXR_TYPE_FLOAT: i32 = 2;
 pub const IMWRITE_EXR_TYPE_HALF: i32 = 1;
 /// For JPEG2000, use to specify the target compression rate (multiplied by 1000). The value can be from 0 to 1000. Default is 1000.
 pub const IMWRITE_JPEG2000_COMPRESSION_X1000: i32 = 272;
-/// Separate chroma quality level, 0 - 100, default is 0 - don't use.
+/// Separate chroma quality level, 0 - 100, default is -1 - don't use.
 pub const IMWRITE_JPEG_CHROMA_QUALITY: i32 = 6;
-/// Separate luma quality level, 0 - 100, default is 0 - don't use.
+/// Separate luma quality level, 0 - 100, default is -1 - don't use.
 pub const IMWRITE_JPEG_LUMA_QUALITY: i32 = 5;
 /// Enable JPEG features, 0 or 1, default is False.
 pub const IMWRITE_JPEG_OPTIMIZE: i32 = 3;
@@ -135,6 +157,33 @@ opencv_type_enum! { crate::imgcodecs::ImreadModes }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq)]
+pub enum ImwriteEXRCompressionFlags {
+	/// no compression
+	IMWRITE_EXR_COMPRESSION_NO = 0,
+	/// run length encoding
+	IMWRITE_EXR_COMPRESSION_RLE = 1,
+	/// zlib compression, one scan line at a time
+	IMWRITE_EXR_COMPRESSION_ZIPS = 2,
+	/// zlib compression, in blocks of 16 scan lines
+	IMWRITE_EXR_COMPRESSION_ZIP = 3,
+	/// piz-based wavelet compression
+	IMWRITE_EXR_COMPRESSION_PIZ = 4,
+	/// lossy 24-bit float compression
+	IMWRITE_EXR_COMPRESSION_PXR24 = 5,
+	/// lossy 4-by-4 pixel block compression, fixed compression rate
+	IMWRITE_EXR_COMPRESSION_B44 = 6,
+	/// lossy 4-by-4 pixel block compression, flat fields are compressed more
+	IMWRITE_EXR_COMPRESSION_B44A = 7,
+	/// lossy DCT based compression, in blocks of 32 scanlines. More efficient for partial buffer access. Supported since OpenEXR 2.2.0.
+	IMWRITE_EXR_COMPRESSION_DWAA = 8,
+	/// lossy DCT based compression, in blocks of 256 scanlines. More efficient space wise and faster to decode full frames than DWAA_COMPRESSION. Supported since OpenEXR 2.2.0.
+	IMWRITE_EXR_COMPRESSION_DWAB = 9,
+}
+
+opencv_type_enum! { crate::imgcodecs::ImwriteEXRCompressionFlags }
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum ImwriteEXRTypeFlags {
 	/// store as HALF (FP16)
 	IMWRITE_EXR_TYPE_HALF = 1,
@@ -156,9 +205,9 @@ pub enum ImwriteFlags {
 	IMWRITE_JPEG_OPTIMIZE = 3,
 	/// JPEG restart interval, 0 - 65535, default is 0 - no restart.
 	IMWRITE_JPEG_RST_INTERVAL = 4,
-	/// Separate luma quality level, 0 - 100, default is 0 - don't use.
+	/// Separate luma quality level, 0 - 100, default is -1 - don't use.
 	IMWRITE_JPEG_LUMA_QUALITY = 5,
-	/// Separate chroma quality level, 0 - 100, default is 0 - don't use.
+	/// Separate chroma quality level, 0 - 100, default is -1 - don't use.
 	IMWRITE_JPEG_CHROMA_QUALITY = 6,
 	/// For PNG, it can be the compression level from 0 to 9. A higher value means a smaller size and longer compression time. If specified, strategy is changed to IMWRITE_PNG_STRATEGY_DEFAULT (Z_DEFAULT_STRATEGY). Default value is 1 (best speed setting).
 	IMWRITE_PNG_COMPRESSION = 16,
@@ -170,6 +219,8 @@ pub enum ImwriteFlags {
 	IMWRITE_PXM_BINARY = 32,
 	/// override EXR storage type (FLOAT (FP32) is default)
 	IMWRITE_EXR_TYPE = 48,
+	/// override EXR compression type (ZIP_COMPRESSION = 3 is default)
+	IMWRITE_EXR_COMPRESSION = 49,
 	/// For WEBP, it can be a quality from 1 to 100 (the higher is the better). By default (without any parameter) and for quality above 100 the lossless compression is used.
 	IMWRITE_WEBP_QUALITY = 64,
 	/// For PAM, sets the TUPLETYPE field to the corresponding string value that is defined for the format
@@ -188,7 +239,7 @@ pub enum ImwriteFlags {
 
 opencv_type_enum! { crate::imgcodecs::ImwriteFlags }
 
-/// Imwrite PAM specific tupletype flags used to define the 'TUPETYPE' field of a PAM file.
+/// Imwrite PAM specific tupletype flags used to define the 'TUPLETYPE' field of a PAM file.
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum ImwritePAMFlags {
@@ -230,18 +281,47 @@ opencv_type_enum! { crate::imgcodecs::ImwritePNGFlags }
 /// 
 /// ## Parameters
 /// * filename: File name of the image
+#[inline]
 pub fn have_image_reader(filename: &str) -> Result<bool> {
 	extern_container_arg!(filename);
-	unsafe { sys::cv_haveImageReader_const_StringR(filename.opencv_as_extern()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_haveImageReader_const_StringR(filename.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Returns true if an image with the specified filename can be encoded by OpenCV
 /// 
 /// ## Parameters
 /// * filename: File name of the image
+#[inline]
 pub fn have_image_writer(filename: &str) -> Result<bool> {
 	extern_container_arg!(filename);
-	unsafe { sys::cv_haveImageWriter_const_StringR(filename.opencv_as_extern()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_haveImageWriter_const_StringR(filename.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
+}
+
+/// Returns the number of images inside the give file
+/// 
+/// The function imcount will return the number of pages in a multi-page image, or 1 for single-page images
+/// ## Parameters
+/// * filename: Name of file to be loaded.
+/// * flags: Flag that can take values of cv::ImreadModes, default with cv::IMREAD_ANYCOLOR.
+/// 
+/// ## C++ default parameters
+/// * flags: IMREAD_ANYCOLOR
+#[inline]
+pub fn imcount(filename: &str, flags: i32) -> Result<size_t> {
+	extern_container_arg!(filename);
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_imcount_const_StringR_int(filename.opencv_as_extern(), flags, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Reads an image from a buffer in memory.
@@ -256,9 +336,15 @@ pub fn have_image_writer(filename: &str) -> Result<bool> {
 /// ## Parameters
 /// * buf: Input array or vector of bytes.
 /// * flags: The same flags as in cv::imread, see cv::ImreadModes.
+#[inline]
 pub fn imdecode(buf: &dyn core::ToInputArray, flags: i32) -> Result<core::Mat> {
 	input_array_arg!(buf);
-	unsafe { sys::cv_imdecode_const__InputArrayR_int(buf.as_raw__InputArray(), flags) }.into_result().map(|r| unsafe { core::Mat::opencv_from_extern(r) } )
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_imdecode_const__InputArrayR_int(buf.as_raw__InputArray(), flags, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { core::Mat::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
 /// Reads an image from a buffer in memory.
@@ -280,9 +366,15 @@ pub fn imdecode(buf: &dyn core::ToInputArray, flags: i32) -> Result<core::Mat> {
 /// * flags: 
 /// * dst: The optional output placeholder for the decoded matrix. It can save the image
 /// reallocations when the function is called repeatedly for images of the same size.
+#[inline]
 pub fn imdecode_to(buf: &dyn core::ToInputArray, flags: i32, dst: &mut core::Mat) -> Result<core::Mat> {
 	input_array_arg!(buf);
-	unsafe { sys::cv_imdecode_const__InputArrayR_int_MatX(buf.as_raw__InputArray(), flags, dst.as_raw_mut_Mat()) }.into_result().map(|r| unsafe { core::Mat::opencv_from_extern(r) } )
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_imdecode_const__InputArrayR_int_MatX(buf.as_raw__InputArray(), flags, dst.as_raw_mut_Mat(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { core::Mat::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
 /// Encodes an image into a memory buffer.
@@ -291,17 +383,22 @@ pub fn imdecode_to(buf: &dyn core::ToInputArray, flags: i32, dst: &mut core::Mat
 /// result. See cv::imwrite for the list of supported formats and flags description.
 /// 
 /// ## Parameters
-/// * ext: File extension that defines the output format.
+/// * ext: File extension that defines the output format. Must include a leading period.
 /// * img: Image to be written.
 /// * buf: Output buffer resized to fit the compressed image.
 /// * params: Format-specific parameters. See cv::imwrite and cv::ImwriteFlags.
 /// 
 /// ## C++ default parameters
 /// * params: std::vector<int>()
-pub fn imencode(ext: &str, img: &dyn core::ToInputArray, buf: &mut core::Vector::<u8>, params: &core::Vector::<i32>) -> Result<bool> {
+#[inline]
+pub fn imencode(ext: &str, img: &dyn core::ToInputArray, buf: &mut core::Vector<u8>, params: &core::Vector<i32>) -> Result<bool> {
 	extern_container_arg!(ext);
 	input_array_arg!(img);
-	unsafe { sys::cv_imencode_const_StringR_const__InputArrayR_vector_unsigned_char_R_const_vector_int_R(ext.opencv_as_extern(), img.as_raw__InputArray(), buf.as_raw_mut_VectorOfu8(), params.as_raw_VectorOfi32()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_imencode_const_StringR_const__InputArrayR_vector_unsigned_char_R_const_vector_int_R(ext.opencv_as_extern(), img.as_raw__InputArray(), buf.as_raw_mut_VectorOfu8(), params.as_raw_VectorOfi32(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Loads an image from a file.
@@ -359,9 +456,15 @@ pub fn imencode(ext: &str, img: &dyn core::ToInputArray, buf: &mut core::Vector:
 /// 
 /// ## C++ default parameters
 /// * flags: IMREAD_COLOR
+#[inline]
 pub fn imread(filename: &str, flags: i32) -> Result<core::Mat> {
 	extern_container_arg!(filename);
-	unsafe { sys::cv_imread_const_StringR_int(filename.opencv_as_extern(), flags) }.into_result().map(|r| unsafe { core::Mat::opencv_from_extern(r) } )
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_imread_const_StringR_int(filename.opencv_as_extern(), flags, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { core::Mat::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
 /// Loads a multi-page image from a file.
@@ -369,16 +472,45 @@ pub fn imread(filename: &str, flags: i32) -> Result<core::Mat> {
 /// The function imreadmulti loads a multi-page image from the specified file into a vector of Mat objects.
 /// ## Parameters
 /// * filename: Name of file to be loaded.
+/// * mats: A vector of Mat objects holding each page.
 /// * flags: Flag that can take values of cv::ImreadModes, default with cv::IMREAD_ANYCOLOR.
-/// * mats: A vector of Mat objects holding each page, if more than one.
 /// ## See also
 /// cv::imread
 /// 
 /// ## C++ default parameters
 /// * flags: IMREAD_ANYCOLOR
-pub fn imreadmulti(filename: &str, mats: &mut core::Vector::<core::Mat>, flags: i32) -> Result<bool> {
+#[inline]
+pub fn imreadmulti(filename: &str, mats: &mut core::Vector<core::Mat>, flags: i32) -> Result<bool> {
 	extern_container_arg!(filename);
-	unsafe { sys::cv_imreadmulti_const_StringR_vector_Mat_R_int(filename.opencv_as_extern(), mats.as_raw_mut_VectorOfMat(), flags) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_imreadmulti_const_StringR_vector_Mat_R_int(filename.opencv_as_extern(), mats.as_raw_mut_VectorOfMat(), flags, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
+}
+
+/// Loads a of images of a multi-page image from a file.
+/// 
+/// The function imreadmulti loads a specified range from a multi-page image from the specified file into a vector of Mat objects.
+/// ## Parameters
+/// * filename: Name of file to be loaded.
+/// * mats: A vector of Mat objects holding each page.
+/// * start: Start index of the image to load
+/// * count: Count number of images to load
+/// * flags: Flag that can take values of cv::ImreadModes, default with cv::IMREAD_ANYCOLOR.
+/// ## See also
+/// cv::imread
+/// 
+/// ## C++ default parameters
+/// * flags: IMREAD_ANYCOLOR
+#[inline]
+pub fn imreadmulti_range(filename: &str, mats: &mut core::Vector<core::Mat>, start: i32, count: i32, flags: i32) -> Result<bool> {
+	extern_container_arg!(filename);
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_imreadmulti_const_StringR_vector_Mat_R_int_int_int(filename.opencv_as_extern(), mats.as_raw_mut_VectorOfMat(), start, count, flags, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Saves an image to a specified file.
@@ -397,6 +529,8 @@ pub fn imreadmulti(filename: &str, mats: &mut core::Vector::<core::Mat>, flags: 
 /// should have alpha set to 0, fully opaque pixels should have alpha set to 255/65535 (see the code sample below).
 /// - Multiple images (vector of Mat) can be saved in TIFF format (see the code sample below).
 /// 
+/// If the image format is not supported, the image will be converted to 8-bit unsigned (CV_8U) and saved that way.
+/// 
 /// If the format, depth or channel order is different, use
 /// Mat::convertTo and cv::cvtColor to convert it before saving. Or, use the universal FileStorage I/O
 /// functions to save the image to XML or YAML format.
@@ -411,18 +545,28 @@ pub fn imreadmulti(filename: &str, mats: &mut core::Vector::<core::Mat>, flags: 
 /// 
 /// ## C++ default parameters
 /// * params: std::vector<int>()
-pub fn imwrite(filename: &str, img: &dyn core::ToInputArray, params: &core::Vector::<i32>) -> Result<bool> {
+#[inline]
+pub fn imwrite(filename: &str, img: &dyn core::ToInputArray, params: &core::Vector<i32>) -> Result<bool> {
 	extern_container_arg!(filename);
 	input_array_arg!(img);
-	unsafe { sys::cv_imwrite_const_StringR_const__InputArrayR_const_vector_int_R(filename.opencv_as_extern(), img.as_raw__InputArray(), params.as_raw_VectorOfi32()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_imwrite_const_StringR_const__InputArrayR_const_vector_int_R(filename.opencv_as_extern(), img.as_raw__InputArray(), params.as_raw_VectorOfi32(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
-/// multi-image overload for bindings
+/// This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts. multi-image overload for bindings
 /// 
 /// ## C++ default parameters
 /// * params: std::vector<int>()
-pub fn imwritemulti(filename: &str, img: &dyn core::ToInputArray, params: &core::Vector::<i32>) -> Result<bool> {
+#[inline]
+pub fn imwritemulti(filename: &str, img: &dyn core::ToInputArray, params: &core::Vector<i32>) -> Result<bool> {
 	extern_container_arg!(filename);
 	input_array_arg!(img);
-	unsafe { sys::cv_imwritemulti_const_StringR_const__InputArrayR_const_vector_int_R(filename.opencv_as_extern(), img.as_raw__InputArray(), params.as_raw_VectorOfi32()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_imwritemulti_const_StringR_const__InputArrayR_const_vector_int_R(filename.opencv_as_extern(), img.as_raw__InputArray(), params.as_raw_VectorOfi32(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }

@@ -31,25 +31,51 @@ use opencv::{
 
 #[test]
 fn boxed() -> Result<()> {
-	let mut vec = VectorOfMat::new();
-	vec.push(Mat::new_rows_cols_with_default(1, 3, u8::typ(), Scalar::all(1.))?);
-	vec.push(Mat::new_rows_cols_with_default(1, 3, u16::typ(), Scalar::all(2.))?);
-	vec.push(Mat::new_rows_cols_with_default(1, 3, i32::typ(), Scalar::all(3.))?);
-	assert_eq!(u8::typ(), vec.get(0)?.typ()?);
-	assert_eq!(1, *vec.get(0)?.at_2d::<u8>(0, 1)?);
-	assert_eq!(u16::typ(), vec.get(1)?.typ()?);
-	assert_eq!(2, *vec.get(1)?.at_2d::<u16>(0, 1)?);
-	assert_eq!(i32::typ(), vec.get(2)?.typ()?);
-	assert_eq!(3, *vec.get(2)?.at_2d::<i32>(0, 1)?);
-	vec.set(0, Mat::new_rows_cols_with_default(1, 3, f32::typ(), Scalar::all(3.))?)?;
-	unsafe { vec.set_unchecked(1, Mat::new_rows_cols_with_default(1, 3, f64::typ(), Scalar::all(4.))?); }
-	vec.set(2, Mat::new_rows_cols_with_default(1, 3, i16::typ(), Scalar::all(5.))?)?;
-	assert_eq!(f32::typ(), unsafe { vec.get_unchecked(0) }.typ()?);
-	assert_eq!(3., *unsafe { vec.get_unchecked(0) }.at_2d::<f32>(0, 1)?);
-	assert_eq!(f64::typ(), unsafe { vec.get_unchecked(1) }.typ()?);
-	assert_eq!(4., *unsafe { vec.get_unchecked(1) }.at_2d::<f64>(0, 1)?);
-	assert_eq!(i16::typ(), unsafe { vec.get_unchecked(2) }.typ()?);
-	assert_eq!(5, *unsafe { vec.get_unchecked(2) }.at_2d::<i16>(0, 1)?);
+	{
+		let mut vec = VectorOfMat::new();
+		vec.push(Mat::new_rows_cols_with_default(1, 3, u8::typ(), Scalar::all(1.))?);
+		vec.push(Mat::new_rows_cols_with_default(1, 3, u16::typ(), Scalar::all(2.))?);
+		vec.push(Mat::new_rows_cols_with_default(1, 3, i32::typ(), Scalar::all(3.))?);
+		assert_eq!(3, vec.len());
+		assert_eq!(u8::typ(), vec.get(0)?.typ());
+		assert_eq!(1, *vec.get(0)?.at_2d::<u8>(0, 1)?);
+		assert_eq!(u16::typ(), vec.get(1)?.typ());
+		assert_eq!(2, *vec.get(1)?.at_2d::<u16>(0, 1)?);
+		assert_eq!(i32::typ(), vec.get(2)?.typ());
+		assert_eq!(3, *vec.get(2)?.at_2d::<i32>(0, 1)?);
+		vec.set(0, Mat::new_rows_cols_with_default(1, 3, f32::typ(), Scalar::all(3.))?)?;
+		unsafe { vec.set_unchecked(1, Mat::new_rows_cols_with_default(1, 3, f64::typ(), Scalar::all(4.))?); }
+		vec.set(2, Mat::new_rows_cols_with_default(1, 3, i16::typ(), Scalar::all(5.))?)?;
+		assert_eq!(f32::typ(), unsafe { vec.get_unchecked(0) }.typ());
+		assert_eq!(3., *unsafe { vec.get_unchecked(0) }.at_2d::<f32>(0, 1)?);
+		assert_eq!(f64::typ(), unsafe { vec.get_unchecked(1) }.typ());
+		assert_eq!(4., *unsafe { vec.get_unchecked(1) }.at_2d::<f64>(0, 1)?);
+		assert_eq!(i16::typ(), unsafe { vec.get_unchecked(2) }.typ());
+		assert_eq!(5, *unsafe { vec.get_unchecked(2) }.at_2d::<i16>(0, 1)?);
+	}
+
+	#[cfg(ocvrs_has_module_imgproc)]
+	{
+		use opencv::{imgproc, types, core::{Vec3b, Point}};
+
+		let mut m = Mat::new_rows_cols_with_default(10, 10, Vec3b::typ(), Scalar::default())?;
+		let mut ps = types::VectorOfMat::new();
+		assert_eq!(ps.len(), 0);
+		let mut p1 = unsafe { Mat::new_rows_cols(3, 2, i32::typ()) }?;
+		p1.at_row_mut::<i32>(0)?.copy_from_slice(&[0, 0]);
+		p1.at_row_mut::<i32>(1)?.copy_from_slice(&[0, 9]);
+		p1.at_row_mut::<i32>(2)?.copy_from_slice(&[9, 9]);
+		ps.push(p1);
+		assert_eq!(ps.len(), 1);
+		#[cfg(ocvrs_opencv_branch_4)]
+		use imgproc::LINE_8;
+		#[cfg(not(ocvrs_opencv_branch_4))]
+		use opencv::core::LINE_8;
+		imgproc::fill_poly(&mut m, &ps, Scalar::new(127., 127., 127., 0.), LINE_8, 0, Point::default())?;
+		assert_eq!(*m.at_2d::<Vec3b>(0, 0)?, Vec3b::from([127, 127, 127]));
+		assert_eq!(*m.at_2d::<Vec3b>(0, 9)?, Vec3b::default());
+		assert_eq!(*m.at_2d::<Vec3b>(9, 9)?, Vec3b::from([127, 127, 127]));
+	}
 
 	Ok(())
 }
@@ -503,11 +529,11 @@ fn to_vec() -> Result<()> {
 		vec.push(Mat::new_rows_cols_with_default(5, 8, u16::typ(), Scalar::all(8.))?);
 		vec.push(Mat::new_rows_cols_with_default(3, 3, u8::typ(), Scalar::all(19.))?);
 		let mat_vec = vec.to_vec();
-		assert_eq!(vec.get(0)?.total()?, mat_vec[0].total()?);
-		assert_eq!(vec.get(0)?.typ()?, mat_vec[0].typ()?);
+		assert_eq!(vec.get(0)?.total(), mat_vec[0].total());
+		assert_eq!(vec.get(0)?.typ(), mat_vec[0].typ());
 		assert_eq!(vec.get(0)?.at_2d::<u16>(2, 2)?, mat_vec[0].at_2d::<u16>(2, 2)?);
-		assert_eq!(vec.get(1)?.total()?, mat_vec[1].total()?);
-		assert_eq!(vec.get(1)?.typ()?, mat_vec[1].typ()?);
+		assert_eq!(vec.get(1)?.total(), mat_vec[1].total());
+		assert_eq!(vec.get(1)?.typ(), mat_vec[1].typ());
 		assert_eq!(vec.get(1)?.at_2d::<u8>(2, 2)?, mat_vec[1].at_2d::<u8>(2, 2)?);
 	}
 
@@ -602,6 +628,32 @@ fn clone() -> Result<()> {
 		vec_of_vec.set(1, VectorOfPoint2f::from_iter(vec![Point2f::new(40., 41.), Point2f::new(42., 43.)]))?;
 		assert_eq!(41., vec_of_vec.get(1)?.get(0)?.y);
 		assert_eq!(21., vec_of_vec_clone.get(1)?.get(0)?.y);
+	}
+
+	Ok(())
+}
+
+#[test]
+fn from_slice() -> Result<()> {
+	{
+		let bytes: &[u8] = &[1, 2, 3, 4, 5];
+		let v = VectorOfu8::from_slice(bytes);
+		assert_eq!(bytes.len(), v.len());
+		assert_eq!(bytes, v.as_slice());
+	}
+
+	{
+		let ints: &[i32] = &[5, 10, 15, 20];
+		let v = VectorOfi32::from_slice(ints);
+		assert_eq!(ints.len(), v.len());
+		assert_eq!(ints, v.as_slice());
+	}
+
+	{
+		let points: &[Point2d] = &[Point2d::new(10., 40.), Point2d::new(0., -55.), Point2d::new(100., -1.)];
+		let v = VectorOfPoint2d::from_slice(points);
+		assert_eq!(points.len(), v.len());
+		assert_eq!(points, v.as_slice());
 	}
 
 	Ok(())

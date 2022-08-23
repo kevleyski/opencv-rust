@@ -14,12 +14,12 @@ use regex::{Captures, Regex};
 pub use renderer::{
 	Constness,
 	ConstnessOverride,
-	CppDeclarationRenderer,
 	CppExternReturnRenderer,
-	CppReferenceRenderer,
+	CppRenderer,
+	FishStyle,
 	Lifetime,
-	RustDeclarationRenderer,
-	RustReferenceRenderer,
+	NameStyle,
+	RustRenderer,
 	TypeRefRenderer,
 };
 
@@ -42,6 +42,7 @@ use crate::{
 	Typedef,
 	Vector,
 };
+use crate::settings::ArgOverride;
 
 mod renderer;
 
@@ -53,9 +54,16 @@ pub enum DependentTypeMode {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum StrType {
-	StdString,
-	CvString,
+	StdString(StrEnc),
+	CvString(StrEnc),
 	CharPtr,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum StrEnc {
+	Text,
+	/// string with binary data, e.g. can contain 0 byte
+	Binary,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -65,19 +73,19 @@ pub enum Dir<T> {
 }
 
 #[derive(Clone, Debug)]
-pub enum Kind<'tu> {
+pub enum Kind<'tu, 'ge> {
 	/// (rust name, cpp name)
 	Primitive(&'static str, &'static str),
 	/// (element type, array size)
-	Array(TypeRef<'tu>, Option<usize>),
-	StdVector(Vector<'tu>),
-	Pointer(TypeRef<'tu>),
-	Reference(TypeRef<'tu>),
-	SmartPtr(SmartPtr<'tu>),
-	Class(Class<'tu>),
+	Array(TypeRef<'tu, 'ge>, Option<usize>),
+	StdVector(Vector<'tu, 'ge>),
+	Pointer(TypeRef<'tu, 'ge>),
+	Reference(TypeRef<'tu, 'ge>),
+	SmartPtr(SmartPtr<'tu, 'ge>),
+	Class(Class<'tu, 'ge>),
 	Enum(Enum<'tu>),
-	Function(Function<'tu>),
-	Typedef(Typedef<'tu>),
+	Function(Function<'tu, 'ge>),
+	Typedef(Typedef<'tu, 'ge>),
 	Generic(String),
 	Ignored,
 }
@@ -85,8 +93,8 @@ pub enum Kind<'tu> {
 #[derive(Clone, Copy, Debug)]
 pub enum TypeRefTypeHint<'tu> {
 	None,
-	Slice,
-	NullableSlice,
+	ArgOverride(ArgOverride),
+	PrimitiveRefAsPointer,
 	Specialized(Type<'tu>),
 }
 
@@ -97,19 +105,19 @@ impl Default for TypeRefTypeHint<'_> {
 }
 
 #[derive(Clone)]
-pub struct TypeRef<'tu> {
+pub struct TypeRef<'tu, 'ge> {
 	type_ref: Type<'tu>,
 	type_hint: TypeRefTypeHint<'tu>,
 	parent_entity: Option<Entity<'tu>>,
-	gen_env: &'tu GeneratorEnv<'tu>,
+	gen_env: &'ge GeneratorEnv<'tu>,
 }
 
-impl<'tu> TypeRef<'tu> {
-	pub fn new(type_ref: Type<'tu>, gen_env: &'tu GeneratorEnv<'tu>) -> Self {
+impl<'tu, 'ge> TypeRef<'tu, 'ge> {
+	pub fn new(type_ref: Type<'tu>, gen_env: &'ge GeneratorEnv<'tu>) -> Self {
 		Self::new_ext(type_ref, Default::default(), None, gen_env)
 	}
 
-	pub fn new_ext(type_ref: Type<'tu>, type_hint: TypeRefTypeHint<'tu>, parent_entity: Option<Entity<'tu>>, gen_env: &'tu GeneratorEnv<'tu>) -> Self {
+	pub fn new_ext(type_ref: Type<'tu>, type_hint: TypeRefTypeHint<'tu>, parent_entity: Option<Entity<'tu>>, gen_env: &'ge GeneratorEnv<'tu>) -> Self {
 		Self { type_ref, type_hint, parent_entity, gen_env }
 	}
 
@@ -122,17 +130,15 @@ impl<'tu> TypeRef<'tu> {
 		)
 	}
 
-	pub fn specialize(&mut self, typ: Type<'tu>) {
-		if self.is_generic() {
-			self.type_hint = TypeRefTypeHint::Specialized(typ);
-		}
+	pub fn set_type_hint(&mut self, typ: TypeRefTypeHint<'tu>) {
+		self.type_hint = typ;
 	}
 
 	pub fn clang_type(&self) -> Type<'tu> {
 		self.type_ref
 	}
 
-	pub fn kind(&self) -> Kind<'tu> {
+	pub fn kind(&self) -> Kind<'tu, 'ge> {
 		match self.type_ref.get_kind() {
 			TypeKind::Void => Kind::Primitive("()", "void"),
 			TypeKind::Bool => Kind::Primitive("bool", "bool"),
@@ -161,10 +167,10 @@ impl<'tu> TypeRef<'tu> {
 				let pointee_typeref = TypeRef::new_ext(pointee, self.type_hint, self.parent_entity, self.gen_env);
 				if pointee_typeref.as_function().is_some() {
 					pointee_typeref.kind()
-				} else if matches!(self.type_hint, TypeRefTypeHint::Slice | TypeRefTypeHint::NullableSlice) {
-					Kind::Array(TypeRef::new_ext(pointee, self.type_hint, self.parent_entity, self.gen_env), None)
+				} else if matches!(self.type_hint, TypeRefTypeHint::ArgOverride(ArgOverride::Slice | ArgOverride::NullableSlice)) {
+					Kind::Array(pointee_typeref, None)
 				} else {
-					Kind::Pointer(TypeRef::new_ext(pointee, self.type_hint, self.parent_entity, self.gen_env))
+					Kind::Pointer(pointee_typeref)
 				}
 			}
 
@@ -297,7 +303,7 @@ impl<'tu> TypeRef<'tu> {
 	}
 
 	/// TypeRef with all of the typedef's traversed
-	pub fn canonical(&self) -> TypeRef<'tu> {
+	pub fn canonical(&self) -> TypeRef<'tu, 'ge> {
 		match self.kind() {
 			Kind::Typedef(tdef) => {
 				tdef.underlying_type_ref().canonical()
@@ -309,7 +315,7 @@ impl<'tu> TypeRef<'tu> {
 	}
 
 	/// performs canonical by calling clang function not taking application logic into account
-	pub fn canonical_clang(&self) -> TypeRef<'tu> {
+	pub fn canonical_clang(&self) -> TypeRef<'tu, 'ge> {
 		if let TypeRefTypeHint::Specialized(typ) = self.type_hint {
 			Self::new_ext(typ.get_canonical_type(), self.type_hint, self.parent_entity, self.gen_env)
 		} else {
@@ -318,7 +324,7 @@ impl<'tu> TypeRef<'tu> {
 	}
 
 	/// Like canonical(), but also removes indirection by pointer and reference
-	pub fn source(&self) -> TypeRef<'tu> {
+	pub fn source(&self) -> TypeRef<'tu, 'ge> {
 		let canonical = self.canonical();
 		match canonical.kind() {
 			Kind::Pointer(inner) | Kind::Reference(inner) => {
@@ -331,7 +337,7 @@ impl<'tu> TypeRef<'tu> {
 	}
 
 	/// Like source(), but digs down to the elements of arrays
-	pub fn base(&self) -> TypeRef<'tu> {
+	pub fn base(&self) -> TypeRef<'tu, 'ge> {
 		let source = self.source();
 		match source.kind() {
 			Kind::Array(inner, ..) => {
@@ -409,7 +415,7 @@ impl<'tu> TypeRef<'tu> {
 		}
 	}
 
-	pub fn as_template(&self) -> Option<Class<'tu>> {
+	pub fn as_template(&self) -> Option<Class<'tu, 'ge>> {
 		match self.base().kind() {
 			Kind::Class(cls) => {
 				cls.as_template()
@@ -432,7 +438,7 @@ impl<'tu> TypeRef<'tu> {
 	}
 
 	pub fn constness(&self) -> Constness {
-		if let Constness::Const = self.clang_constness() {
+		if self.clang_constness().is_const() {
 			Constness::Const
 		} else {
 			match self.kind() {
@@ -500,16 +506,24 @@ impl<'tu> TypeRef<'tu> {
 	}
 
 	pub fn as_string(&self) -> Option<Dir<StrType>> {
-		fn class_string_type(cls: Class) -> Option<StrType> {
+		let class_string_type = |cls: Class| -> Option<StrType> {
 			let cpp_fullname = cls.cpp_fullname();
 			if cpp_fullname.starts_with("std::") && cpp_fullname.ends_with("::string") {
-				Some(StrType::StdString)
+				Some(StrType::StdString(if matches!(self.type_hint, TypeRefTypeHint::ArgOverride(ArgOverride::StringAsBytes)) {
+					StrEnc::Binary
+				} else {
+					StrEnc::Text
+				}))
 			} else if cpp_fullname == "cv::String" {
-				Some(StrType::CvString)
+				Some(StrType::CvString(if matches!(self.type_hint, TypeRefTypeHint::ArgOverride(ArgOverride::StringAsBytes)) {
+					StrEnc::Binary
+				} else {
+					StrEnc::Text
+				}))
 			} else {
 				None
 			}
-		}
+		};
 
 		match self.canonical().kind() {
 			Kind::Class(cls) => {
@@ -556,11 +570,11 @@ impl<'tu> TypeRef<'tu> {
 	}
 
 	pub fn is_std_string(&self) -> bool {
-		matches!(self.as_string(), Some(Dir::In(StrType::StdString)))
+		matches!(self.as_string(), Some(Dir::In(StrType::StdString(_))))
 	}
 
 	pub fn is_cv_string(&self) -> bool {
-		matches!(self.as_string(), Some(Dir::In(StrType::CvString)))
+		matches!(self.as_string(), Some(Dir::In(StrType::CvString(_))))
 	}
 
 	pub fn is_char_ptr_string(&self) -> bool {
@@ -633,7 +647,11 @@ impl<'tu> TypeRef<'tu> {
 		matches!(self.canonical().kind(), Kind::Primitive("bool", _))
 	}
 
-	pub fn as_pointer(&self) -> Option<TypeRef<'tu>> {
+	pub fn is_void_ptr(&self) -> bool {
+		self.as_pointer().map_or(false, |inner| inner.is_void())
+	}
+
+	pub fn as_pointer(&self) -> Option<TypeRef<'tu, 'ge>> {
 		if let Kind::Pointer(out) = self.canonical().kind() {
 			Some(out)
 		} else {
@@ -641,7 +659,7 @@ impl<'tu> TypeRef<'tu> {
 		}
 	}
 
-	pub fn as_reference(&self) -> Option<TypeRef<'tu>> {
+	pub fn as_reference(&self) -> Option<TypeRef<'tu, 'ge>> {
 		if let Kind::Reference(out) = self.canonical().kind() {
 			Some(out)
 		} else {
@@ -649,7 +667,7 @@ impl<'tu> TypeRef<'tu> {
 		}
 	}
 
-	pub fn as_smart_ptr(&self) -> Option<SmartPtr<'tu>> {
+	pub fn as_smart_ptr(&self) -> Option<SmartPtr<'tu, 'ge>> {
 		if let Kind::SmartPtr(out) = self.canonical().kind() {
 			Some(out)
 		} else {
@@ -679,10 +697,10 @@ impl<'tu> TypeRef<'tu> {
 	}
 
 	pub fn is_nullable(&self) -> bool {
-		matches!(self.type_hint, TypeRefTypeHint::NullableSlice)
+		matches!(self.type_hint, TypeRefTypeHint::ArgOverride(ArgOverride::NullableSlice) | TypeRefTypeHint::ArgOverride(ArgOverride::Nullable))
 	}
 
-	pub fn as_class(&self) -> Option<Class<'tu>> {
+	pub fn as_class(&self) -> Option<Class<'tu, 'ge>> {
 		if let Kind::Class(out) = self.canonical().kind() {
 			Some(out)
 		} else {
@@ -690,7 +708,7 @@ impl<'tu> TypeRef<'tu> {
 		}
 	}
 
-	pub fn as_simple_class(&self) -> Option<Class<'tu>> {
+	pub fn as_simple_class(&self) -> Option<Class<'tu, 'ge>> {
 		match self.canonical().kind() {
 			Kind::Class(out) if out.is_simple() => {
 				Some(out)
@@ -701,7 +719,7 @@ impl<'tu> TypeRef<'tu> {
 		}
 	}
 
-	pub fn as_abstract_class_ptr(&self) -> Option<(TypeRef<'tu>, Class<'tu>)> {
+	pub fn as_abstract_class_ptr(&self) -> Option<(TypeRef<'tu, 'ge>, Class<'tu, 'ge>)> {
 		if let Some(pointee) = self.as_pointer() {
 			if let Some(class) = pointee.as_class() {
 				if class.is_abstract() {
@@ -712,7 +730,7 @@ impl<'tu> TypeRef<'tu> {
 		None
 	}
 
-	pub fn as_array(&self) -> Option<(TypeRef<'tu>, Option<usize>)> {
+	pub fn as_array(&self) -> Option<(TypeRef<'tu, 'ge>, Option<usize>)> {
 		if let Kind::Array(elem, size) = self.canonical().kind() {
 			Some((elem, size))
 		} else {
@@ -720,7 +738,7 @@ impl<'tu> TypeRef<'tu> {
 		}
 	}
 
-	pub fn as_variable_array(&self) -> Option<TypeRef<'tu>> {
+	pub fn as_variable_array(&self) -> Option<TypeRef<'tu, 'ge>> {
 		if let Some((elem, None)) = self.as_array() {
 			Some(elem)
 		} else {
@@ -728,7 +746,7 @@ impl<'tu> TypeRef<'tu> {
 		}
 	}
 
-	pub fn as_fixed_array(&self) -> Option<(TypeRef<'tu>, usize)> {
+	pub fn as_fixed_array(&self) -> Option<(TypeRef<'tu, 'ge>, usize)> {
 		if let Some((elem, Some(size))) = self.as_array() {
 			Some((elem, size))
 		} else {
@@ -736,7 +754,7 @@ impl<'tu> TypeRef<'tu> {
 		}
 	}
 
-	pub fn as_string_array(&self) -> Option<(TypeRef<'tu>, Option<usize>)> {
+	pub fn as_string_array(&self) -> Option<(TypeRef<'tu, 'ge>, Option<usize>)> {
 		if let Some((elem, size)) = self.as_array() {
 			if elem.as_string().is_some() {
 				return Some((elem, size))
@@ -745,7 +763,7 @@ impl<'tu> TypeRef<'tu> {
 		None
 	}
 
-	pub fn as_vector(&self) -> Option<Vector<'tu>> {
+	pub fn as_vector(&self) -> Option<Vector<'tu, 'ge>> {
 		if let Kind::StdVector(out) = self.canonical().kind() {
 			Some(out)
 		} else {
@@ -753,7 +771,7 @@ impl<'tu> TypeRef<'tu> {
 		}
 	}
 
-	pub fn as_function(&self) -> Option<Function<'tu>> {
+	pub fn as_function(&self) -> Option<Function<'tu, 'ge>> {
 		match self.canonical().kind() {
 			Kind::Function(out) => {
 				Some(out)
@@ -764,7 +782,7 @@ impl<'tu> TypeRef<'tu> {
 		}
 	}
 
-	pub fn as_typedef(&self) -> Option<Typedef<'tu>> {
+	pub fn as_typedef(&self) -> Option<Typedef<'tu, 'ge>> {
 		match self.kind() {
 			Kind::Typedef(out) => {
 				Some(out)
@@ -774,8 +792,6 @@ impl<'tu> TypeRef<'tu> {
 			}
 		}
 	}
-
-//	}
 
 	pub fn is_by_ptr(&self) -> bool {
 		match self.canonical().kind() {
@@ -798,7 +814,21 @@ impl<'tu> TypeRef<'tu> {
 		settings::DATA_TYPES.contains(self.cpp_full().as_ref())
 	}
 
-	pub fn template_specialization_args(&self) -> Vec<TemplateArg<'tu>> {
+	pub fn can_pass_by_ptr(&self) -> bool {
+		if let Some(inner) = self.as_pointer() {
+			if inner.is_primitive() && !self.as_string().is_some() {
+				return true;
+			}
+		}
+		false
+	}
+
+	pub fn is_pass_by_ptr(&self) -> bool {
+		self.is_void_ptr() ||
+			matches!(self.type_hint, TypeRefTypeHint::PrimitiveRefAsPointer) && self.can_pass_by_ptr()
+	}
+
+	pub fn template_specialization_args(&self) -> Vec<TemplateArg<'tu, 'ge>> {
 		match self.type_ref.get_kind() {
 			TypeKind::Typedef => {
 				vec![]
@@ -858,7 +888,7 @@ impl<'tu> TypeRef<'tu> {
 				ptr.rust_localalias().into_owned()
 			}
 			Kind::Class(cls) => {
-				cls.rust_localname().into_owned()
+				cls.rust_localname(FishStyle::No).into_owned()
 			}
 			Kind::Primitive(..) | Kind::Enum(..)
 			| Kind::Function(..) | Kind::Typedef(..) | Kind::Generic(..)
@@ -902,20 +932,19 @@ impl<'tu> TypeRef<'tu> {
 		}
 	}
 
+	pub fn rust_name(&self, name_style: NameStyle, lifetime: Lifetime) -> Cow<str> {
+		self.render(RustRenderer::new(name_style, lifetime, self.is_pass_by_ptr()))
+	}
+
 	pub fn rust_local(&self) -> Cow<str> {
-		self.render(RustDeclarationRenderer::new())
+		self.rust_name(NameStyle::Declaration, Lifetime::elided())
 	}
 
 	pub fn rust_full(&self) -> Cow<str> {
-		self.rust_full_ext(true, false)
+		self.rust_name(NameStyle::Reference(FishStyle::No), Lifetime::elided())
 	}
 
-	pub fn rust_full_ext(&self, elided_lifetimes: bool, use_turbo_fish: bool) -> Cow<str> {
-		let lifetimes = if !elided_lifetimes && self.rust_lifetime_count() > 0 { Some(Lifetime::default()) } else { None };
-		self.render(RustReferenceRenderer::new(lifetimes, use_turbo_fish))
-	}
-
-	fn rust_lifetime_count(&self) -> usize {
+	pub fn rust_lifetime_count(&self) -> usize {
 		if self.as_string().is_some() {
 			0
 		} else {
@@ -944,22 +973,11 @@ impl<'tu> TypeRef<'tu> {
 		}
 	}
 
-	pub fn rust_lifetimes(&self) -> Vec<Lifetime> {
-		let mut cur_lifetime = Lifetime::default();
-		(0..self.rust_lifetime_count())
-			.map(|_| {
-				let out = cur_lifetime;
-				cur_lifetime = cur_lifetime.next();
-				out
-			})
-			.collect()
+	pub fn rust_lifetimes(&self) -> impl Iterator<Item=Lifetime> {
+		Lifetime::explicit().into_iter().take(self.rust_lifetime_count())
 	}
 
-	pub fn rust_extern(&self) -> Cow<str> {
-		self.rust_extern_with_const(ConstnessOverride::No)
-	}
-
-	pub fn rust_extern_with_const(&self, constness: ConstnessOverride) -> Cow<str> {
+	pub fn rust_extern(&self, constness: ConstnessOverride) -> Cow<str> {
 		let constness = constness.with(self.constness());
 		#[allow(clippy::never_loop)] // fixme use named block when stable
 		'typ: loop {
@@ -992,7 +1010,7 @@ impl<'tu> TypeRef<'tu> {
 				} else if self.as_string().is_some() {
 					out += "c_char";
 				} else {
-					out += &inner.rust_extern_with_const(ConstnessOverride::Yes(constness))
+					out += inner.rust_extern(ConstnessOverride::Yes(constness)).as_ref()
 				}
 				break 'typ out.into();
 			}
@@ -1000,7 +1018,7 @@ impl<'tu> TypeRef<'tu> {
 				break 'typ format!(
 					"*{cnst}[{typ}; {len}]",
 					cnst=self.constness().rust_qual(true),
-					typ=elem.rust_extern_with_const(ConstnessOverride::Yes(constness)),
+					typ=elem.rust_extern(ConstnessOverride::Yes(constness)),
 					len=len,
 				).into();
 			}
@@ -1010,7 +1028,7 @@ impl<'tu> TypeRef<'tu> {
 					// argv is treated as array of output arguments and it doesn't seem to be meant this way
 					format!("*{cnst}c_char", cnst=elem.clang_constness().rust_qual(true)).into()
 				} else {
-					elem.rust_extern_with_const(ConstnessOverride::Yes(constness))
+					elem.rust_extern(ConstnessOverride::Yes(constness))
 				};
 				break 'typ format!(
 					"*{cnst}{typ}",
@@ -1025,9 +1043,9 @@ impl<'tu> TypeRef<'tu> {
 		}
 	}
 
-	pub fn rust_self_func_decl(&self, is_method_const: bool) -> String {
+	pub fn rust_self_func_decl(&self, method_constness: Constness) -> String {
 		if self.is_by_ptr() {
-			if is_method_const {
+			if method_constness.is_const() {
 				"&self".to_string()
 			} else {
 				"&mut self".to_string()
@@ -1042,8 +1060,10 @@ impl<'tu> TypeRef<'tu> {
 		let typ = 'decl_type: loop {
 			if let Some(dir) = self.as_string() {
 				break 'decl_type match dir {
-					Dir::In(_) => "&str".into(),
-					Dir::Out(_) => "&mut String".into(),
+					Dir::In(StrType::StdString(StrEnc::Text) | StrType::CvString(StrEnc::Text) | StrType::CharPtr) => "&str".into(),
+					Dir::In(StrType::StdString(StrEnc::Binary) | StrType::CvString(StrEnc::Binary)) => "&[u8]".into(),
+					Dir::Out(StrType::StdString(StrEnc::Text) | StrType::CvString(StrEnc::Text) | StrType::CharPtr) => "&mut String".into(),
+					Dir::Out(StrType::StdString(StrEnc::Binary) | StrType::CvString(StrEnc::Binary)) => "&mut Vec<u8>".into(),
 				};
 			} else if self.is_input_array() {
 				break 'decl_type "&dyn core::ToInputArray".into();
@@ -1064,36 +1084,42 @@ impl<'tu> TypeRef<'tu> {
 		format!("{mutable}{name}: {typ}", mutable=mutable, name=name, typ=typ)
 	}
 
-	pub fn rust_return_func_decl(&self, with_turbofish: bool, is_static_func: bool) -> Cow<str> {
+	pub fn rust_return_func_decl(&self, turbo_fish_style: FishStyle, is_static_func: bool) -> Cow<str> {
 		if self.as_abstract_class_ptr().is_some() {
 			format!(
 				"types::AbstractRef{mut_suf}{fish}<{lt}{typ}>",
 				mut_suf=if self.constness().is_const() { "" } else { "Mut" },
-				fish=if with_turbofish { "::" } else { "" },
+				fish=turbo_fish_style.rust_qual(),
 				lt=if is_static_func { "'static, " } else { "" },
-				typ=self.source().rust_full_ext(true, with_turbofish),
+				typ=self.source().rust_name(NameStyle::Reference(turbo_fish_style), Lifetime::elided()),
 			).into()
 		} else if self.is_by_ptr() {
-			self.source().rust_full_ext(true, with_turbofish).into_owned().into()
+			self.source().rust_name(NameStyle::Reference(turbo_fish_style), Lifetime::elided()).into_owned().into()
 		} else {
-			self.rust_full_ext(true, with_turbofish)
+			self.rust_name(NameStyle::Reference(turbo_fish_style), Lifetime::elided())
 		}
 	}
 
-	pub fn rust_return_map(&self, is_safe_context: bool, is_static_func: bool) -> Cow<str> {
+	pub fn rust_return_map(&self, is_safe_context: bool, is_static_func: bool, is_infallible: bool) -> Cow<str> {
 		let unsafety_call = if is_safe_context { "unsafe " } else { "" };
 		if self.as_string().is_some() || self.is_by_ptr() {
 			format!(
-				".map(|r| {unsafety_call}{{ {typ}::opencv_from_extern(r) }} )",
+				"let ret = {unsafety_call}{{ {typ}::opencv_from_extern(ret) }};",
 				unsafety_call=unsafety_call,
-				typ=self.rust_return_func_decl(true, is_static_func),
+				typ=self.rust_return_func_decl(FishStyle::Turbo, is_static_func),
 			).into()
-		} else if self.as_pointer().map_or(false, |i| !i.is_void()) || self.as_fixed_array().is_some() {
+		} else if self.as_pointer().map_or(false, |i| !i.is_void()) && !self.is_pass_by_ptr() || self.as_fixed_array().is_some() {
 			let ptr_call = if self.constness().is_const() { "ref" } else { "mut" };
+			let error_handling = if is_infallible {
+				".expect(\"Function returned null pointer\")"
+			} else {
+				".ok_or_else(|| Error::new(core::StsNullPtr, \"Function returned null pointer\"))?"
+			};
 			format!(
-				".and_then(|x| {unsafety_call}{{ x.as_{ptr_call}() }}.ok_or_else(|| Error::new(core::StsNullPtr, \"Function returned Null pointer\".to_string())))",
+				"let ret = {unsafety_call}{{ ret.as_{ptr_call}() }}{error_handling};",
 				unsafety_call=unsafety_call,
 				ptr_call=ptr_call,
+				error_handling=error_handling,
 			).into()
 		} else {
 			"".into()
@@ -1147,10 +1173,10 @@ impl<'tu> TypeRef<'tu> {
 					"callback_arg!({name}_trampoline({tramp_args}) -> {tramp_ret} => {tramp_userdata_arg} in callbacks => {name}({fw_args}) -> {fw_ret})",
 					name=name,
 					tramp_args=tramp_args,
-					tramp_ret=ret.rust_extern(),
+					tramp_ret=ret.rust_extern(ConstnessOverride::No),
 					tramp_userdata_arg=userdata_name,
 					fw_args=fw_args,
-					fw_ret=ret.rust_extern(),
+					fw_ret=ret.rust_extern(ConstnessOverride::No),
 				);
 			}
 		}
@@ -1165,8 +1191,8 @@ impl<'tu> TypeRef<'tu> {
 		)
 	}
 
-	pub fn rust_self_func_call(&self, is_method_const: bool) -> String {
-		self.rust_arg_func_call("self", if is_method_const { ConstnessOverride::Yes(Constness::Const) } else { ConstnessOverride::No })
+	pub fn rust_self_func_call(&self, method_constness: Constness) -> String {
+		self.rust_arg_func_call("self", if method_constness.is_const() { ConstnessOverride::Yes(Constness::Const) } else { ConstnessOverride::No })
 	}
 
 	pub fn rust_arg_func_call(&self, name: &str, constness: ConstnessOverride) -> String {
@@ -1201,12 +1227,12 @@ impl<'tu> TypeRef<'tu> {
 				format!("{name}.as_mut_ptr()", name=name)
 			};
 			return if self.is_nullable() {
-				let null_ptr_name = if constness.with(self.constness()).is_const() {
-					"null"
-				} else {
-					"null_mut"
-				};
-				format!("{name}.map_or(::core::ptr::{null_ptr_name}(), |{name}| {arr})", name=name, null_ptr_name=null_ptr_name, arr=arr)
+				format!(
+					"{name}.map_or({null_ptr}, |{name}| {arr})",
+					name=name,
+					null_ptr=constness.with(self.constness()).rust_null_ptr_full(),
+					arr=arr
+				)
 			} else {
 				arr
 			}
@@ -1226,6 +1252,18 @@ impl<'tu> TypeRef<'tu> {
 				);
 			}
 		}
+		if self.is_nullable() && (self.as_reference().is_some() || self.as_pointer().is_some()) {
+			let arg = if constness.with(self.constness()).is_const() {
+				format!("{name} as *const _", name=name)
+			} else {
+				format!("{name} as *mut _", name=name)
+			};	return format!(
+				"{name}.map_or({null_ptr}, |{name}| {arg})",
+				name=name,
+				null_ptr=constness.with(self.constness()).rust_null_ptr_full(),
+				arg=arg,
+			)
+		}
 		name.to_string()
 	}
 
@@ -1233,17 +1271,12 @@ impl<'tu> TypeRef<'tu> {
 		name.to_string()
 	}
 
-	pub fn rust_extern_self_func_decl(&self, is_method_const: bool) -> String {
-		let method_constness = if is_method_const {
-			ConstnessOverride::Yes(Constness::Const)
-		} else {
-			ConstnessOverride::Yes(Constness::Mut)
-		};
-		self.rust_extern_arg_func_decl("instance", method_constness)
+	pub fn rust_extern_self_func_decl(&self, method_constness: Constness) -> String {
+		self.rust_extern_arg_func_decl("instance", ConstnessOverride::Yes(method_constness))
 	}
 
 	pub fn rust_extern_arg_func_decl(&self, name: &str, constness: ConstnessOverride) -> String {
-		let mut typ = self.rust_extern_with_const(constness);
+		let mut typ = self.rust_extern(constness);
 		if self.as_simple_class().is_some() {
 			*typ.to_mut() = format!("*const {}", typ)
 		}
@@ -1254,7 +1287,7 @@ impl<'tu> TypeRef<'tu> {
 		if self.as_string().is_some() {
 			"*mut c_void".into()
 		} else {
-			self.rust_extern_with_const(ConstnessOverride::Yes(Constness::Mut))
+			self.rust_extern(ConstnessOverride::Yes(Constness::Mut))
 		}
 	}
 
@@ -1267,22 +1300,23 @@ impl<'tu> TypeRef<'tu> {
 	}
 
 	pub fn rust_arg_post_call(&self, name: &str, _is_function_infallible: bool) -> String {
-		if let Some(Dir::Out(_)) = self.as_string() {
-			format!("string_arg_output_receive!(out, {name}_via => {name})", name = name)
-		} else {
-			"".to_string()
+		match self.as_string() {
+			Some(Dir::Out(StrType::StdString(StrEnc::Text) | StrType::CvString(StrEnc::Text) | StrType::CharPtr)) => {
+				format!("string_arg_output_receive!({name}_via => {name})", name = name)
+			}
+			Some(Dir::Out(StrType::StdString(StrEnc::Binary) | StrType::CvString(StrEnc::Binary))) => {
+				format!("byte_string_arg_output_receive!({name}_via => {name})", name = name)
+			}
+			_ => {
+				"".to_string()
+			}
 		}
 	}
 
-	pub fn dependent_types<D: DependentType<'tu>>(&self) -> Vec<D> {
-		self.dependent_types_with_mode(DependentTypeMode::None)
-	}
-
-	pub fn dependent_types_with_mode<D: DependentType<'tu>>(&self, mode: DependentTypeMode) -> Vec<D> {
-		let mut out = vec![];
+	pub fn dependent_types(&self, mode: DependentTypeMode) -> Vec<DependentType<'tu, 'ge>> {
 		match self.source().kind() {
 			Kind::StdVector(vec) => {
-				out = vec.dependent_types();
+				let mut out = vec.dependent_types();
 				out.reserve(2);
 				if let Some(Dir::In(str_type)) = vec.element_type().as_string() {
 					// We need to generate return wrappers for std::vector<cv::String>, but it has several issues:
@@ -1293,15 +1327,15 @@ impl<'tu> TypeRef<'tu> {
 					// That's why we try to resolve both types and check if they are the same, if they are we only generate
 					// vector<std::string> if not - both.
 					let vec_cv_string = self.gen_env.resolve_type("std::vector<cv::String>").expect("Can't resolve std::vector<cv::String>");
-					let vec_std_string = self.gen_env.resolve_type("std::vector<std::string>").expect("Can't resolve std::vector<std::string>");
 					if let DependentTypeMode::ForReturn(def_location) = mode {
+						let vec_std_string = self.gen_env.resolve_type("std::vector<std::string>").expect("Can't resolve std::vector<std::string>");
 						let vec_type_ref = if vec_cv_string.get_canonical_type() == vec_std_string.get_canonical_type() {
 							TypeRef::new(vec_std_string, self.gen_env)
 						} else {
 							vec.type_ref()
 						};
 						let const_hint = self.get_const_hint(&vec_type_ref);
-						out.push(D::from_return_type_wrapper(ReturnTypeWrapper::new_ext(
+						out.push(DependentType::from_return_type_wrapper(ReturnTypeWrapper::new_ext(
 							vec_type_ref,
 							const_hint,
 							def_location,
@@ -1310,77 +1344,78 @@ impl<'tu> TypeRef<'tu> {
 					}
 					// implement workaround for race when type with std::string gets generated first
 					// we only want vector<cv::String> because it's more compatible across OpenCV versions
-					if str_type == StrType::StdString {
-						let tref = TypeRef::new(
-							vec_cv_string,
-							self.gen_env,
-						);
-						out.push(D::from_vector(tref.as_vector().expect("Not possible unless something is terribly broken")));
+					if matches!(str_type, StrType::StdString(_)) {
+						let tref = TypeRef::new(vec_cv_string, self.gen_env);
+						out.push(DependentType::from_vector(tref.as_vector().expect("Not possible unless something is terribly broken")));
 					} else {
-						out.push(D::from_vector(vec))
+						out.push(DependentType::from_vector(vec))
 					}
 				} else {
 					if let DependentTypeMode::ForReturn(def_location) = mode {
 						let vec_type_ref = vec.type_ref().canonical_clang();
 						let const_hint = self.get_const_hint(&vec_type_ref);
-						out.push(D::from_return_type_wrapper(ReturnTypeWrapper::new_ext(
+						out.push(DependentType::from_return_type_wrapper(ReturnTypeWrapper::new_ext(
 							vec_type_ref,
 							const_hint,
 							def_location,
 							self.gen_env,
 						)));
 					}
-					out.push(D::from_vector(vec));
+					out.push(DependentType::from_vector(vec));
 				}
+				out
 			},
 			Kind::SmartPtr(ptr) => {
-				out = ptr.dependent_types();
+				let mut out = ptr.dependent_types();
 				if let DependentTypeMode::ForReturn(def_location) = mode {
 					let ptr_type_ref = ptr.type_ref().canonical_clang();
 					let const_hint = self.get_const_hint(&ptr_type_ref);
-					out.push(D::from_return_type_wrapper(ReturnTypeWrapper::new_ext(
+					out.push(DependentType::from_return_type_wrapper(ReturnTypeWrapper::new_ext(
 						ptr_type_ref,
 						const_hint,
 						def_location,
 						self.gen_env,
 					)));
 				}
-				out.push(D::from_smart_ptr(ptr))
+				out.push(DependentType::from_smart_ptr(ptr));
+				out
 			},
 			Kind::Typedef(typedef) => {
-				out = typedef.dependent_types();
+				typedef.dependent_types()
 			}
 			_ => {
+				let mut out = vec![];
 				if let DependentTypeMode::ForReturn(def_location) = mode {
 					if !self.is_generic() && !self.is_void() {
 						if self.as_string().is_some() {
 							let type_ref = TypeRef::new(
-								self.gen_env.resolve_type(&self.cpp_extern_return()).expect("Can't resolve string cpp_extern_return()"),
+								self.gen_env.resolve_type(self.cpp_extern_return(ConstnessOverride::No).as_ref())
+									.expect("Can't resolve string cpp_extern_return()"),
 								self.gen_env,
 							);
 							let def_location = match def_location {
 								DefinitionLocation::Type => DefinitionLocation::Custom(self.rust_module().into_owned()),
 								dl => dl
 							};
-							out.push(D::from_return_type_wrapper(ReturnTypeWrapper::new(type_ref, def_location, self.gen_env)));
+							out.push(DependentType::from_return_type_wrapper(ReturnTypeWrapper::new(type_ref, def_location, self.gen_env)));
 						} else {
 							let type_ref = self.canonical_clang();
 							let const_hint = self.get_const_hint(&type_ref);
-							out.push(D::from_return_type_wrapper(ReturnTypeWrapper::new_ext(
+							out.push(DependentType::from_return_type_wrapper(ReturnTypeWrapper::new_ext(
 								type_ref,
 								const_hint,
 								def_location,
 								self.gen_env,
 							)));
 							if self.as_abstract_class_ptr().is_some() {
-								out.push(D::from_abstract_ref_wrapper(AbstractRefWrapper::new(self.clone(), self.gen_env)))
+								out.push(DependentType::from_abstract_ref_wrapper(AbstractRefWrapper::new(self.clone())))
 							}
 						}
 					}
 				}
+				out
 			}
 		}
-		out
 	}
 
 	pub fn cpp_safe_id(&self) -> Cow<str> {
@@ -1399,7 +1434,7 @@ impl<'tu> TypeRef<'tu> {
 	}
 
 	pub fn cpp_local_ext(&self, extern_types: bool) -> Cow<str> {
-		self.render(CppDeclarationRenderer::new(extern_types))
+		self.render(CppRenderer::new(NameStyle::Declaration, "", extern_types))
 	}
 
 	pub fn cpp_full(&self) -> Cow<str> {
@@ -1407,7 +1442,7 @@ impl<'tu> TypeRef<'tu> {
 	}
 
 	pub fn cpp_full_ext(&self, name: &str, extern_types: bool) -> Cow<str> {
-		self.render(CppReferenceRenderer::new(name, extern_types))
+		self.render(CppRenderer::new(NameStyle::Reference(FishStyle::Turbo), name, extern_types))
 	}
 
 	pub fn cpp_extern(&self) -> Cow<str> {
@@ -1432,8 +1467,8 @@ impl<'tu> TypeRef<'tu> {
 		}
 	}
 
-	pub fn cpp_self_func_decl(&self, method_is_const: bool) -> String {
-		let cnst = if method_is_const {
+	pub fn cpp_self_func_decl(&self, method_constness: Constness) -> String {
+		let cnst = if method_constness.is_const() {
 			"const "
 		} else {
 			""
@@ -1454,18 +1489,19 @@ impl<'tu> TypeRef<'tu> {
 
 	pub fn cpp_arg_pre_call(&self, name: &str) -> String {
 		match self.as_string() {
-			Some(Dir::Out(StrType::StdString)) => {
-				return format!("std::string {name}_out", name=name);
+			Some(Dir::Out(StrType::StdString(_))) => {
+				format!("std::string {name}_out", name=name)
 			}
-			Some(Dir::Out(StrType::CvString)) => {
-				return format!("cv::String {name}_out", name=name);
+			Some(Dir::Out(StrType::CvString(_))) => {
+				format!("cv::String {name}_out", name=name)
 			}
 			Some(Dir::Out(StrType::CharPtr)) => {
-				return format!("char* {name}_out = new char[1024]()", name=name);
+				format!("char* {name}_out = new char[1024]()", name=name)
 			}
-			Some(_) | None => {}
+			Some(Dir::In(_)) | None => {
+				"".to_string()
+			}
 		}
-		"".to_string()
 	}
 
 	pub fn cpp_arg_func_call<'a>(&self, name: impl Into<Cow<'a, str>>) -> Cow<'a, str> {
@@ -1476,10 +1512,10 @@ impl<'tu> TypeRef<'tu> {
 				let ptr = if str_type != StrType::CharPtr && self.as_pointer().is_some() { "&" } else { "" };
 				return format!("{ptr}{name}_out", ptr=ptr, name=name).into();
 			}
-			Some(Dir::In(StrType::StdString)) => {
+			Some(Dir::In(StrType::StdString(_))) => {
 				return format!("std::string({name})", name=name).into();
 			},
-			Some(Dir::In(StrType::CvString)) => {
+			Some(Dir::In(StrType::CvString(_))) => {
 				return format!("cv::String({name})", name=name).into();
 			},
 			Some(Dir::In(StrType::CharPtr)) | None => {}
@@ -1497,29 +1533,36 @@ impl<'tu> TypeRef<'tu> {
 		name
 	}
 
-	pub fn cpp_extern_return(&self) -> Cow<str> {
-		self.render(CppExternReturnRenderer::new())
+	pub fn cpp_extern_return(&self, constness: ConstnessOverride) -> Cow<str> {
+		self.render(CppExternReturnRenderer::new(constness))
 	}
 
-	pub fn cpp_extern_return_wrapper_full(&self) -> Cow<str> {
+	pub fn cpp_extern_return_wrapper_full(&self, constness: ConstnessOverride) -> Cow<str> {
 		if self.is_void() {
 			"Result_void".into()
 		} else {
-			format!("Result<{ext}>", ext=self.cpp_extern_return()).into()
+			format!("Result<{ext}>", ext=self.cpp_extern_return(constness)).into()
 		}
 	}
 
 	pub fn cpp_arg_post_call(&self, name: &str) -> String {
 		match self.as_string() {
-			Some(Dir::Out(StrType::StdString)) | Some(Dir::Out(StrType::CvString)) => {
-				return format!("*{name} = ocvrs_create_string({name}_out.c_str())", name=name);
+			Some(Dir::Out(StrType::StdString(StrEnc::Text) | StrType::CvString(StrEnc::Text))) => {
+				format!("*{name} = ocvrs_create_string({name}_out.c_str())", name=name)
 			}
 			Some(Dir::Out(StrType::CharPtr)) => {
-				return format!("*{name} = ocvrs_create_string({name}_out)", name=name);
+				format!("*{name} = ocvrs_create_string({name}_out)", name=name)
 			}
-			_ => {}
+			Some(Dir::Out(StrType::StdString(StrEnc::Binary))) => {
+				format!("*{name} = ocvrs_create_byte_string({name}_out.data(), {name}_out.size())", name=name)
+			}
+			Some(Dir::Out(StrType::CvString(StrEnc::Binary))) => {
+				format!("*{name} = ocvrs_create_byte_string({name}_out.begin(), {name}_out.size())", name=name)
+			}
+			Some(Dir::In(_)) | None => {
+				"".to_string()
+			}
 		}
-		"".to_string()
 	}
 
 	// we need cleanup as a separate step from post_call because in cv_ocl_convertTypeStr_int_int_int_charX the
@@ -1533,13 +1576,13 @@ impl<'tu> TypeRef<'tu> {
 	}
 }
 
-impl cmp::PartialEq for TypeRef<'_> {
+impl cmp::PartialEq for TypeRef<'_, '_> {
 	fn eq(&self, other: &Self) -> bool {
 		self.type_ref == other.type_ref
 	}
 }
 
-impl fmt::Debug for TypeRef<'_> {
+impl fmt::Debug for TypeRef<'_, '_> {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		let mut props = vec![];
 		if self.is_excluded() {
@@ -1569,14 +1612,20 @@ impl fmt::Debug for TypeRef<'_> {
 				},
 			};
 			match str_type {
-				StrType::StdString => {
+				StrType::StdString(StrEnc::Text) => {
 					props.push("std_string");
 				},
-				StrType::CvString => {
+				StrType::CvString(StrEnc::Text) => {
 					props.push("cv_string");
 				},
 				StrType::CharPtr => {
 					props.push("char_ptr_string");
+				},
+				StrType::StdString(StrEnc::Binary) => {
+					props.push("byte_std_string");
+				},
+				StrType::CvString(StrEnc::Binary) => {
+					props.push("byte_cv_string");
 				},
 			}
 		}
@@ -1603,7 +1652,7 @@ impl fmt::Debug for TypeRef<'_> {
 		dbg
 			.field("rust_safe_id", &self.rust_safe_id())
 			.field("rust_full", &self.rust_full())
-			.field("rust_extern", &self.rust_extern())
+			.field("rust_extern", &self.rust_extern(ConstnessOverride::No))
 			.field("cpp_safe_id", &self.cpp_safe_id())
 			.field("cpp_full", &self.cpp_full())
 			.field("cpp_extern", &self.cpp_extern())
@@ -1618,8 +1667,8 @@ impl fmt::Debug for TypeRef<'_> {
 }
 
 #[derive(Debug)]
-pub enum TemplateArg<'tu> {
+pub enum TemplateArg<'tu, 'ge> {
 	Unknown,
-	Typename(TypeRef<'tu>),
+	Typename(TypeRef<'tu, 'ge>),
 	Constant(String),
 }

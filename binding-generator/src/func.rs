@@ -1,16 +1,17 @@
 use std::{
 	borrow::Cow,
 	collections::HashMap,
-	fmt,
+	fmt::{self, Write},
 };
 
-use clang::{Availability, Entity, EntityKind};
+use clang::{Availability, Entity, EntityKind, ExceptionSpecification};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
 use crate::{
 	Class,
 	comment,
+	Constness,
 	DefaultElement,
 	DefinitionLocation,
 	DependentType,
@@ -22,10 +23,10 @@ use crate::{
 	FieldTypeHint,
 	GeneratorEnv,
 	reserved_rename,
-	settings::{self, SliceHint},
+	settings,
 	StrExt,
 	StringExt,
-	type_ref::{Dir, StrType},
+	type_ref::{FishStyle, TypeRefTypeHint},
 	TypeRef,
 };
 
@@ -38,6 +39,9 @@ pub enum OperatorKind {
 	Mul,
 	Div,
 	Deref,
+	Equals,
+	Incr,
+	Decr,
 }
 
 impl OperatorKind {
@@ -62,6 +66,15 @@ impl OperatorKind {
 			"/" => {
 				OperatorKind::Div
 			}
+			"==" => {
+				OperatorKind::Equals
+			}
+			"++" => {
+				OperatorKind::Incr
+			}
+			"--" => {
+				OperatorKind::Decr
+			}
 			_ => {
 				OperatorKind::Unsupported
 			},
@@ -70,17 +83,17 @@ impl OperatorKind {
 }
 
 #[derive(Debug)]
-pub enum Kind<'tu> {
+pub enum Kind<'tu, 'ge> {
 	Function,
 	FunctionOperator(OperatorKind),
-	Constructor(Class<'tu>),
-	InstanceMethod(Class<'tu>),
-	StaticMethod(Class<'tu>),
-	FieldAccessor(Class<'tu>),
-	ConversionMethod(Class<'tu>),
-	InstanceOperator(Class<'tu>, OperatorKind),
+	Constructor(Class<'tu, 'ge>),
+	InstanceMethod(Class<'tu, 'ge>),
+	StaticMethod(Class<'tu, 'ge>),
+	FieldAccessor(Class<'tu, 'ge>),
+	ConversionMethod(Class<'tu, 'ge>),
+	InstanceOperator(Class<'tu, 'ge>, OperatorKind),
 	GenericFunction,
-	GenericInstanceMethod(Class<'tu>),
+	GenericInstanceMethod(Class<'tu, 'ge>),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -90,36 +103,92 @@ pub enum FunctionTypeHint {
 	Specialized(&'static HashMap<&'static str, &'static str>),
 }
 
-#[derive(Clone)]
-pub struct Func<'tu> {
-	entity: Entity<'tu>,
-	type_hint: FunctionTypeHint,
-	name_hint: Option<&'tu str>,
-	gen_env: &'tu GeneratorEnv<'tu>,
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct FuncId<'f> {
+	name: Cow<'f, str>,
+	args: Vec<Cow<'f, str>>,
 }
 
-impl<'tu> Func<'tu> {
-	pub fn new(entity: Entity<'tu>, gen_env: &'tu GeneratorEnv<'tu>) -> Self {
+impl<'f> FuncId<'f> {
+	/// # Parameters
+	/// name: fully qualified C++ function name (e.g. cv::Mat::create)
+	/// args: C++ argument names ("unnamed" for unnamed ones)
+	pub fn new<const ARGS: usize>(name: &'static str, args: [&'static str; ARGS]) -> FuncId<'static> {
+		FuncId {
+			name: name.into(),
+			args: IntoIterator::into_iter(args).map(|a| a.into()).collect(),
+		}
+	}
+
+	pub fn from_entity(entity: Entity) -> Self {
+		let name = entity.cpp_fullname().into_owned().into();
+		let args = if let EntityKind::FunctionTemplate = entity.get_kind() {
+			let mut args = vec![];
+			entity.walk_children_while(|child| {
+				if child.get_kind() == EntityKind::ParmDecl {
+					args.push(child.get_name()
+						.map(Cow::Owned)
+						.unwrap_or_else(|| "unnamed".into()));
+				}
+				true
+			});
+			args
+		} else {
+			entity.get_arguments().into_iter()
+				.flatten()
+				.map(|a| a.get_name()
+					.map(Cow::Owned)
+					.unwrap_or_else(|| "unnamed".into()))
+				.collect()
+		};
+		Self { name, args }
+	}
+
+	pub fn name(&self) -> &str {
+		self.name.as_ref()
+	}
+
+	pub fn args(&self) -> &[Cow<str>] {
+		&self.args
+	}
+}
+
+impl fmt::Display for FuncId<'_> {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		write!(f, "{}({})", self.name, self.args.join(", "))
+	}
+}
+
+#[derive(Clone)]
+pub struct Func<'tu, 'ge> {
+	entity: Entity<'tu>,
+	type_hint: FunctionTypeHint,
+	name_hint: Option<String>,
+	gen_env: &'ge GeneratorEnv<'tu>,
+}
+
+impl<'tu, 'ge> Func<'tu, 'ge> {
+	pub fn new(entity: Entity<'tu>, gen_env: &'ge GeneratorEnv<'tu>) -> Self {
 		Self { entity, type_hint: FunctionTypeHint::None, name_hint: None, gen_env }
 	}
 
-	pub fn new_ext(entity: Entity<'tu>, type_hint: FunctionTypeHint, name_hint: Option<&'tu str>, gen_env: &'tu GeneratorEnv<'tu>) -> Self {
+	pub fn new_ext(entity: Entity<'tu>, type_hint: FunctionTypeHint, name_hint: Option<String>, gen_env: &'ge GeneratorEnv<'tu>) -> Self {
 		Self { entity, type_hint, name_hint, gen_env }
 	}
 
-	pub fn set_name_hint(&mut self, name_hint: Option<&'tu str>) {
+	pub fn set_name_hint(&mut self, name_hint: Option<String>) {
 		self.name_hint = name_hint;
 	}
 
-	pub fn name_hint(&self) -> Option<&'tu str> {
-		self.name_hint
+	pub fn name_hint(&self) -> Option<&str> {
+		self.name_hint.as_deref()
 	}
 
 	pub fn type_hint(&self) -> FunctionTypeHint {
 		self.type_hint
 	}
 
-	pub fn kind(&self) -> Kind<'tu> {
+	pub fn kind(&self) -> Kind<'tu, 'ge> {
 		const OPERATOR: &str = "operator";
 		match self.entity.get_kind() {
 			EntityKind::FunctionDecl => {
@@ -176,7 +245,7 @@ impl<'tu> Func<'tu> {
 		}
 	}
 
-	pub fn as_constructor(&self) -> Option<Class<'tu>> {
+	pub fn as_constructor(&self) -> Option<Class<'tu, 'ge>> {
 		if let Kind::Constructor(out) = self.kind() {
 			Some(out)
 		} else {
@@ -184,7 +253,7 @@ impl<'tu> Func<'tu> {
 		}
 	}
 
-	pub fn as_instance_method(&self) -> Option<Class<'tu>> {
+	pub fn as_instance_method(&self) -> Option<Class<'tu, 'ge>> {
 		match self.kind() {
 			Kind::InstanceMethod(out) | Kind::FieldAccessor(out) | Kind::GenericInstanceMethod(out)
 			| Kind::ConversionMethod(out) | Kind::InstanceOperator(out, ..) => {
@@ -196,7 +265,7 @@ impl<'tu> Func<'tu> {
 		}
 	}
 
-	pub fn as_static_method(&self) -> Option<Class<'tu>> {
+	pub fn as_static_method(&self) -> Option<Class<'tu, 'ge>> {
 		if let Kind::StaticMethod(out) = self.kind() {
 			Some(out)
 		} else {
@@ -204,7 +273,7 @@ impl<'tu> Func<'tu> {
 		}
 	}
 
-	pub fn as_field_accessor(&self) -> Option<Field<'tu>> {
+	pub fn as_field_accessor(&self) -> Option<Field<'tu, 'ge>> {
 		if let Kind::FieldAccessor(..) = self.kind() {
 			Some(Field::new(self.entity, self.gen_env))
 		} else {
@@ -212,7 +281,7 @@ impl<'tu> Func<'tu> {
 		}
 	}
 
-	pub fn as_field_setter(&self) -> Option<Field<'tu>> {
+	pub fn as_field_setter(&self) -> Option<Field<'tu, 'ge>> {
 		if self.as_field_accessor().is_some() && self.type_hint == FunctionTypeHint::FieldSetter {
 			Some(Field::new_ext(self.entity, FieldTypeHint::FieldSetter, self.gen_env))
 		} else {
@@ -220,7 +289,7 @@ impl<'tu> Func<'tu> {
 		}
 	}
 
-	pub fn as_conversion_method(&self) -> Option<Class<'tu>> {
+	pub fn as_conversion_method(&self) -> Option<Class<'tu, 'ge>> {
 		if let Kind::ConversionMethod(out) = self.kind() {
 			Some(out)
 		} else {
@@ -228,13 +297,13 @@ impl<'tu> Func<'tu> {
 		}
 	}
 
-	pub fn as_operator(&self) -> Option<(Option<Class<'tu>>, OperatorKind)> {
+	pub fn as_operator(&self) -> Option<OperatorKind> {
 		match self.kind() {
 			Kind::FunctionOperator(kind) => {
-				Some((None, kind))
+				Some(kind)
 			}
-			Kind::InstanceOperator(cls, kind) => {
-				Some((Some(cls), kind))
+			Kind::InstanceOperator(_, kind) => {
+				Some(kind)
 			}
 			_ => {
 				None
@@ -242,17 +311,22 @@ impl<'tu> Func<'tu> {
 		}
 	}
 
-	pub fn is_const(&self) -> bool {
+	pub fn constness(&self) -> Constness {
 		if settings::FORCE_CONSTANT_METHOD.contains(self.cpp_fullname().as_ref()) {
-			true
-		}
-		else if let Some(fld) = self.as_field_accessor() {
-			self.type_hint != FunctionTypeHint::FieldSetter && {
+			Constness::Const
+		} else if let Some(fld) = self.as_field_accessor() {
+			if self.type_hint == FunctionTypeHint::FieldSetter {
+				Constness::Mut
+			} else {
 				let type_ref = fld.type_ref();
-				type_ref.constness().is_const() || type_ref.is_copy() || matches!(type_ref.as_string(), Some(Dir::In(StrType::CvString)) | Some(Dir::In(StrType::StdString)))
+				Constness::from_is_mut(
+					type_ref.as_array().is_some()
+						|| type_ref.as_smart_ptr().is_some()
+						|| type_ref.as_pointer().map_or(false, |r| r.constness().is_mut())
+				)
 			}
 		} else {
-			self.entity.is_const_method()
+			Constness::from_is_const(self.entity.is_const_method())
 		}
 	}
 
@@ -275,11 +349,21 @@ impl<'tu> Func<'tu> {
 
 	pub fn is_infallible(&self) -> bool {
 		self.as_field_accessor().is_some()
-			|| self.gen_env.get_export_config(self.entity).map_or(false, |e| e.no_except)
+			|| matches!(self.entity.get_exception_specification(), Some(ExceptionSpecification::BasicNoexcept) | Some(ExceptionSpecification::Unevaluated))
+			|| settings::FORCE_INFALLIBLE.contains(&self.func_id())
+	}
+
+	pub fn is_unsafe(&self) -> bool {
+		settings::FUNC_UNSAFE.contains(&self.func_id())
+			|| self.arguments().into_iter().any(|a| a.type_ref().is_pass_by_ptr() && !a.is_user_data())
+	}
+
+	pub fn is_default_constructor(&self) -> bool {
+		self.entity.is_default_constructor() && !self.has_arguments()
 	}
 
 	pub fn is_clone(&self) -> bool {
-		if self.rust_leafname() == "clone" {
+		if self.rust_leafname(FishStyle::No) == "clone" {
 			if let Some(c) = self.as_instance_method() {
 				!self.has_arguments() && self.return_type().as_class().map_or(false, |r| r == c)
 			} else {
@@ -287,6 +371,18 @@ impl<'tu> Func<'tu> {
 			}
 		} else {
 			false
+		}
+	}
+
+	pub fn is_no_discard(&self) -> bool {
+		self.gen_env.get_export_config(self.entity).map_or(false, |c| c.no_discard)
+	}
+
+	pub fn is_naked_return(&self) -> bool {
+		self.is_infallible() && {
+			let ret_type = self.return_type();
+			ret_type.is_primitive() || ret_type.as_pointer().is_some() || ret_type.as_array().is_some()
+				|| ret_type.is_by_ptr() || ret_type.as_string().is_some()
 		}
 	}
 
@@ -298,7 +394,7 @@ impl<'tu> Func<'tu> {
 		}
 	}
 
-	pub fn return_type(&self) -> TypeRef<'tu> {
+	pub fn return_type(&self) -> TypeRef<'tu, 'ge> {
 		match self.kind() {
 			Kind::Constructor(cls) => {
 				cls.type_ref()
@@ -306,29 +402,31 @@ impl<'tu> Func<'tu> {
 			Kind::Function | Kind::InstanceMethod(..) | Kind::StaticMethod(..)
 			| Kind::ConversionMethod(..) | Kind::GenericInstanceMethod(..) | Kind::GenericFunction
 			| Kind::FunctionOperator(..) | Kind::InstanceOperator(..) => {
-				let mut out = TypeRef::new(
-					self.entity.get_result_type().expect("Can't get return type"),
-					self.gen_env,
-				);
-				if let Some(type_ref) = out.as_reference() {
-					out = type_ref
-				}
+				let mut out = TypeRef::new_ext(self.entity.get_result_type().expect("Can't get return type"), TypeRefTypeHint::PrimitiveRefAsPointer, None, self.gen_env);
 				if let Some(spec) = self.as_specialized() {
 					if out.is_generic() {
 						let spec_type = spec.get(out.base().cpp_full().as_ref())
 							.and_then(|s| self.gen_env.resolve_type(s));
 						if let Some(spec_type) = spec_type {
-							out.specialize(spec_type);
+							out.set_type_hint(TypeRefTypeHint::Specialized(spec_type));
 						}
 					}
+				} else if let Some(&over) = settings::ARGUMENT_OVERRIDE.get(&self.func_id()).and_then(|x| x.get("return")) {
+					out.set_type_hint(TypeRefTypeHint::ArgOverride(over))
 				}
-				out
+				if let Some(type_ref) = out.as_reference() {
+					type_ref
+				} else {
+					out
+				}
 			}
 			Kind::FieldAccessor(..) => {
 				if self.type_hint == FunctionTypeHint::FieldSetter {
 					TypeRef::new(self.gen_env.resolve_type("void").expect("Can't resolve void type"), self.gen_env)
 				} else {
-					Field::new(self.entity, self.gen_env).type_ref()
+					let mut out = Field::new(self.entity, self.gen_env).type_ref();
+					out.set_type_hint(TypeRefTypeHint::PrimitiveRefAsPointer);
+					out
 				}
 			}
 		}
@@ -363,38 +461,23 @@ impl<'tu> Func<'tu> {
 		}
 	}
 
-	pub fn arguments(&self) -> Vec<Field<'tu>> {
-		let args = self.clang_arguments();
+	pub fn arguments(&self) -> Vec<Field<'tu, 'ge>> {
+		let empty_spec_hashmap = HashMap::new();
+		let spec = self.as_specialized().unwrap_or(&empty_spec_hashmap);
 
-		let empty_hashmap = HashMap::new();
-		let spec = if let Some(spec) = self.as_specialized() {
-			spec
-		} else {
-			&empty_hashmap
-		};
-		let args_len = args.len();
-		let func_name = self.cpp_fullname();
 		let is_field_setter = self.as_field_setter().is_some();
-		let slice_args = settings::SLICE_ARGUMENT.get(&(func_name.as_ref(), args_len));
+		let arg_overrides = settings::ARGUMENT_OVERRIDE.get(&self.func_id());
 
-		args.into_iter()
+		self.clang_arguments().into_iter()
 			.map(|a| {
 				if is_field_setter {
 					return Field::new_ext(a, FieldTypeHint::FieldSetter, self.gen_env)
 				}
 
-				if let Some(slice_arg) = slice_args.and_then(|o| o.get(a.rust_leafname().as_ref())) {
-					return match *slice_arg {
-						SliceHint::Slice => {
-							Field::new_ext(a, FieldTypeHint::Slice, self.gen_env)
-						},
-						SliceHint::NullableSlice => {
-							Field::new_ext(a, FieldTypeHint::NullableSlice, self.gen_env)
-						},
-						SliceHint::LenForSlice(slice, len_div) => {
-							Field::new_ext(a, FieldTypeHint::LenForSlice(slice, len_div), self.gen_env)
-						}
-					}
+				let arg_override = arg_overrides
+					.and_then(|o| a.get_name().and_then(|arg_name| o.get(arg_name.as_str())));
+				if let Some(arg_override) = arg_override {
+					return Field::new_ext(a, FieldTypeHint::ArgOverride(*arg_override), self.gen_env);
 				}
 
 				let out = Field::new(a, self.gen_env);
@@ -411,13 +494,12 @@ impl<'tu> Func<'tu> {
 			.collect()
 	}
 
-	pub fn dependent_types<D: DependentType<'tu>>(&self) -> Vec<D> {
+	pub fn dependent_types(&self) -> Vec<DependentType<'tu, 'ge>> {
 		self.arguments().into_iter()
 			.map(|a| a.type_ref())
 			.filter(|t| !t.is_ignored())
-			.map(|t| t.dependent_types())
-			.flatten()
-			.chain(self.return_type().dependent_types_with_mode(DependentTypeMode::ForReturn(DefinitionLocation::Module)))
+			.flat_map(|t| t.dependent_types(DependentTypeMode::None))
+			.chain(self.return_type().dependent_types(DependentTypeMode::ForReturn(DefinitionLocation::Module)))
 			.collect()
 	}
 
@@ -430,9 +512,9 @@ impl<'tu> Func<'tu> {
 			let local_name = DefaultElement::cpp_localname(self);
 			let (first_letter, rest) = local_name.split_at(1);
 			if self.as_field_setter().is_some() {
-				out += &format!("setProp{}{}", first_letter.to_uppercase(), rest);
+				write!(&mut out, "setProp{}{}", first_letter.to_uppercase(), rest).expect("write! to String shouldn't fail");
 			} else {
-				out += &format!("getProp{}{}", first_letter.to_uppercase(), rest);
+				write!(&mut out, "getProp{}{}", first_letter.to_uppercase(), rest).expect("write! to String shouldn't fail");
 			}
 			out
 		} else {
@@ -447,7 +529,7 @@ impl<'tu> Func<'tu> {
 				out.push_str(&typ);
 			}
 		}
-		if self.is_const() {
+		if self.constness().is_const() {
 			out += "_const";
 		}
 		for arg in self.arguments() {
@@ -457,15 +539,23 @@ impl<'tu> Func<'tu> {
 		}
 		out.into()
 	}
+
+	pub fn func_id(&self) -> FuncId {
+		let mut out = FuncId::from_entity(self.entity);
+		if self.as_field_setter().is_some() {
+			out.args.push("val".into());
+		}
+		out
+	}
 }
 
-impl<'tu> EntityElement<'tu> for Func<'tu> {
+impl<'tu> EntityElement<'tu> for Func<'tu, '_> {
 	fn entity(&self) -> Entity<'tu> {
 		self.entity
 	}
 }
 
-impl Element for Func<'_> {
+impl Element for Func<'_, '_> {
 	fn is_excluded(&self) -> bool {
 		let identifier = self.identifier();
 		if settings::FUNC_MANUAL.contains_key(identifier.as_ref()) || settings::FUNC_SPECIALIZE.contains_key(identifier.as_ref()) {
@@ -473,11 +563,19 @@ impl Element for Func<'_> {
 		}
 		DefaultElement::is_excluded(self)
 			|| self.is_generic()
+			|| self.as_operator().map_or(false, |kind| {
+				if matches!(kind, OperatorKind::Incr | OperatorKind::Decr) {
+					// filter out postfix version of ++ and --: https://en.cppreference.com/w/cpp/language/operator_incdec
+					self.clang_arguments().len() == 1
+				} else {
+					false
+				}
+			})
 			|| if let Some(cls) = self.as_constructor() { // don't generate constructors of abstract classes
-			cls.is_abstract()
-		} else {
-			false
-		}
+				cls.is_abstract()
+			} else {
+				false
+			}
 	}
 
 	fn is_ignored(&self) -> bool {
@@ -487,7 +585,7 @@ impl Element for Func<'_> {
 		}
 		DefaultElement::is_ignored(self)
 			|| self.entity.get_availability() == Availability::Unavailable
-			|| self.as_operator().map_or(false, |(.., op)| op == OperatorKind::Unsupported)
+			|| self.as_operator().map_or(false, |op| op == OperatorKind::Unsupported)
 			|| self.arguments().into_iter().any(|a| a.type_ref().is_ignored())
 			|| {
 					let ret = self.return_type();
@@ -510,12 +608,13 @@ impl Element for Func<'_> {
 
 	fn rendered_doc_comment_with_prefix(&self, prefix: &str, opencv_version: &str) -> String {
 		let mut comment = self.entity.get_comment().unwrap_or_default();
+		let line = self.entity.get_location().map(|l| l.get_file_location().line).unwrap_or(0);
 		const OVERLOAD: &str = "@overload";
 		if let Some(idx) = comment.find(OVERLOAD) {
-			let rep = if let Some(copy) = self.gen_env.get_func_comment(self.entity.cpp_fullname().as_ref()) {
+			let rep = if let Some(copy) = self.gen_env.get_func_comment(line, self.entity.cpp_fullname().as_ref()) {
 				format!("{}\n\n## Overloaded parameters\n", copy)
 			} else {
-				"".to_string()
+				"This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts.".to_string()
 			};
 			comment.replace_range(idx..idx + OVERLOAD.len(), &rep);
 		}
@@ -525,7 +624,7 @@ impl Element for Func<'_> {
 			let mut copy_full_name = self.cpp_namespace().into_owned();
 			copy_full_name += "::";
 			copy_full_name += copy_name;
-			if let Some(copy) = self.gen_env.get_func_comment(&copy_full_name) {
+			if let Some(copy) = self.gen_env.get_func_comment(line, &copy_full_name) {
 				Some(copy.into())
 			} else {
 				Some("".into())
@@ -538,7 +637,8 @@ impl Element for Func<'_> {
 					if default_args_comment.is_empty() {
 						default_args_comment += "## C++ default parameters";
 					}
-					default_args_comment += &format!("\n* {name}: {val}", name=arg.rust_leafname(), val=def_val);
+					write!(&mut default_args_comment, "\n* {name}: {val}", name = arg.rust_leafname(FishStyle::No), val = def_val)
+						.expect("write! to String shouldn't fail");
 				}
 			}
 			if !default_args_comment.is_empty() {
@@ -551,7 +651,7 @@ impl Element for Func<'_> {
 	}
 
 	fn cpp_namespace(&self) -> Cow<str> {
-		DefaultElement::cpp_namespace(self)
+		DefaultElement::cpp_namespace(self).into()
 	}
 
 	fn cpp_localname(&self) -> Cow<str> {
@@ -570,8 +670,8 @@ impl Element for Func<'_> {
 		DefaultElement::rust_module(self)
 	}
 
-	fn rust_leafname(&self) -> Cow<str> {
-		let cpp_name = if let Some(name) = self.gen_env.get_export_config(self.entity).and_then(|c| c.rename.as_ref()) {
+	fn rust_leafname(&self, _fish_style: FishStyle) -> Cow<str> {
+		let cpp_name = if let Some(name) = self.gen_env.get_rename_config(self.entity).map(|c| &c.rename) {
 			name.into()
 		} else {
 			self.cpp_localname()
@@ -607,14 +707,14 @@ impl Element for Func<'_> {
 			let mut name: String = self.return_type().rust_local().into_owned();
 			name.cleanup_name();
 			format!("to_{}", name).into()
-		} else if let Some((.., kind)) = self.as_operator() {
+		} else if let Some(kind) = self.as_operator() {
 			if cpp_name.starts_with("operator") {
 				match kind {
 					OperatorKind::Unsupported => {
 						cpp_name
 					}
 					OperatorKind::Index => {
-						if self.is_const() {
+						if self.constness().is_const() {
 							"get".into()
 						} else {
 							"get_mut".into()
@@ -633,11 +733,21 @@ impl Element for Func<'_> {
 						"div".into()
 					}
 					OperatorKind::Deref => {
-						if self.is_const() {
+						if self.constness().is_const() {
 							"try_deref".into()
 						} else {
 							"try_deref_mut".into()
 						}
+					}
+					OperatorKind::Equals => {
+						"equals".into()
+					}
+
+					OperatorKind::Incr => {
+						"incr".into()
+					}
+					OperatorKind::Decr => {
+						"decr".into()
 					}
 				}
 			} else {
@@ -657,23 +767,24 @@ impl Element for Func<'_> {
 		}
 	}
 
-	fn rust_localname(&self) -> Cow<str> {
-		DefaultElement::rust_localname(self)
+	fn rust_localname(&self, fish_style: FishStyle) -> Cow<str> {
+		DefaultElement::rust_localname(self, fish_style)
 	}
 }
 
-impl fmt::Display for Func<'_> {
+impl fmt::Display for Func<'_, '_> {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		write!(f, "{}", self.entity.get_display_name().expect("Can't get display name"))
 	}
 }
 
-impl fmt::Debug for Func<'_> {
+impl fmt::Debug for Func<'_, '_> {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		let mut debug_struct = f.debug_struct("Func");
 		self.update_debug_struct(&mut debug_struct)
 			.field("export_config", &self.gen_env.get_export_config(self.entity))
-			.field("is_const", &self.is_const())
+			.field("is_const", &self.constness())
+			.field("is_infallible", &self.is_infallible())
 			.field("type_hint", &self.type_hint)
 			.field("kind", &self.kind())
 			.field("return_type", &self.return_type())

@@ -1,38 +1,40 @@
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
-use num_traits::{NumCast, ToPrimitive, Zero};
+use num_traits::{NumCast, NumOps, ToPrimitive, Zero};
 
-use crate::core::{Point_, ValidPointType, ValidVecType, Vec3};
-
-valid_types!(ValidPoint3Type: i32, f32, f64);
+use crate::{
+	core::{Point_, VecN},
+	opencv_type_simple_generic,
+};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default, PartialEq, PartialOrd)]
 /// [docs.opencv.org](https://docs.opencv.org/master/df/d6c/classcv_1_1Point3__.html)
-pub struct Point3_<T: ValidPoint3Type> {
+pub struct Point3_<T> {
 	pub x: T,
 	pub y: T,
 	pub z: T,
 }
 
-impl<T: ValidPoint3Type> Point3_<T> {
+impl<T> Point3_<T> {
 	#[inline]
 	pub fn new(x: T, y: T, z: T) -> Self {
 		Self { x, y, z }
 	}
 
 	#[inline]
-	pub fn from_vec3(vec: Vec3<T>) -> Self where T: ValidVecType {
-		Self::new(vec[0], vec[1], vec[2])
+	pub fn from_vec3(vec: VecN<T, 3>) -> Self {
+		let [x, y, z] = vec.0;
+		Self::new(x, y, z)
 	}
 
 	#[inline]
-	pub fn from_point(pt: Point_<T>) -> Self where T: ValidPointType + Zero {
+	pub fn from_point(pt: Point_<T>) -> Self where T: Zero {
 		Self::new(pt.x, pt.y, T::zero())
 	}
 
 	#[inline]
-	pub fn cross(self, pt: Point3_<T>) -> Point3_<T> {
+	pub fn cross(self, pt: Self) -> Self where T: NumOps + Copy {
 		Self::new(
 			self.y * pt.z - self.z * pt.y,
 			self.z * pt.x - self.x * pt.z,
@@ -41,12 +43,12 @@ impl<T: ValidPoint3Type> Point3_<T> {
 	}
 
 	#[inline]
-	pub fn dot(self, pt: Point3_<T>) -> T {
+	pub fn dot(self, pt: Self) -> T where T: NumOps {
 		self.x * pt.x + self.y * pt.y + self.z * pt.z
 	}
 
 	#[inline]
-	pub fn ddot(self, pt: Point3_<T>) -> f64 where f64: From<T> {
+	pub fn ddot(self, pt: Self) -> f64 where f64: From<T> {
 		let self_x: f64 = From::from(self.x);
 		let self_y: f64 = From::from(self.y);
 		let self_z: f64 = From::from(self.z);
@@ -65,46 +67,57 @@ impl<T: ValidPoint3Type> Point3_<T> {
 	}
 
 	#[inline]
-	pub fn to<D: ValidPoint3Type + NumCast>(self) -> Option<Point3_<D>> where T: ToPrimitive {
+	pub fn to<D: NumCast>(self) -> Option<Point3_<D>> where T: ToPrimitive {
 		Some(Point3_::new(D::from(self.x)?, D::from(self.y)?, D::from(self.z)?))
 	}
 
 	#[inline]
-	pub fn to_vec3(&self) -> Vec3<T> where T: ValidVecType {
-		Vec3::from([self.x, self.y, self.z])
+	pub fn to_vec3(self) -> VecN<T, 3> {
+		VecN::<_, 3>::from([self.x, self.y, self.z])
 	}
 }
-opencv_type_simple_generic! { Point3_<ValidPoint3Type> }
 
-impl<T> Add for Point3_<T>
-	where
-		T: ValidPoint3Type + AddAssign,
-{
-	type Output = Point3_<T>;
+impl<T> From<(T, T, T)> for Point3_<T> {
+	#[inline]
+	fn from(s: (T, T, T)) -> Self {
+		Self::new(s.0, s.1, s.2)
+	}
+}
 
-	fn add(mut self, rhs: Point3_<T>) -> Self::Output {
+impl<T> From<VecN<T, 3>> for Point3_<T> {
+	#[inline]
+	fn from(s: VecN<T, 3>) -> Self {
+		Self::from_vec3(s)
+	}
+}
+
+impl<T: Zero> From<Point_<T>> for Point3_<T> {
+	#[inline]
+	fn from(s: Point_<T>) -> Self {
+		Self::from_point(s)
+	}
+}
+
+impl<T> Add for Point3_<T> where Self: AddAssign {
+	type Output = Self;
+
+	fn add(mut self, rhs: Self) -> Self::Output {
 		self += rhs;
 		self
 	}
 }
 
-impl<T> Sub for Point3_<T>
-	where
-		T: ValidPoint3Type + SubAssign,
-{
-	type Output = Point3_<T>;
+impl<T> Sub for Point3_<T> where Self: SubAssign {
+	type Output = Self;
 
-	fn sub(mut self, rhs: Point3_<T>) -> Self::Output {
+	fn sub(mut self, rhs: Self) -> Self::Output {
 		self -= rhs;
 		self
 	}
 }
 
-impl<T> Mul<T> for Point3_<T>
-	where
-		T: ValidPoint3Type + MulAssign
-{
-	type Output = Point3_<T>;
+impl<T> Mul<T> for Point3_<T> where Self: MulAssign<T> {
+	type Output = Self;
 
 	fn mul(mut self, rhs: T) -> Self::Output {
 		self *= rhs;
@@ -112,11 +125,8 @@ impl<T> Mul<T> for Point3_<T>
 	}
 }
 
-impl<T> Div<T> for Point3_<T>
-	where
-		T: ValidPoint3Type + DivAssign
-{
-	type Output = Point3_<T>;
+impl<T> Div<T> for Point3_<T> where Self: DivAssign<T> {
+	type Output = Self;
 
 	fn div(mut self, rhs: T) -> Self::Output {
 		self /= rhs;
@@ -124,10 +134,7 @@ impl<T> Div<T> for Point3_<T>
 	}
 }
 
-impl<T> AddAssign for Point3_<T>
-	where
-		T: ValidPoint3Type + AddAssign,
-{
+impl<T: AddAssign> AddAssign for Point3_<T> {
 	fn add_assign(&mut self, rhs: Point3_<T>) {
 		self.x += rhs.x;
 		self.y += rhs.y;
@@ -135,10 +142,7 @@ impl<T> AddAssign for Point3_<T>
 	}
 }
 
-impl<T> SubAssign for Point3_<T>
-	where
-		T: ValidPoint3Type + SubAssign,
-{
+impl<T: SubAssign> SubAssign for Point3_<T> {
 	fn sub_assign(&mut self, rhs: Point3_<T>) {
 		self.x -= rhs.x;
 		self.y -= rhs.y;
@@ -146,10 +150,7 @@ impl<T> SubAssign for Point3_<T>
 	}
 }
 
-impl<T> MulAssign<T> for Point3_<T>
-	where
-		T: ValidPoint3Type + MulAssign
-{
+impl<T: MulAssign + Copy> MulAssign<T> for Point3_<T> {
 	fn mul_assign(&mut self, rhs: T) {
 		self.x *= rhs;
 		self.y *= rhs;
@@ -157,13 +158,12 @@ impl<T> MulAssign<T> for Point3_<T>
 	}
 }
 
-impl<T> DivAssign<T> for Point3_<T>
-	where
-		T: ValidPoint3Type + DivAssign
-{
+impl<T: DivAssign + Copy> DivAssign<T> for Point3_<T> {
 	fn div_assign(&mut self, rhs: T) {
 		self.x /= rhs;
 		self.y /= rhs;
 		self.z /= rhs;
 	}
 }
+
+opencv_type_simple_generic! { Point3_<Copy> }

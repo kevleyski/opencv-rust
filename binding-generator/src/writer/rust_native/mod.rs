@@ -9,21 +9,25 @@ use dunce::canonicalize;
 use maplit::hashmap;
 use once_cell::sync::Lazy;
 
-use element::{DepType, RustNativeGeneratedElement};
+use element::RustNativeGeneratedElement;
 
 use crate::{
 	Class,
 	comment,
 	CompiledInterpolation,
 	Const,
+	Constness,
+	DependentType,
 	Element,
 	Enum,
 	Func,
 	GeneratorVisitor,
+	is_ephemeral_header,
 	IteratorExt,
-	module_from_path,
+	opencv_module_from_path,
 	settings,
 	StrExt,
+	type_ref::{FishStyle, NameStyle},
 	Typedef,
 };
 
@@ -68,18 +72,10 @@ impl<'s> RustNativeBindingWriter<'s> {
 	pub fn new(src_cpp_dir: &Path, out_dir: impl Into<PathBuf>, module: &'s str, opencv_version: &'s str, debug: bool) -> Self {
 		let out_dir = out_dir.into();
 		let debug_path = out_dir.join(format!("{}.log", module));
-		if debug {
-			if false {
+		#[allow(clippy::collapsible_if)]
+		if false {
+			if debug {
 				File::create(&debug_path).expect("Can't create debug log");
-			}
-			for entry in out_dir.read_dir().expect("Can't read out_dir") {
-				let entry = entry.expect("Can't read directory entry");
-				let path = entry.path();
-				if entry.file_type().map(|f| f.is_file()).unwrap_or(false)
-					&& path.extension().map_or(false, |e| e == "rs" || e == "cpp")
-				{
-					let _ = fs::remove_file(path);
-				}
 			}
 		}
 		Self {
@@ -117,11 +113,9 @@ impl<'s> RustNativeBindingWriter<'s> {
 	}
 }
 
-impl<'tu> GeneratorVisitor<'tu> for RustNativeBindingWriter<'_> {
-	type D = DepType<'tu>;
-
+impl GeneratorVisitor for RustNativeBindingWriter<'_> {
 	fn wants_file(&mut self, path: &Path) -> bool {
-		module_from_path(path).map_or(false, |m| m == self.module)
+		is_ephemeral_header(path) || opencv_module_from_path(path).map_or(false, |m| m == self.module)
 	}
 
 	fn visit_module_comment(&mut self, comment: String) {
@@ -130,12 +124,12 @@ impl<'tu> GeneratorVisitor<'tu> for RustNativeBindingWriter<'_> {
 
 	fn visit_const(&mut self, cnst: Const) {
 		self.emit_debug_log(&cnst);
-		self.consts.push((cnst.rust_localname().into_owned(), cnst.gen_rust(self.opencv_version)));
+		self.consts.push((cnst.rust_localname(FishStyle::No).into_owned(), cnst.gen_rust(self.opencv_version)));
 	}
 
 	fn visit_enum(&mut self, enm: Enum) {
 		self.emit_debug_log(&enm);
-		self.enums.push((enm.rust_localname().into_owned(), enm.gen_rust(self.opencv_version)));
+		self.enums.push((enm.rust_localname(FishStyle::No).into_owned(), enm.gen_rust(self.opencv_version)));
 	}
 
 	fn visit_func(&mut self, func: Func) {
@@ -154,7 +148,8 @@ impl<'tu> GeneratorVisitor<'tu> for RustNativeBindingWriter<'_> {
 	fn visit_class(&mut self, class: Class) {
 		self.emit_debug_log(&class);
 		if class.is_trait() {
-			self.found_traits.push(format!("super::{}", class.rust_trait_localname().into_owned()));
+			self.found_traits.push(format!("super::{}", class.rust_trait_name(NameStyle::Declaration, Constness::Const).into_owned()));
+			self.found_traits.push(format!("super::{}", class.rust_trait_name(NameStyle::Declaration, Constness::Mut).into_owned()));
 		}
 		let name: String = class.cpp_fullname().into_owned();
 		self.rust_classes.push((name.clone(), class.gen_rust(self.opencv_version)));
@@ -162,16 +157,12 @@ impl<'tu> GeneratorVisitor<'tu> for RustNativeBindingWriter<'_> {
 		self.cpp_classes.push((name, class.gen_cpp()));
 	}
 
-	fn visit_dependent_type(&mut self, typ: Self::D) {
+	fn visit_dependent_type(&mut self, typ: DependentType) {
 		let prio = typ.element_order();
 		let safe_id = typ.element_safe_id();
 
 		let path = self.types_dir.join(format!("{:03}-{}.type.rs", prio, safe_id));
-		let file = if self.debug {
-			OpenOptions::new().create(true).write(true).truncate(true).open(&path)
-		} else {
-			OpenOptions::new().create_new(true).write(true).open(&path)
-		};
+		let file = OpenOptions::new().create_new(true).write(true).open(&path);
 		match file {
 			Ok(mut file) => {
 				let gen = typ.gen_rust(self.opencv_version);
@@ -190,11 +181,7 @@ impl<'tu> GeneratorVisitor<'tu> for RustNativeBindingWriter<'_> {
 		}
 
 		let path = self.types_dir.join(format!("{:03}-{}.type.cpp", prio, safe_id));
-		let file = if self.debug {
-			OpenOptions::new().create(true).write(true).truncate(true).open(&path)
-		} else {
-			OpenOptions::new().create_new(true).write(true).open(&path)
-		};
+		let file = OpenOptions::new().create_new(true).write(true).open(&path);
 		match file {
 			Ok(mut file) => {
 				let gen = typ.gen_cpp();
@@ -210,6 +197,13 @@ impl<'tu> GeneratorVisitor<'tu> for RustNativeBindingWriter<'_> {
 			Err(e) => {
 				panic!("Error while creating file for cpp dependent type: {}", e)
 			},
+		}
+	}
+
+	fn visit_ephemeral_header(&mut self, contents: &str) {
+		if self.debug {
+			let mut file = File::create(self.types_dir.join(format!("ocvrs_ephemeral_{}.hpp", self.module))).expect("Can't create debug ephemeral file");
+			file.write_all(contents.as_bytes()).expect("Can't write debug ephemeral file");
 		}
 	}
 }
@@ -258,7 +252,7 @@ impl Drop for RustNativeBindingWriter<'_> {
 		let mut cpp = join(&mut self.cpp_funcs);
 		cpp += &join(&mut self.cpp_classes);
 		let includes = if self.src_cpp_dir.join(format!("{}.hpp", self.module)).exists() {
-			format!("#include \"{module}.hpp\"\n", module=self.module)
+			format!("#include \"{module}.hpp\"", module=self.module)
 		} else {
 			format!("#include \"ocvrs_common.hpp\"\n#include <opencv2/{module}.hpp>", module=self.module)
 		};

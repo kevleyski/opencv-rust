@@ -14,7 +14,7 @@
 //!    # Feature Detection
 use crate::{mod_prelude::*, core, sys, types};
 pub mod prelude {
-	pub use { super::CUDA_CLAHE, super::CUDA_CannyEdgeDetector, super::CUDA_HoughLinesDetector, super::CUDA_HoughSegmentDetector, super::CUDA_HoughCirclesDetector, super::CUDA_CornernessCriteria, super::CUDA_CornersDetector, super::CUDA_TemplateMatching };
+	pub use { super::CUDA_CLAHEConst, super::CUDA_CLAHE, super::CUDA_CannyEdgeDetectorConst, super::CUDA_CannyEdgeDetector, super::CUDA_HoughLinesDetectorConst, super::CUDA_HoughLinesDetector, super::CUDA_HoughSegmentDetectorConst, super::CUDA_HoughSegmentDetector, super::CUDA_HoughCirclesDetectorConst, super::CUDA_HoughCirclesDetector, super::CUDA_CornernessCriteriaConst, super::CUDA_CornernessCriteria, super::CUDA_CornersDetectorConst, super::CUDA_CornersDetector, super::CUDA_TemplateMatchingConst, super::CUDA_TemplateMatching };
 }
 
 pub const CUDA_ALPHA_ATOP: i32 = 3;
@@ -30,6 +30,10 @@ pub const CUDA_ALPHA_PLUS_PREMUL: i32 = 11;
 pub const CUDA_ALPHA_PREMUL: i32 = 12;
 pub const CUDA_ALPHA_XOR: i32 = 4;
 pub const CUDA_ALPHA_XOR_PREMUL: i32 = 10;
+/// BKE [Allegretti2019](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Allegretti2019) algorithm for 8-way connectivity.
+pub const CUDA_CCL_BKE: i32 = 0;
+/// BKE [Allegretti2019](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Allegretti2019) algorithm for 8-way connectivity.
+pub const CUDA_CCL_DEFAULT: i32 = -1;
 /// Bayer Demosaicing (Malvar, He, and Cutler)
 pub const CUDA_COLOR_BayerBG2BGR_MHT: i32 = 256;
 /// Bayer Demosaicing (Malvar, He, and Cutler)
@@ -73,6 +77,18 @@ pub enum CUDA_AlphaCompTypes {
 }
 
 opencv_type_enum! { crate::cudaimgproc::CUDA_AlphaCompTypes }
+
+/// Connected Components Algorithm
+#[repr(C)]
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum CUDA_ConnectedComponentsAlgorithmsTypes {
+	/// BKE [Allegretti2019](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Allegretti2019) algorithm for 8-way connectivity.
+	CCL_DEFAULT = -1,
+	/// BKE [Allegretti2019](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Allegretti2019) algorithm for 8-way connectivity.
+	CCL_BKE = 0,
+}
+
+opencv_type_enum! { crate::cudaimgproc::CUDA_ConnectedComponentsAlgorithmsTypes }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -134,11 +150,16 @@ opencv_type_enum! { crate::cudaimgproc::CUDA_DemosaicTypes }
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn alpha_comp(img1: &dyn core::ToInputArray, img2: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, alpha_op: i32, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(img1);
 	input_array_arg!(img2);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_alphaComp_const__InputArrayR_const__InputArrayR_const__OutputArrayR_int_StreamR(img1.as_raw__InputArray(), img2.as_raw__InputArray(), dst.as_raw__OutputArray(), alpha_op, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_alphaComp_const__InputArrayR_const__InputArrayR_const__OutputArrayR_int_StreamR(img1.as_raw__InputArray(), img2.as_raw__InputArray(), dst.as_raw__OutputArray(), alpha_op, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Performs bilateral filtering of passed image
@@ -159,10 +180,15 @@ pub fn alpha_comp(img1: &dyn core::ToInputArray, img2: &dyn core::ToInputArray, 
 /// ## C++ default parameters
 /// * border_mode: BORDER_DEFAULT
 /// * stream: Stream::Null()
+#[inline]
 pub fn bilateral_filter(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, kernel_size: i32, sigma_color: f32, sigma_spatial: f32, border_mode: i32, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_bilateralFilter_const__InputArrayR_const__OutputArrayR_int_float_float_int_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), kernel_size, sigma_color, sigma_spatial, border_mode, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_bilateralFilter_const__InputArrayR_const__OutputArrayR_int_float_float_int_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), kernel_size, sigma_color, sigma_spatial, border_mode, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Performs linear blending of two images.
@@ -179,13 +205,18 @@ pub fn bilateral_filter(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutp
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn blend_linear(img1: &dyn core::ToInputArray, img2: &dyn core::ToInputArray, weights1: &dyn core::ToInputArray, weights2: &dyn core::ToInputArray, result: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(img1);
 	input_array_arg!(img2);
 	input_array_arg!(weights1);
 	input_array_arg!(weights2);
 	output_array_arg!(result);
-	unsafe { sys::cv_cuda_blendLinear_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__OutputArrayR_StreamR(img1.as_raw__InputArray(), img2.as_raw__InputArray(), weights1.as_raw__InputArray(), weights2.as_raw__InputArray(), result.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_blendLinear_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__OutputArrayR_StreamR(img1.as_raw__InputArray(), img2.as_raw__InputArray(), weights1.as_raw__InputArray(), weights2.as_raw__InputArray(), result.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Calculates histogram for one channel 8-bit image confined in given mask.
@@ -198,11 +229,16 @@ pub fn blend_linear(img1: &dyn core::ToInputArray, img2: &dyn core::ToInputArray
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn calc_hist_1(src: &dyn core::ToInputArray, mask: &dyn core::ToInputArray, hist: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	input_array_arg!(mask);
 	output_array_arg!(hist);
-	unsafe { sys::cv_cuda_calcHist_const__InputArrayR_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), mask.as_raw__InputArray(), hist.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_calcHist_const__InputArrayR_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), mask.as_raw__InputArray(), hist.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Calculates histogram for one channel 8-bit image.
@@ -214,10 +250,91 @@ pub fn calc_hist_1(src: &dyn core::ToInputArray, mask: &dyn core::ToInputArray, 
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn calc_hist(src: &dyn core::ToInputArray, hist: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(hist);
-	unsafe { sys::cv_cuda_calcHist_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), hist.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_calcHist_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), hist.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
+}
+
+/// Computes the Connected Components Labeled image of a binary image.
+/// 
+/// The function takes as input a binary image and performs Connected Components Labeling. The output
+/// is an image where each Connected Component is assigned a unique label (integer value).
+/// ltype specifies the output label image type, an important consideration based on the total
+/// number of labels or alternatively the total number of pixels in the source image.
+/// ccltype specifies the connected components labeling algorithm to use, currently
+/// BKE [Allegretti2019](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Allegretti2019) is supported, see the #ConnectedComponentsAlgorithmsTypes
+/// for details. Note that labels in the output are not required to be sequential.
+/// 
+/// ## Parameters
+/// * image: The 8-bit single-channel image to be labeled.
+/// * labels: Destination labeled image.
+/// * connectivity: Connectivity to use for the labeling procedure. 8 for 8-way connectivity is supported.
+/// * ltype: Output image label type. Currently CV_32S is supported.
+/// * ccltype: Connected components algorithm type (see the #ConnectedComponentsAlgorithmsTypes).
+/// 
+/// 
+/// Note: A sample program demonstrating Connected Components Labeling in CUDA can be found at
+/// 
+/// opencv_contrib_source_code/modules/cudaimgproc/samples/connected_components.cpp
+/// 
+/// ## Overloaded parameters
+/// 
+/// 
+/// * image: The 8-bit single-channel image to be labeled.
+/// * labels: Destination labeled image.
+/// * connectivity: Connectivity to use for the labeling procedure. 8 for 8-way connectivity is supported.
+/// * ltype: Output image label type. Currently CV_32S is supported.
+/// 
+/// ## C++ default parameters
+/// * connectivity: 8
+/// * ltype: CV_32S
+#[inline]
+pub fn connected_components(image: &dyn core::ToInputArray, labels: &mut dyn core::ToOutputArray, connectivity: i32, ltype: i32) -> Result<()> {
+	input_array_arg!(image);
+	output_array_arg!(labels);
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_connectedComponents_const__InputArrayR_const__OutputArrayR_int_int(image.as_raw__InputArray(), labels.as_raw__OutputArray(), connectivity, ltype, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
+}
+
+/// Computes the Connected Components Labeled image of a binary image.
+/// 
+/// The function takes as input a binary image and performs Connected Components Labeling. The output
+/// is an image where each Connected Component is assigned a unique label (integer value).
+/// ltype specifies the output label image type, an important consideration based on the total
+/// number of labels or alternatively the total number of pixels in the source image.
+/// ccltype specifies the connected components labeling algorithm to use, currently
+/// BKE [Allegretti2019](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Allegretti2019) is supported, see the #ConnectedComponentsAlgorithmsTypes
+/// for details. Note that labels in the output are not required to be sequential.
+/// 
+/// ## Parameters
+/// * image: The 8-bit single-channel image to be labeled.
+/// * labels: Destination labeled image.
+/// * connectivity: Connectivity to use for the labeling procedure. 8 for 8-way connectivity is supported.
+/// * ltype: Output image label type. Currently CV_32S is supported.
+/// * ccltype: Connected components algorithm type (see the #ConnectedComponentsAlgorithmsTypes).
+/// 
+/// 
+/// Note: A sample program demonstrating Connected Components Labeling in CUDA can be found at
+/// 
+/// opencv_contrib_source_code/modules/cudaimgproc/samples/connected_components.cpp
+#[inline]
+pub fn connected_components_with_algorithm(image: &dyn core::ToInputArray, labels: &mut dyn core::ToOutputArray, connectivity: i32, ltype: i32, ccltype: crate::cudaimgproc::CUDA_ConnectedComponentsAlgorithmsTypes) -> Result<()> {
+	input_array_arg!(image);
+	output_array_arg!(labels);
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_connectedComponents_const__InputArrayR_const__OutputArrayR_int_int_ConnectedComponentsAlgorithmsTypes(image.as_raw__InputArray(), labels.as_raw__OutputArray(), connectivity, ltype, ccltype, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Creates implementation for cuda::CLAHE .
@@ -230,8 +347,14 @@ pub fn calc_hist(src: &dyn core::ToInputArray, hist: &mut dyn core::ToOutputArra
 /// ## C++ default parameters
 /// * clip_limit: 40.0
 /// * tile_grid_size: Size(8,8)
-pub fn create_clahe(clip_limit: f64, tile_grid_size: core::Size) -> Result<core::Ptr::<dyn crate::cudaimgproc::CUDA_CLAHE>> {
-	unsafe { sys::cv_cuda_createCLAHE_double_Size(clip_limit, tile_grid_size.opencv_as_extern()) }.into_result().map(|r| unsafe { core::Ptr::<dyn crate::cudaimgproc::CUDA_CLAHE>::opencv_from_extern(r) } )
+#[inline]
+pub fn create_clahe(clip_limit: f64, tile_grid_size: core::Size) -> Result<core::Ptr<dyn crate::cudaimgproc::CUDA_CLAHE>> {
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_createCLAHE_double_Size(clip_limit, tile_grid_size.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { core::Ptr::<dyn crate::cudaimgproc::CUDA_CLAHE>::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
 /// Creates implementation for cuda::CannyEdgeDetector .
@@ -248,18 +371,36 @@ pub fn create_clahe(clip_limit: f64, tile_grid_size: core::Size) -> Result<core:
 /// ## C++ default parameters
 /// * apperture_size: 3
 /// * l2gradient: false
-pub fn create_canny_edge_detector(low_thresh: f64, high_thresh: f64, apperture_size: i32, l2gradient: bool) -> Result<core::Ptr::<dyn crate::cudaimgproc::CUDA_CannyEdgeDetector>> {
-	unsafe { sys::cv_cuda_createCannyEdgeDetector_double_double_int_bool(low_thresh, high_thresh, apperture_size, l2gradient) }.into_result().map(|r| unsafe { core::Ptr::<dyn crate::cudaimgproc::CUDA_CannyEdgeDetector>::opencv_from_extern(r) } )
+#[inline]
+pub fn create_canny_edge_detector(low_thresh: f64, high_thresh: f64, apperture_size: i32, l2gradient: bool) -> Result<core::Ptr<dyn crate::cudaimgproc::CUDA_CannyEdgeDetector>> {
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_createCannyEdgeDetector_double_double_int_bool(low_thresh, high_thresh, apperture_size, l2gradient, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { core::Ptr::<dyn crate::cudaimgproc::CUDA_CannyEdgeDetector>::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
-/// Creates implementation for generalized hough transform from [Ballard1981](https://docs.opencv.org/4.3.0/d0/de3/citelist.html#CITEREF_Ballard1981) .
-pub fn create_generalized_hough_ballard() -> Result<core::Ptr::<dyn crate::imgproc::GeneralizedHoughBallard>> {
-	unsafe { sys::cv_cuda_createGeneralizedHoughBallard() }.into_result().map(|r| unsafe { core::Ptr::<dyn crate::imgproc::GeneralizedHoughBallard>::opencv_from_extern(r) } )
+/// Creates implementation for generalized hough transform from [Ballard1981](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Ballard1981) .
+#[inline]
+pub fn create_generalized_hough_ballard() -> Result<core::Ptr<dyn crate::imgproc::GeneralizedHoughBallard>> {
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_createGeneralizedHoughBallard(ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { core::Ptr::<dyn crate::imgproc::GeneralizedHoughBallard>::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
-/// Creates implementation for generalized hough transform from [Guil1999](https://docs.opencv.org/4.3.0/d0/de3/citelist.html#CITEREF_Guil1999) .
-pub fn create_generalized_hough_guil() -> Result<core::Ptr::<dyn crate::imgproc::GeneralizedHoughGuil>> {
-	unsafe { sys::cv_cuda_createGeneralizedHoughGuil() }.into_result().map(|r| unsafe { core::Ptr::<dyn crate::imgproc::GeneralizedHoughGuil>::opencv_from_extern(r) } )
+/// Creates implementation for generalized hough transform from [Guil1999](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Guil1999) .
+#[inline]
+pub fn create_generalized_hough_guil() -> Result<core::Ptr<dyn crate::imgproc::GeneralizedHoughGuil>> {
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_createGeneralizedHoughGuil(ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { core::Ptr::<dyn crate::imgproc::GeneralizedHoughGuil>::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
 /// Creates implementation for cuda::CornersDetector .
@@ -288,8 +429,14 @@ pub fn create_generalized_hough_guil() -> Result<core::Ptr::<dyn crate::imgproc:
 /// * block_size: 3
 /// * use_harris_detector: false
 /// * harris_k: 0.04
-pub fn create_good_features_to_track_detector(src_type: i32, max_corners: i32, quality_level: f64, min_distance: f64, block_size: i32, use_harris_detector: bool, harris_k: f64) -> Result<core::Ptr::<dyn crate::cudaimgproc::CUDA_CornersDetector>> {
-	unsafe { sys::cv_cuda_createGoodFeaturesToTrackDetector_int_int_double_double_int_bool_double(src_type, max_corners, quality_level, min_distance, block_size, use_harris_detector, harris_k) }.into_result().map(|r| unsafe { core::Ptr::<dyn crate::cudaimgproc::CUDA_CornersDetector>::opencv_from_extern(r) } )
+#[inline]
+pub fn create_good_features_to_track_detector(src_type: i32, max_corners: i32, quality_level: f64, min_distance: f64, block_size: i32, use_harris_detector: bool, harris_k: f64) -> Result<core::Ptr<dyn crate::cudaimgproc::CUDA_CornersDetector>> {
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_createGoodFeaturesToTrackDetector_int_int_double_double_int_bool_double(src_type, max_corners, quality_level, min_distance, block_size, use_harris_detector, harris_k, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { core::Ptr::<dyn crate::cudaimgproc::CUDA_CornersDetector>::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
 /// Creates implementation for Harris cornerness criteria.
@@ -306,8 +453,14 @@ pub fn create_good_features_to_track_detector(src_type: i32, max_corners: i32, q
 /// 
 /// ## C++ default parameters
 /// * border_type: BORDER_REFLECT101
-pub fn create_harris_corner(src_type: i32, block_size: i32, ksize: i32, k: f64, border_type: i32) -> Result<core::Ptr::<dyn crate::cudaimgproc::CUDA_CornernessCriteria>> {
-	unsafe { sys::cv_cuda_createHarrisCorner_int_int_int_double_int(src_type, block_size, ksize, k, border_type) }.into_result().map(|r| unsafe { core::Ptr::<dyn crate::cudaimgproc::CUDA_CornernessCriteria>::opencv_from_extern(r) } )
+#[inline]
+pub fn create_harris_corner(src_type: i32, block_size: i32, ksize: i32, k: f64, border_type: i32) -> Result<core::Ptr<dyn crate::cudaimgproc::CUDA_CornernessCriteria>> {
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_createHarrisCorner_int_int_int_double_int(src_type, block_size, ksize, k, border_type, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { core::Ptr::<dyn crate::cudaimgproc::CUDA_CornernessCriteria>::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
 /// Creates implementation for cuda::HoughCirclesDetector .
@@ -329,8 +482,14 @@ pub fn create_harris_corner(src_type: i32, block_size: i32, ksize: i32, k: f64, 
 /// 
 /// ## C++ default parameters
 /// * max_circles: 4096
-pub fn create_hough_circles_detector(dp: f32, min_dist: f32, canny_threshold: i32, votes_threshold: i32, min_radius: i32, max_radius: i32, max_circles: i32) -> Result<core::Ptr::<dyn crate::cudaimgproc::CUDA_HoughCirclesDetector>> {
-	unsafe { sys::cv_cuda_createHoughCirclesDetector_float_float_int_int_int_int_int(dp, min_dist, canny_threshold, votes_threshold, min_radius, max_radius, max_circles) }.into_result().map(|r| unsafe { core::Ptr::<dyn crate::cudaimgproc::CUDA_HoughCirclesDetector>::opencv_from_extern(r) } )
+#[inline]
+pub fn create_hough_circles_detector(dp: f32, min_dist: f32, canny_threshold: i32, votes_threshold: i32, min_radius: i32, max_radius: i32, max_circles: i32) -> Result<core::Ptr<dyn crate::cudaimgproc::CUDA_HoughCirclesDetector>> {
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_createHoughCirclesDetector_float_float_int_int_int_int_int(dp, min_dist, canny_threshold, votes_threshold, min_radius, max_radius, max_circles, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { core::Ptr::<dyn crate::cudaimgproc::CUDA_HoughCirclesDetector>::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
 /// Creates implementation for cuda::HoughLinesDetector .
@@ -346,8 +505,14 @@ pub fn create_hough_circles_detector(dp: f32, min_dist: f32, canny_threshold: i3
 /// ## C++ default parameters
 /// * do_sort: false
 /// * max_lines: 4096
-pub fn create_hough_lines_detector(rho: f32, theta: f32, threshold: i32, do_sort: bool, max_lines: i32) -> Result<core::Ptr::<dyn crate::cudaimgproc::CUDA_HoughLinesDetector>> {
-	unsafe { sys::cv_cuda_createHoughLinesDetector_float_float_int_bool_int(rho, theta, threshold, do_sort, max_lines) }.into_result().map(|r| unsafe { core::Ptr::<dyn crate::cudaimgproc::CUDA_HoughLinesDetector>::opencv_from_extern(r) } )
+#[inline]
+pub fn create_hough_lines_detector(rho: f32, theta: f32, threshold: i32, do_sort: bool, max_lines: i32) -> Result<core::Ptr<dyn crate::cudaimgproc::CUDA_HoughLinesDetector>> {
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_createHoughLinesDetector_float_float_int_bool_int(rho, theta, threshold, do_sort, max_lines, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { core::Ptr::<dyn crate::cudaimgproc::CUDA_HoughLinesDetector>::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
 /// Creates implementation for cuda::HoughSegmentDetector .
@@ -361,8 +526,14 @@ pub fn create_hough_lines_detector(rho: f32, theta: f32, threshold: i32, do_sort
 /// 
 /// ## C++ default parameters
 /// * max_lines: 4096
-pub fn create_hough_segment_detector(rho: f32, theta: f32, min_line_length: i32, max_line_gap: i32, max_lines: i32) -> Result<core::Ptr::<dyn crate::cudaimgproc::CUDA_HoughSegmentDetector>> {
-	unsafe { sys::cv_cuda_createHoughSegmentDetector_float_float_int_int_int(rho, theta, min_line_length, max_line_gap, max_lines) }.into_result().map(|r| unsafe { core::Ptr::<dyn crate::cudaimgproc::CUDA_HoughSegmentDetector>::opencv_from_extern(r) } )
+#[inline]
+pub fn create_hough_segment_detector(rho: f32, theta: f32, min_line_length: i32, max_line_gap: i32, max_lines: i32) -> Result<core::Ptr<dyn crate::cudaimgproc::CUDA_HoughSegmentDetector>> {
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_createHoughSegmentDetector_float_float_int_int_int(rho, theta, min_line_length, max_line_gap, max_lines, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { core::Ptr::<dyn crate::cudaimgproc::CUDA_HoughSegmentDetector>::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
 /// Creates implementation for the minimum eigen value of a 2x2 derivative covariation matrix (the
@@ -379,8 +550,14 @@ pub fn create_hough_segment_detector(rho: f32, theta: f32, min_line_length: i32,
 /// 
 /// ## C++ default parameters
 /// * border_type: BORDER_REFLECT101
-pub fn create_min_eigen_val_corner(src_type: i32, block_size: i32, ksize: i32, border_type: i32) -> Result<core::Ptr::<dyn crate::cudaimgproc::CUDA_CornernessCriteria>> {
-	unsafe { sys::cv_cuda_createMinEigenValCorner_int_int_int_int(src_type, block_size, ksize, border_type) }.into_result().map(|r| unsafe { core::Ptr::<dyn crate::cudaimgproc::CUDA_CornernessCriteria>::opencv_from_extern(r) } )
+#[inline]
+pub fn create_min_eigen_val_corner(src_type: i32, block_size: i32, ksize: i32, border_type: i32) -> Result<core::Ptr<dyn crate::cudaimgproc::CUDA_CornernessCriteria>> {
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_createMinEigenValCorner_int_int_int_int(src_type, block_size, ksize, border_type, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { core::Ptr::<dyn crate::cudaimgproc::CUDA_CornernessCriteria>::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
 /// Creates implementation for cuda::TemplateMatching .
@@ -412,8 +589,14 @@ pub fn create_min_eigen_val_corner(src_type: i32, block_size: i32, ksize: i32, b
 /// 
 /// ## C++ default parameters
 /// * user_block_size: Size()
-pub fn create_template_matching(src_type: i32, method: i32, user_block_size: core::Size) -> Result<core::Ptr::<dyn crate::cudaimgproc::CUDA_TemplateMatching>> {
-	unsafe { sys::cv_cuda_createTemplateMatching_int_int_Size(src_type, method, user_block_size.opencv_as_extern()) }.into_result().map(|r| unsafe { core::Ptr::<dyn crate::cudaimgproc::CUDA_TemplateMatching>::opencv_from_extern(r) } )
+#[inline]
+pub fn create_template_matching(src_type: i32, method: i32, user_block_size: core::Size) -> Result<core::Ptr<dyn crate::cudaimgproc::CUDA_TemplateMatching>> {
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_createTemplateMatching_int_int_Size(src_type, method, user_block_size.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { core::Ptr::<dyn crate::cudaimgproc::CUDA_TemplateMatching>::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
 /// Converts an image from one color space to another.
@@ -434,10 +617,15 @@ pub fn create_template_matching(src_type: i32, method: i32, user_block_size: cor
 /// ## C++ default parameters
 /// * dcn: 0
 /// * stream: Stream::Null()
+#[inline]
 pub fn cvt_color(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, code: i32, dcn: i32, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_cvtColor_const__InputArrayR_const__OutputArrayR_int_int_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), code, dcn, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_cvtColor_const__InputArrayR_const__OutputArrayR_int_int_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), code, dcn, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Converts an image from Bayer pattern to RGB or grayscale.
@@ -457,7 +645,7 @@ pub fn cvt_color(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray
 ///    > -   COLOR_BayerBG2GRAY , COLOR_BayerGB2GRAY , COLOR_BayerRG2GRAY , COLOR_BayerGR2GRAY
 ///    > -   COLOR_BayerBG2BGR , COLOR_BayerGB2BGR , COLOR_BayerRG2BGR , COLOR_BayerGR2BGR
 /// 
-/// *   Demosaicing using Malvar-He-Cutler algorithm ([MHT2011](https://docs.opencv.org/4.3.0/d0/de3/citelist.html#CITEREF_MHT2011))
+/// *   Demosaicing using Malvar-He-Cutler algorithm ([MHT2011](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_MHT2011))
 /// 
 ///    > -   COLOR_BayerBG2GRAY_MHT , COLOR_BayerGB2GRAY_MHT , COLOR_BayerRG2GRAY_MHT ,
 ///    >     COLOR_BayerGR2GRAY_MHT
@@ -469,10 +657,15 @@ pub fn cvt_color(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray
 /// ## C++ default parameters
 /// * dcn: -1
 /// * stream: Stream::Null()
+#[inline]
 pub fn demosaicing(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, code: i32, dcn: i32, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_demosaicing_const__InputArrayR_const__OutputArrayR_int_int_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), code, dcn, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_demosaicing_const__InputArrayR_const__OutputArrayR_int_int_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), code, dcn, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Equalizes the histogram of a grayscale image.
@@ -486,10 +679,15 @@ pub fn demosaicing(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArr
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn equalize_hist(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_equalizeHist_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_equalizeHist_const__InputArrayR_const__OutputArrayR_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Computes levels with even distribution.
@@ -503,9 +701,14 @@ pub fn equalize_hist(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputA
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn even_levels(levels: &mut dyn core::ToOutputArray, n_levels: i32, lower_level: i32, upper_level: i32, stream: &mut core::Stream) -> Result<()> {
 	output_array_arg!(levels);
-	unsafe { sys::cv_cuda_evenLevels_const__OutputArrayR_int_int_int_StreamR(levels.as_raw__OutputArray(), n_levels, lower_level, upper_level, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_evenLevels_const__OutputArrayR_int_int_int_StreamR(levels.as_raw__OutputArray(), n_levels, lower_level, upper_level, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Routines for correcting image color gamma.
@@ -519,10 +722,15 @@ pub fn even_levels(levels: &mut dyn core::ToOutputArray, n_levels: i32, lower_le
 /// ## C++ default parameters
 /// * forward: true
 /// * stream: Stream::Null()
+#[inline]
 pub fn gamma_correction(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, forward: bool, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_gammaCorrection_const__InputArrayR_const__OutputArrayR_bool_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), forward, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_gammaCorrection_const__InputArrayR_const__OutputArrayR_bool_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), forward, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Calculates a histogram with evenly distributed bins.
@@ -538,10 +746,15 @@ pub fn gamma_correction(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutp
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn hist_even(src: &dyn core::ToInputArray, hist: &mut dyn core::ToOutputArray, hist_size: i32, lower_level: i32, upper_level: i32, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(hist);
-	unsafe { sys::cv_cuda_histEven_const__InputArrayR_const__OutputArrayR_int_int_int_StreamR(src.as_raw__InputArray(), hist.as_raw__OutputArray(), hist_size, lower_level, upper_level, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_histEven_const__InputArrayR_const__OutputArrayR_int_int_int_StreamR(src.as_raw__InputArray(), hist.as_raw__OutputArray(), hist_size, lower_level, upper_level, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Calculates a histogram with bins determined by the levels array.
@@ -555,11 +768,16 @@ pub fn hist_even(src: &dyn core::ToInputArray, hist: &mut dyn core::ToOutputArra
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn hist_range(src: &dyn core::ToInputArray, hist: &mut dyn core::ToOutputArray, levels: &dyn core::ToInputArray, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(hist);
 	input_array_arg!(levels);
-	unsafe { sys::cv_cuda_histRange_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src.as_raw__InputArray(), hist.as_raw__OutputArray(), levels.as_raw__InputArray(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_histRange_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(src.as_raw__InputArray(), hist.as_raw__OutputArray(), levels.as_raw__InputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Performs mean-shift filtering for each point of the source image.
@@ -579,10 +797,15 @@ pub fn hist_range(src: &dyn core::ToInputArray, hist: &mut dyn core::ToOutputArr
 /// ## C++ default parameters
 /// * criteria: TermCriteria(TermCriteria::MAX_ITER+TermCriteria::EPS,5,1)
 /// * stream: Stream::Null()
+#[inline]
 pub fn mean_shift_filtering(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, sp: i32, sr: i32, criteria: core::TermCriteria, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_meanShiftFiltering_const__InputArrayR_const__OutputArrayR_int_int_TermCriteria_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), sp, sr, criteria.opencv_as_extern(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_meanShiftFiltering_const__InputArrayR_const__OutputArrayR_int_int_TermCriteria_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), sp, sr, criteria.opencv_as_extern(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Performs a mean-shift procedure and stores information about processed points (their colors and
@@ -604,11 +827,16 @@ pub fn mean_shift_filtering(src: &dyn core::ToInputArray, dst: &mut dyn core::To
 /// ## C++ default parameters
 /// * criteria: TermCriteria(TermCriteria::MAX_ITER+TermCriteria::EPS,5,1)
 /// * stream: Stream::Null()
+#[inline]
 pub fn mean_shift_proc(src: &dyn core::ToInputArray, dstr: &mut dyn core::ToOutputArray, dstsp: &mut dyn core::ToOutputArray, sp: i32, sr: i32, criteria: core::TermCriteria, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dstr);
 	output_array_arg!(dstsp);
-	unsafe { sys::cv_cuda_meanShiftProc_const__InputArrayR_const__OutputArrayR_const__OutputArrayR_int_int_TermCriteria_StreamR(src.as_raw__InputArray(), dstr.as_raw__OutputArray(), dstsp.as_raw__OutputArray(), sp, sr, criteria.opencv_as_extern(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_meanShiftProc_const__InputArrayR_const__OutputArrayR_const__OutputArrayR_int_int_TermCriteria_StreamR(src.as_raw__InputArray(), dstr.as_raw__OutputArray(), dstsp.as_raw__OutputArray(), sp, sr, criteria.opencv_as_extern(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Performs a mean-shift segmentation of the source image and eliminates small segments.
@@ -625,10 +853,15 @@ pub fn mean_shift_proc(src: &dyn core::ToInputArray, dstr: &mut dyn core::ToOutp
 /// ## C++ default parameters
 /// * criteria: TermCriteria(TermCriteria::MAX_ITER+TermCriteria::EPS,5,1)
 /// * stream: Stream::Null()
+#[inline]
 pub fn mean_shift_segmentation(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, sp: i32, sr: i32, minsize: i32, criteria: core::TermCriteria, stream: &mut core::Stream) -> Result<()> {
 	input_array_arg!(src);
 	output_array_arg!(dst);
-	unsafe { sys::cv_cuda_meanShiftSegmentation_const__InputArrayR_const__OutputArrayR_int_int_int_TermCriteria_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), sp, sr, minsize, criteria.opencv_as_extern(), stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_meanShiftSegmentation_const__InputArrayR_const__OutputArrayR_int_int_int_TermCriteria_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), sp, sr, minsize, criteria.opencv_as_extern(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Exchanges the color channels of an image in-place.
@@ -644,14 +877,23 @@ pub fn mean_shift_segmentation(src: &dyn core::ToInputArray, dst: &mut dyn core:
 /// 
 /// ## C++ default parameters
 /// * stream: Stream::Null()
+#[inline]
 pub fn swap_channels(image: &mut dyn core::ToInputOutputArray, dst_order: &[i32; 4], stream: &mut core::Stream) -> Result<()> {
 	input_output_array_arg!(image);
-	unsafe { sys::cv_cuda_swapChannels_const__InputOutputArrayR_const_int_X__4__StreamR(image.as_raw__InputOutputArray(), dst_order, stream.as_raw_mut_Stream()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_swapChannels_const__InputOutputArrayR_const_intXX_StreamR(image.as_raw__InputOutputArray(), dst_order, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Base class for Contrast Limited Adaptive Histogram Equalization. :
-pub trait CUDA_CLAHE: crate::imgproc::CLAHE {
+pub trait CUDA_CLAHEConst: crate::imgproc::CLAHEConst {
 	fn as_raw_CUDA_CLAHE(&self) -> *const c_void;
+
+}
+
+pub trait CUDA_CLAHE: crate::cudaimgproc::CUDA_CLAHEConst + crate::imgproc::CLAHE {
 	fn as_raw_mut_CUDA_CLAHE(&mut self) -> *mut c_void;
 
 	/// Equalizes the histogram of a grayscale image using Contrast Limited Adaptive Histogram Equalization.
@@ -660,20 +902,65 @@ pub trait CUDA_CLAHE: crate::imgproc::CLAHE {
 	/// * src: Source image with CV_8UC1 type.
 	/// * dst: Destination image.
 	/// * stream: Stream for the asynchronous version.
+	#[inline]
 	fn apply(&mut self, src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 		input_array_arg!(src);
 		output_array_arg!(dst);
-		unsafe { sys::cv_cuda_CLAHE_apply_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_CUDA_CLAHE(), src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_CLAHE_apply_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_CUDA_CLAHE(), src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
 
 /// Base class for Canny Edge Detector. :
-pub trait CUDA_CannyEdgeDetector: core::AlgorithmTrait {
+pub trait CUDA_CannyEdgeDetectorConst: core::AlgorithmTraitConst {
 	fn as_raw_CUDA_CannyEdgeDetector(&self) -> *const c_void;
+
+	#[inline]
+	fn get_low_threshold(&self) -> Result<f64> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_CannyEdgeDetector_getLowThreshold_const(self.as_raw_CUDA_CannyEdgeDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
+	fn get_high_threshold(&self) -> Result<f64> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_CannyEdgeDetector_getHighThreshold_const(self.as_raw_CUDA_CannyEdgeDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
+	fn get_apperture_size(&self) -> Result<i32> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_CannyEdgeDetector_getAppertureSize_const(self.as_raw_CUDA_CannyEdgeDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
+	fn get_l2_gradient(&self) -> Result<bool> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_CannyEdgeDetector_getL2Gradient_const(self.as_raw_CUDA_CannyEdgeDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+}
+
+pub trait CUDA_CannyEdgeDetector: core::AlgorithmTrait + crate::cudaimgproc::CUDA_CannyEdgeDetectorConst {
 	fn as_raw_mut_CUDA_CannyEdgeDetector(&mut self) -> *mut c_void;
 
-	/// Finds edges in an image using the [Canny86](https://docs.opencv.org/4.3.0/d0/de3/citelist.html#CITEREF_Canny86) algorithm.
+	/// Finds edges in an image using the [Canny86](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Canny86) algorithm.
 	/// 
 	/// ## Parameters
 	/// * image: Single-channel 8-bit input image.
@@ -682,13 +969,18 @@ pub trait CUDA_CannyEdgeDetector: core::AlgorithmTrait {
 	/// 
 	/// ## C++ default parameters
 	/// * stream: Stream::Null()
+	#[inline]
 	fn detect(&mut self, image: &dyn core::ToInputArray, edges: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 		input_array_arg!(image);
 		output_array_arg!(edges);
-		unsafe { sys::cv_cuda_CannyEdgeDetector_detect_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_CUDA_CannyEdgeDetector(), image.as_raw__InputArray(), edges.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_CannyEdgeDetector_detect_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_CUDA_CannyEdgeDetector(), image.as_raw__InputArray(), edges.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	/// Finds edges in an image using the [Canny86](https://docs.opencv.org/4.3.0/d0/de3/citelist.html#CITEREF_Canny86) algorithm.
+	/// Finds edges in an image using the [Canny86](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Canny86) algorithm.
 	/// 
 	/// ## Parameters
 	/// * image: Single-channel 8-bit input image.
@@ -704,50 +996,63 @@ pub trait CUDA_CannyEdgeDetector: core::AlgorithmTrait {
 	/// 
 	/// ## C++ default parameters
 	/// * stream: Stream::Null()
+	#[inline]
 	fn detect_1(&mut self, dx: &dyn core::ToInputArray, dy: &dyn core::ToInputArray, edges: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 		input_array_arg!(dx);
 		input_array_arg!(dy);
 		output_array_arg!(edges);
-		unsafe { sys::cv_cuda_CannyEdgeDetector_detect_const__InputArrayR_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_CUDA_CannyEdgeDetector(), dx.as_raw__InputArray(), dy.as_raw__InputArray(), edges.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_CannyEdgeDetector_detect_const__InputArrayR_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_CUDA_CannyEdgeDetector(), dx.as_raw__InputArray(), dy.as_raw__InputArray(), edges.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
+	#[inline]
 	fn set_low_threshold(&mut self, low_thresh: f64) -> Result<()> {
-		unsafe { sys::cv_cuda_CannyEdgeDetector_setLowThreshold_double(self.as_raw_mut_CUDA_CannyEdgeDetector(), low_thresh) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_CannyEdgeDetector_setLowThreshold_double(self.as_raw_mut_CUDA_CannyEdgeDetector(), low_thresh, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn get_low_threshold(&self) -> Result<f64> {
-		unsafe { sys::cv_cuda_CannyEdgeDetector_getLowThreshold_const(self.as_raw_CUDA_CannyEdgeDetector()) }.into_result()
-	}
-	
+	#[inline]
 	fn set_high_threshold(&mut self, high_thresh: f64) -> Result<()> {
-		unsafe { sys::cv_cuda_CannyEdgeDetector_setHighThreshold_double(self.as_raw_mut_CUDA_CannyEdgeDetector(), high_thresh) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_CannyEdgeDetector_setHighThreshold_double(self.as_raw_mut_CUDA_CannyEdgeDetector(), high_thresh, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn get_high_threshold(&self) -> Result<f64> {
-		unsafe { sys::cv_cuda_CannyEdgeDetector_getHighThreshold_const(self.as_raw_CUDA_CannyEdgeDetector()) }.into_result()
-	}
-	
+	#[inline]
 	fn set_apperture_size(&mut self, apperture_size: i32) -> Result<()> {
-		unsafe { sys::cv_cuda_CannyEdgeDetector_setAppertureSize_int(self.as_raw_mut_CUDA_CannyEdgeDetector(), apperture_size) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_CannyEdgeDetector_setAppertureSize_int(self.as_raw_mut_CUDA_CannyEdgeDetector(), apperture_size, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn get_apperture_size(&self) -> Result<i32> {
-		unsafe { sys::cv_cuda_CannyEdgeDetector_getAppertureSize_const(self.as_raw_CUDA_CannyEdgeDetector()) }.into_result()
-	}
-	
+	#[inline]
 	fn set_l2_gradient(&mut self, l2gradient: bool) -> Result<()> {
-		unsafe { sys::cv_cuda_CannyEdgeDetector_setL2Gradient_bool(self.as_raw_mut_CUDA_CannyEdgeDetector(), l2gradient) }.into_result()
-	}
-	
-	fn get_l2_gradient(&self) -> Result<bool> {
-		unsafe { sys::cv_cuda_CannyEdgeDetector_getL2Gradient_const(self.as_raw_CUDA_CannyEdgeDetector()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_CannyEdgeDetector_setL2Gradient_bool(self.as_raw_mut_CUDA_CannyEdgeDetector(), l2gradient, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
 
 /// Base class for Cornerness Criteria computation. :
-pub trait CUDA_CornernessCriteria: core::AlgorithmTrait {
+pub trait CUDA_CornernessCriteriaConst: core::AlgorithmTraitConst {
 	fn as_raw_CUDA_CornernessCriteria(&self) -> *const c_void;
+
+}
+
+pub trait CUDA_CornernessCriteria: core::AlgorithmTrait + crate::cudaimgproc::CUDA_CornernessCriteriaConst {
 	fn as_raw_mut_CUDA_CornernessCriteria(&mut self) -> *mut c_void;
 
 	/// Computes the cornerness criteria at each image pixel.
@@ -760,17 +1065,26 @@ pub trait CUDA_CornernessCriteria: core::AlgorithmTrait {
 	/// 
 	/// ## C++ default parameters
 	/// * stream: Stream::Null()
+	#[inline]
 	fn compute(&mut self, src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 		input_array_arg!(src);
 		output_array_arg!(dst);
-		unsafe { sys::cv_cuda_CornernessCriteria_compute_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_CUDA_CornernessCriteria(), src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_CornernessCriteria_compute_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_CUDA_CornernessCriteria(), src.as_raw__InputArray(), dst.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
 
 /// Base class for Corners Detector. :
-pub trait CUDA_CornersDetector: core::AlgorithmTrait {
+pub trait CUDA_CornersDetectorConst: core::AlgorithmTraitConst {
 	fn as_raw_CUDA_CornersDetector(&self) -> *const c_void;
+
+}
+
+pub trait CUDA_CornersDetector: core::AlgorithmTrait + crate::cudaimgproc::CUDA_CornersDetectorConst {
 	fn as_raw_mut_CUDA_CornersDetector(&mut self) -> *mut c_void;
 
 	/// Determines strong corners on an image.
@@ -786,18 +1100,90 @@ pub trait CUDA_CornersDetector: core::AlgorithmTrait {
 	/// ## C++ default parameters
 	/// * mask: noArray()
 	/// * stream: Stream::Null()
+	#[inline]
 	fn detect(&mut self, image: &dyn core::ToInputArray, corners: &mut dyn core::ToOutputArray, mask: &dyn core::ToInputArray, stream: &mut core::Stream) -> Result<()> {
 		input_array_arg!(image);
 		output_array_arg!(corners);
 		input_array_arg!(mask);
-		unsafe { sys::cv_cuda_CornersDetector_detect_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(self.as_raw_mut_CUDA_CornersDetector(), image.as_raw__InputArray(), corners.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_CornersDetector_detect_const__InputArrayR_const__OutputArrayR_const__InputArrayR_StreamR(self.as_raw_mut_CUDA_CornersDetector(), image.as_raw__InputArray(), corners.as_raw__OutputArray(), mask.as_raw__InputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
 
 /// Base class for circles detector algorithm. :
-pub trait CUDA_HoughCirclesDetector: core::AlgorithmTrait {
+pub trait CUDA_HoughCirclesDetectorConst: core::AlgorithmTraitConst {
 	fn as_raw_CUDA_HoughCirclesDetector(&self) -> *const c_void;
+
+	#[inline]
+	fn get_dp(&self) -> Result<f32> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughCirclesDetector_getDp_const(self.as_raw_CUDA_HoughCirclesDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
+	fn get_min_dist(&self) -> Result<f32> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughCirclesDetector_getMinDist_const(self.as_raw_CUDA_HoughCirclesDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
+	fn get_canny_threshold(&self) -> Result<i32> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughCirclesDetector_getCannyThreshold_const(self.as_raw_CUDA_HoughCirclesDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
+	fn get_votes_threshold(&self) -> Result<i32> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughCirclesDetector_getVotesThreshold_const(self.as_raw_CUDA_HoughCirclesDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
+	fn get_min_radius(&self) -> Result<i32> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughCirclesDetector_getMinRadius_const(self.as_raw_CUDA_HoughCirclesDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
+	fn get_max_radius(&self) -> Result<i32> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughCirclesDetector_getMaxRadius_const(self.as_raw_CUDA_HoughCirclesDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
+	fn get_max_circles(&self) -> Result<i32> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughCirclesDetector_getMaxCircles_const(self.as_raw_CUDA_HoughCirclesDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+}
+
+pub trait CUDA_HoughCirclesDetector: core::AlgorithmTrait + crate::cudaimgproc::CUDA_HoughCirclesDetectorConst {
 	fn as_raw_mut_CUDA_HoughCirclesDetector(&mut self) -> *mut c_void;
 
 	/// Finds circles in a grayscale image using the Hough transform.
@@ -812,73 +1198,134 @@ pub trait CUDA_HoughCirclesDetector: core::AlgorithmTrait {
 	/// 
 	/// ## C++ default parameters
 	/// * stream: Stream::Null()
+	#[inline]
 	fn detect(&mut self, src: &dyn core::ToInputArray, circles: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 		input_array_arg!(src);
 		output_array_arg!(circles);
-		unsafe { sys::cv_cuda_HoughCirclesDetector_detect_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_CUDA_HoughCirclesDetector(), src.as_raw__InputArray(), circles.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughCirclesDetector_detect_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_CUDA_HoughCirclesDetector(), src.as_raw__InputArray(), circles.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
+	#[inline]
 	fn set_dp(&mut self, dp: f32) -> Result<()> {
-		unsafe { sys::cv_cuda_HoughCirclesDetector_setDp_float(self.as_raw_mut_CUDA_HoughCirclesDetector(), dp) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughCirclesDetector_setDp_float(self.as_raw_mut_CUDA_HoughCirclesDetector(), dp, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn get_dp(&self) -> Result<f32> {
-		unsafe { sys::cv_cuda_HoughCirclesDetector_getDp_const(self.as_raw_CUDA_HoughCirclesDetector()) }.into_result()
-	}
-	
+	#[inline]
 	fn set_min_dist(&mut self, min_dist: f32) -> Result<()> {
-		unsafe { sys::cv_cuda_HoughCirclesDetector_setMinDist_float(self.as_raw_mut_CUDA_HoughCirclesDetector(), min_dist) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughCirclesDetector_setMinDist_float(self.as_raw_mut_CUDA_HoughCirclesDetector(), min_dist, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn get_min_dist(&self) -> Result<f32> {
-		unsafe { sys::cv_cuda_HoughCirclesDetector_getMinDist_const(self.as_raw_CUDA_HoughCirclesDetector()) }.into_result()
-	}
-	
+	#[inline]
 	fn set_canny_threshold(&mut self, canny_threshold: i32) -> Result<()> {
-		unsafe { sys::cv_cuda_HoughCirclesDetector_setCannyThreshold_int(self.as_raw_mut_CUDA_HoughCirclesDetector(), canny_threshold) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughCirclesDetector_setCannyThreshold_int(self.as_raw_mut_CUDA_HoughCirclesDetector(), canny_threshold, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn get_canny_threshold(&self) -> Result<i32> {
-		unsafe { sys::cv_cuda_HoughCirclesDetector_getCannyThreshold_const(self.as_raw_CUDA_HoughCirclesDetector()) }.into_result()
-	}
-	
+	#[inline]
 	fn set_votes_threshold(&mut self, votes_threshold: i32) -> Result<()> {
-		unsafe { sys::cv_cuda_HoughCirclesDetector_setVotesThreshold_int(self.as_raw_mut_CUDA_HoughCirclesDetector(), votes_threshold) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughCirclesDetector_setVotesThreshold_int(self.as_raw_mut_CUDA_HoughCirclesDetector(), votes_threshold, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn get_votes_threshold(&self) -> Result<i32> {
-		unsafe { sys::cv_cuda_HoughCirclesDetector_getVotesThreshold_const(self.as_raw_CUDA_HoughCirclesDetector()) }.into_result()
-	}
-	
+	#[inline]
 	fn set_min_radius(&mut self, min_radius: i32) -> Result<()> {
-		unsafe { sys::cv_cuda_HoughCirclesDetector_setMinRadius_int(self.as_raw_mut_CUDA_HoughCirclesDetector(), min_radius) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughCirclesDetector_setMinRadius_int(self.as_raw_mut_CUDA_HoughCirclesDetector(), min_radius, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn get_min_radius(&self) -> Result<i32> {
-		unsafe { sys::cv_cuda_HoughCirclesDetector_getMinRadius_const(self.as_raw_CUDA_HoughCirclesDetector()) }.into_result()
-	}
-	
+	#[inline]
 	fn set_max_radius(&mut self, max_radius: i32) -> Result<()> {
-		unsafe { sys::cv_cuda_HoughCirclesDetector_setMaxRadius_int(self.as_raw_mut_CUDA_HoughCirclesDetector(), max_radius) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughCirclesDetector_setMaxRadius_int(self.as_raw_mut_CUDA_HoughCirclesDetector(), max_radius, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn get_max_radius(&self) -> Result<i32> {
-		unsafe { sys::cv_cuda_HoughCirclesDetector_getMaxRadius_const(self.as_raw_CUDA_HoughCirclesDetector()) }.into_result()
-	}
-	
+	#[inline]
 	fn set_max_circles(&mut self, max_circles: i32) -> Result<()> {
-		unsafe { sys::cv_cuda_HoughCirclesDetector_setMaxCircles_int(self.as_raw_mut_CUDA_HoughCirclesDetector(), max_circles) }.into_result()
-	}
-	
-	fn get_max_circles(&self) -> Result<i32> {
-		unsafe { sys::cv_cuda_HoughCirclesDetector_getMaxCircles_const(self.as_raw_CUDA_HoughCirclesDetector()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughCirclesDetector_setMaxCircles_int(self.as_raw_mut_CUDA_HoughCirclesDetector(), max_circles, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
 
 /// Base class for lines detector algorithm. :
-pub trait CUDA_HoughLinesDetector: core::AlgorithmTrait {
+pub trait CUDA_HoughLinesDetectorConst: core::AlgorithmTraitConst {
 	fn as_raw_CUDA_HoughLinesDetector(&self) -> *const c_void;
+
+	#[inline]
+	fn get_rho(&self) -> Result<f32> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughLinesDetector_getRho_const(self.as_raw_CUDA_HoughLinesDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
+	fn get_theta(&self) -> Result<f32> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughLinesDetector_getTheta_const(self.as_raw_CUDA_HoughLinesDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
+	fn get_threshold(&self) -> Result<i32> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughLinesDetector_getThreshold_const(self.as_raw_CUDA_HoughLinesDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
+	fn get_do_sort(&self) -> Result<bool> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughLinesDetector_getDoSort_const(self.as_raw_CUDA_HoughLinesDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
+	fn get_max_lines(&self) -> Result<i32> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughLinesDetector_getMaxLines_const(self.as_raw_CUDA_HoughLinesDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+}
+
+pub trait CUDA_HoughLinesDetector: core::AlgorithmTrait + crate::cudaimgproc::CUDA_HoughLinesDetectorConst {
 	fn as_raw_mut_CUDA_HoughLinesDetector(&mut self) -> *mut c_void;
 
 	/// Finds lines in a binary image using the classical Hough transform.
@@ -895,10 +1342,15 @@ pub trait CUDA_HoughLinesDetector: core::AlgorithmTrait {
 	/// 
 	/// ## C++ default parameters
 	/// * stream: Stream::Null()
+	#[inline]
 	fn detect(&mut self, src: &dyn core::ToInputArray, lines: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 		input_array_arg!(src);
 		output_array_arg!(lines);
-		unsafe { sys::cv_cuda_HoughLinesDetector_detect_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_CUDA_HoughLinesDetector(), src.as_raw__InputArray(), lines.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughLinesDetector_detect_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_CUDA_HoughLinesDetector(), src.as_raw__InputArray(), lines.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Downloads results from cuda::HoughLinesDetector::detect to host memory.
@@ -912,58 +1364,117 @@ pub trait CUDA_HoughLinesDetector: core::AlgorithmTrait {
 	/// ## C++ default parameters
 	/// * h_votes: noArray()
 	/// * stream: Stream::Null()
+	#[inline]
 	fn download_results(&mut self, d_lines: &dyn core::ToInputArray, h_lines: &mut dyn core::ToOutputArray, h_votes: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 		input_array_arg!(d_lines);
 		output_array_arg!(h_lines);
 		output_array_arg!(h_votes);
-		unsafe { sys::cv_cuda_HoughLinesDetector_downloadResults_const__InputArrayR_const__OutputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_CUDA_HoughLinesDetector(), d_lines.as_raw__InputArray(), h_lines.as_raw__OutputArray(), h_votes.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughLinesDetector_downloadResults_const__InputArrayR_const__OutputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_CUDA_HoughLinesDetector(), d_lines.as_raw__InputArray(), h_lines.as_raw__OutputArray(), h_votes.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
+	#[inline]
 	fn set_rho(&mut self, rho: f32) -> Result<()> {
-		unsafe { sys::cv_cuda_HoughLinesDetector_setRho_float(self.as_raw_mut_CUDA_HoughLinesDetector(), rho) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughLinesDetector_setRho_float(self.as_raw_mut_CUDA_HoughLinesDetector(), rho, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn get_rho(&self) -> Result<f32> {
-		unsafe { sys::cv_cuda_HoughLinesDetector_getRho_const(self.as_raw_CUDA_HoughLinesDetector()) }.into_result()
-	}
-	
+	#[inline]
 	fn set_theta(&mut self, theta: f32) -> Result<()> {
-		unsafe { sys::cv_cuda_HoughLinesDetector_setTheta_float(self.as_raw_mut_CUDA_HoughLinesDetector(), theta) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughLinesDetector_setTheta_float(self.as_raw_mut_CUDA_HoughLinesDetector(), theta, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn get_theta(&self) -> Result<f32> {
-		unsafe { sys::cv_cuda_HoughLinesDetector_getTheta_const(self.as_raw_CUDA_HoughLinesDetector()) }.into_result()
-	}
-	
+	#[inline]
 	fn set_threshold(&mut self, threshold: i32) -> Result<()> {
-		unsafe { sys::cv_cuda_HoughLinesDetector_setThreshold_int(self.as_raw_mut_CUDA_HoughLinesDetector(), threshold) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughLinesDetector_setThreshold_int(self.as_raw_mut_CUDA_HoughLinesDetector(), threshold, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn get_threshold(&self) -> Result<i32> {
-		unsafe { sys::cv_cuda_HoughLinesDetector_getThreshold_const(self.as_raw_CUDA_HoughLinesDetector()) }.into_result()
-	}
-	
+	#[inline]
 	fn set_do_sort(&mut self, do_sort: bool) -> Result<()> {
-		unsafe { sys::cv_cuda_HoughLinesDetector_setDoSort_bool(self.as_raw_mut_CUDA_HoughLinesDetector(), do_sort) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughLinesDetector_setDoSort_bool(self.as_raw_mut_CUDA_HoughLinesDetector(), do_sort, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn get_do_sort(&self) -> Result<bool> {
-		unsafe { sys::cv_cuda_HoughLinesDetector_getDoSort_const(self.as_raw_CUDA_HoughLinesDetector()) }.into_result()
-	}
-	
+	#[inline]
 	fn set_max_lines(&mut self, max_lines: i32) -> Result<()> {
-		unsafe { sys::cv_cuda_HoughLinesDetector_setMaxLines_int(self.as_raw_mut_CUDA_HoughLinesDetector(), max_lines) }.into_result()
-	}
-	
-	fn get_max_lines(&self) -> Result<i32> {
-		unsafe { sys::cv_cuda_HoughLinesDetector_getMaxLines_const(self.as_raw_CUDA_HoughLinesDetector()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughLinesDetector_setMaxLines_int(self.as_raw_mut_CUDA_HoughLinesDetector(), max_lines, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
 
 /// Base class for line segments detector algorithm. :
-pub trait CUDA_HoughSegmentDetector: core::AlgorithmTrait {
+pub trait CUDA_HoughSegmentDetectorConst: core::AlgorithmTraitConst {
 	fn as_raw_CUDA_HoughSegmentDetector(&self) -> *const c_void;
+
+	#[inline]
+	fn get_rho(&self) -> Result<f32> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughSegmentDetector_getRho_const(self.as_raw_CUDA_HoughSegmentDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
+	fn get_theta(&self) -> Result<f32> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughSegmentDetector_getTheta_const(self.as_raw_CUDA_HoughSegmentDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
+	fn get_min_line_length(&self) -> Result<i32> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughSegmentDetector_getMinLineLength_const(self.as_raw_CUDA_HoughSegmentDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
+	fn get_max_line_gap(&self) -> Result<i32> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughSegmentDetector_getMaxLineGap_const(self.as_raw_CUDA_HoughSegmentDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
+	fn get_max_lines(&self) -> Result<i32> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughSegmentDetector_getMaxLines_const(self.as_raw_CUDA_HoughSegmentDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+}
+
+pub trait CUDA_HoughSegmentDetector: core::AlgorithmTrait + crate::cudaimgproc::CUDA_HoughSegmentDetectorConst {
 	fn as_raw_mut_CUDA_HoughSegmentDetector(&mut self) -> *mut c_void;
 
 	/// Finds line segments in a binary image using the probabilistic Hough transform.
@@ -979,57 +1490,71 @@ pub trait CUDA_HoughSegmentDetector: core::AlgorithmTrait {
 	/// 
 	/// ## C++ default parameters
 	/// * stream: Stream::Null()
+	#[inline]
 	fn detect(&mut self, src: &dyn core::ToInputArray, lines: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 		input_array_arg!(src);
 		output_array_arg!(lines);
-		unsafe { sys::cv_cuda_HoughSegmentDetector_detect_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_CUDA_HoughSegmentDetector(), src.as_raw__InputArray(), lines.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughSegmentDetector_detect_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_CUDA_HoughSegmentDetector(), src.as_raw__InputArray(), lines.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
+	#[inline]
 	fn set_rho(&mut self, rho: f32) -> Result<()> {
-		unsafe { sys::cv_cuda_HoughSegmentDetector_setRho_float(self.as_raw_mut_CUDA_HoughSegmentDetector(), rho) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughSegmentDetector_setRho_float(self.as_raw_mut_CUDA_HoughSegmentDetector(), rho, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn get_rho(&self) -> Result<f32> {
-		unsafe { sys::cv_cuda_HoughSegmentDetector_getRho_const(self.as_raw_CUDA_HoughSegmentDetector()) }.into_result()
-	}
-	
+	#[inline]
 	fn set_theta(&mut self, theta: f32) -> Result<()> {
-		unsafe { sys::cv_cuda_HoughSegmentDetector_setTheta_float(self.as_raw_mut_CUDA_HoughSegmentDetector(), theta) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughSegmentDetector_setTheta_float(self.as_raw_mut_CUDA_HoughSegmentDetector(), theta, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn get_theta(&self) -> Result<f32> {
-		unsafe { sys::cv_cuda_HoughSegmentDetector_getTheta_const(self.as_raw_CUDA_HoughSegmentDetector()) }.into_result()
-	}
-	
+	#[inline]
 	fn set_min_line_length(&mut self, min_line_length: i32) -> Result<()> {
-		unsafe { sys::cv_cuda_HoughSegmentDetector_setMinLineLength_int(self.as_raw_mut_CUDA_HoughSegmentDetector(), min_line_length) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughSegmentDetector_setMinLineLength_int(self.as_raw_mut_CUDA_HoughSegmentDetector(), min_line_length, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn get_min_line_length(&self) -> Result<i32> {
-		unsafe { sys::cv_cuda_HoughSegmentDetector_getMinLineLength_const(self.as_raw_CUDA_HoughSegmentDetector()) }.into_result()
-	}
-	
+	#[inline]
 	fn set_max_line_gap(&mut self, max_line_gap: i32) -> Result<()> {
-		unsafe { sys::cv_cuda_HoughSegmentDetector_setMaxLineGap_int(self.as_raw_mut_CUDA_HoughSegmentDetector(), max_line_gap) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughSegmentDetector_setMaxLineGap_int(self.as_raw_mut_CUDA_HoughSegmentDetector(), max_line_gap, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn get_max_line_gap(&self) -> Result<i32> {
-		unsafe { sys::cv_cuda_HoughSegmentDetector_getMaxLineGap_const(self.as_raw_CUDA_HoughSegmentDetector()) }.into_result()
-	}
-	
+	#[inline]
 	fn set_max_lines(&mut self, max_lines: i32) -> Result<()> {
-		unsafe { sys::cv_cuda_HoughSegmentDetector_setMaxLines_int(self.as_raw_mut_CUDA_HoughSegmentDetector(), max_lines) }.into_result()
-	}
-	
-	fn get_max_lines(&self) -> Result<i32> {
-		unsafe { sys::cv_cuda_HoughSegmentDetector_getMaxLines_const(self.as_raw_CUDA_HoughSegmentDetector()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_HoughSegmentDetector_setMaxLines_int(self.as_raw_mut_CUDA_HoughSegmentDetector(), max_lines, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
 
 /// Base class for Template Matching. :
-pub trait CUDA_TemplateMatching: core::AlgorithmTrait {
+pub trait CUDA_TemplateMatchingConst: core::AlgorithmTraitConst {
 	fn as_raw_CUDA_TemplateMatching(&self) -> *const c_void;
+
+}
+
+pub trait CUDA_TemplateMatching: core::AlgorithmTrait + crate::cudaimgproc::CUDA_TemplateMatchingConst {
 	fn as_raw_mut_CUDA_TemplateMatching(&mut self) -> *mut c_void;
 
 	/// Computes a proximity map for a raster template and an image where the template is searched for.
@@ -1043,11 +1568,16 @@ pub trait CUDA_TemplateMatching: core::AlgorithmTrait {
 	/// 
 	/// ## C++ default parameters
 	/// * stream: Stream::Null()
+	#[inline]
 	fn match_(&mut self, image: &dyn core::ToInputArray, templ: &dyn core::ToInputArray, result: &mut dyn core::ToOutputArray, stream: &mut core::Stream) -> Result<()> {
 		input_array_arg!(image);
 		input_array_arg!(templ);
 		output_array_arg!(result);
-		unsafe { sys::cv_cuda_TemplateMatching_match_const__InputArrayR_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_CUDA_TemplateMatching(), image.as_raw__InputArray(), templ.as_raw__InputArray(), result.as_raw__OutputArray(), stream.as_raw_mut_Stream()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_cuda_TemplateMatching_match_const__InputArrayR_const__InputArrayR_const__OutputArrayR_StreamR(self.as_raw_mut_CUDA_TemplateMatching(), image.as_raw__InputArray(), templ.as_raw__InputArray(), result.as_raw__OutputArray(), stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }

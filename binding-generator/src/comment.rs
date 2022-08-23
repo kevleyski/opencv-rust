@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use once_cell::sync::Lazy;
 use percent_encoding::{NON_ALPHANUMERIC, utf8_percent_encode};
 use regex::Regex;
@@ -204,7 +206,8 @@ pub fn render_doc_comment_with_processor(doc_comment: &str, prefix: &str, opencv
 	}
 
 	// comment body markers
-	out.replace_in_place("@brief ", "");
+	static BRIEF: Lazy<Regex> = Lazy::new(|| Regex::new(r#"@brief[ :]*"#).unwrap());
+	out.replace_in_place_regex(&BRIEF, "");
 	out.replace_in_place("@note", "\nNote:");
 
 	// code blocks, don't run them during tests
@@ -320,7 +323,7 @@ pub fn render_doc_comment_with_processor(doc_comment: &str, prefix: &str, opencv
 			)
 	};
 	if let Some(deprecated) = deprecated {
-		out += &format!("\n#[deprecated = \"{}\"]", deprecated);
+		write!(&mut out, "\n#[deprecated = \"{}\"]", deprecated).expect("write! to String shouldn't fail");
 	}
 	out
 }

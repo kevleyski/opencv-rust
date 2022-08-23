@@ -1,15 +1,15 @@
 use matches::assert_matches;
 
 use opencv::{
-	core::{self, Matx12d, Scalar, ToInputArray, UMat, UMatUsageFlags},
+	core::{self, Matx12d, Scalar, ToInputArray, ToInputOutputArray, ToOutputArray, UMat, UMatUsageFlags, Vec2b, VecN},
 	prelude::*,
 	Result,
 	types::{VectorOff64, VectorOfu8},
 };
-#[cfg(not(feature = "opencv-4"))]
-use opencv::core::ACCESS_READ;
-#[cfg(feature = "opencv-4")]
+#[cfg(ocvrs_opencv_branch_4)]
 use opencv::core::AccessFlag::ACCESS_READ;
+#[cfg(not(ocvrs_opencv_branch_4))]
+use opencv::core::ACCESS_READ;
 
 #[test]
 fn input_array() -> Result<()> {
@@ -21,10 +21,33 @@ fn input_array() -> Result<()> {
 
 #[test]
 fn input_output_array_types() -> Result<()> {
-	assert!(Mat::default()?.input_array()?.is_mat()?);
+	assert!(Mat::default().input_array()?.is_mat()?);
+	assert!(Mat::default().output_array()?.is_mat()?);
+	assert!(Mat::default().input_output_array()?.is_mat()?);
+
 	assert!(VectorOfu8::new().input_array()?.is_vector()?);
+	assert!(VectorOfu8::new().output_array()?.is_vector()?);
+	assert!(VectorOfu8::new().input_output_array()?.is_vector()?);
+
 	assert!(Matx12d::default().input_array()?.is_matx()?);
+	assert!(Matx12d::default().output_array()?.is_matx()?);
+	assert!(Matx12d::default().input_output_array()?.is_matx()?);
+
 	assert!(UMat::new_rows_cols_with_default(1, 1, u8::typ(), Scalar::from(8.), UMatUsageFlags::USAGE_DEFAULT)?.input_array()?.is_umat()?);
+	assert!(UMat::new_rows_cols_with_default(1, 1, u8::typ(), Scalar::from(8.), UMatUsageFlags::USAGE_DEFAULT)?.output_array()?.is_umat()?);
+	assert!(UMat::new_rows_cols_with_default(1, 1, u8::typ(), Scalar::from(8.), UMatUsageFlags::USAGE_DEFAULT)?.input_output_array()?.is_umat()?);
+
+	assert!(Scalar::default().input_array()?.is_matx()?);
+	assert!(Scalar::default().output_array()?.is_matx()?);
+	assert!(Scalar::default().input_output_array()?.is_matx()?);
+
+	assert!(Vec2b::default().input_array()?.is_matx()?);
+	assert!(Vec2b::default().output_array()?.is_matx()?);
+	assert!(Vec2b::default().input_output_array()?.is_matx()?);
+
+	assert!(VecN::<f64, 18>::default().input_array()?.is_matx()?);
+	assert!(VecN::<f64, 18>::default().output_array()?.is_matx()?);
+	assert!(VecN::<f64, 18>::default().input_output_array()?.is_matx()?);
 	Ok(())
 }
 
@@ -36,7 +59,7 @@ fn input_output_array() -> Result<()> {
 		let umat = mat.get_umat(ACCESS_READ, UMatUsageFlags::USAGE_DEFAULT)?;
 		{
 			let mut trg = VectorOfu8::new();
-			core::add(&mat_expr, &umat, &mut trg, &core::no_array()?, -1)?;
+			core::add(&mat_expr, &umat, &mut trg, &core::no_array(), -1)?;
 			assert_eq!(3, trg.len());
 			assert_eq!(4, trg.get(0)?);
 			assert_eq!(4, trg.get(1)?);
@@ -45,7 +68,7 @@ fn input_output_array() -> Result<()> {
 
 		{
 			let mut trg = VectorOfu8::new();
-			core::add(&&mat_expr, &&umat, &mut &mut trg, &core::no_array()?, -1)?;
+			core::add(&&mat_expr, &&umat, &mut &mut trg, &core::no_array(), -1)?;
 			assert_eq!(3, trg.len());
 			assert_eq!(4, trg.get(0)?);
 			assert_eq!(4, trg.get(1)?);
@@ -55,7 +78,7 @@ fn input_output_array() -> Result<()> {
 
 	{
 		let mut t = VectorOff64::new();
-		core::add(&2.5, &4., &mut t, &core::no_array()?, -1)?;
+		core::add(&2.5, &4., &mut t, &core::no_array(), -1)?;
 		assert_eq!(6.5, t.get(0)?);
 	}
 
@@ -82,9 +105,12 @@ fn input_output_array() -> Result<()> {
 #[test]
 fn no_array() -> Result<()> {
 	use self::core::no_array;
-	assert_eq!(Scalar::all(0.), core::sum_elems(&no_array()?)?);
-	assert_matches!(core::complete_symm(&mut no_array()?, false), Ok(()));
-	let m = Mat::new_rows_cols_with_default(1, 1, u16::typ(), Scalar::all(0.))?;
-	assert_matches!(core::mean_std_dev(&m, &mut no_array()?, &mut no_array()?, &no_array()?), Ok(()));
+
+	assert!(no_array().empty()?);
+
+	{
+		let m = Mat::new_rows_cols_with_default(1, 1, u16::typ(), Scalar::all(0.))?;
+		assert_matches!(core::mean_std_dev(&m, &mut no_array(), &mut no_array(), &no_array()), Ok(()));
+	}
 	Ok(())
 }

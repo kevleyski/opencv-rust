@@ -12,27 +12,26 @@ use crate::{
 	EntityElement,
 	GeneratorEnv,
 	settings,
-	type_ref::Kind,
+	type_ref::{DependentTypeMode, FishStyle, Kind, TypeRefTypeHint},
 	TypeRef,
-	TypeRefTypeHint,
 };
 
 #[derive(Clone)]
-pub struct Typedef<'tu> {
+pub struct Typedef<'tu, 'ge> {
 	entity: Entity<'tu>,
-	gen_env: &'tu GeneratorEnv<'tu>,
+	gen_env: &'ge GeneratorEnv<'tu>,
 }
 
-impl<'tu> Typedef<'tu> {
-	pub fn new(entity: Entity<'tu>, gen_env: &'tu GeneratorEnv<'tu>) -> Self {
+impl<'tu, 'ge> Typedef<'tu, 'ge> {
+	pub fn new(entity: Entity<'tu>, gen_env: &'ge GeneratorEnv<'tu>) -> Self {
 		Self { entity, gen_env }
 	}
 
-	pub fn type_ref(&self) -> TypeRef<'tu> {
+	pub fn type_ref(&self) -> TypeRef<'tu, 'ge> {
 		TypeRef::new(self.entity.get_type().expect("Can't get typedef type"), self.gen_env)
 	}
 
-	pub fn underlying_type_ref(&self) -> TypeRef<'tu> {
+	pub fn underlying_type_ref(&self) -> TypeRef<'tu, 'ge> {
 		TypeRef::new_ext(
 			self.entity.get_typedef_underlying_type().expect("Can't get typedef underlying type"),
 			TypeRefTypeHint::None,
@@ -41,21 +40,21 @@ impl<'tu> Typedef<'tu> {
 		)
 	}
 
-	pub fn dependent_types<D: DependentType<'tu>>(&self) -> Vec<D> {
-		self.underlying_type_ref().dependent_types()
+	pub fn dependent_types(&self) -> Vec<DependentType<'tu, 'ge>> {
+		self.underlying_type_ref().dependent_types(DependentTypeMode::None)
 	}
 }
 
-impl<'tu> EntityElement<'tu> for Typedef<'tu> {
+impl<'tu> EntityElement<'tu> for Typedef<'tu, '_> {
 	fn entity(&self) -> Entity<'tu> {
 		self.entity
 	}
 }
 
-impl Element for Typedef<'_> {
+impl Element for Typedef<'_, '_> {
 	fn is_excluded(&self) -> bool {
 		DefaultElement::is_excluded(self)
-			|| self.rust_fullname() == self.underlying_type_ref().rust_full() // fixes recursive typedefs like Cv16suf
+			|| self.rust_fullname(FishStyle::No) == self.underlying_type_ref().rust_full() // fixes recursive typedefs like Cv16suf
 			|| settings::PRIMITIVE_TYPEDEFS.contains_key(self.cpp_fullname().as_ref())
 	}
 
@@ -80,7 +79,7 @@ impl Element for Typedef<'_> {
 	}
 
 	fn cpp_namespace(&self) -> Cow<str> {
-		DefaultElement::cpp_namespace(self)
+		DefaultElement::cpp_namespace(self).into()
 	}
 
 	fn cpp_localname(&self) -> Cow<str> {
@@ -91,7 +90,7 @@ impl Element for Typedef<'_> {
 		DefaultElement::rust_module(self)
 	}
 
-	fn rust_leafname(&self) -> Cow<str> {
+	fn rust_leafname(&self, _fish_style: FishStyle) -> Cow<str> {
 		match self.underlying_type_ref().source().kind() {
 			Kind::Class(..) | Kind::Function(..) | Kind::StdVector(..)
 			| Kind::SmartPtr(..) => {
@@ -103,18 +102,18 @@ impl Element for Typedef<'_> {
 		}
 	}
 
-	fn rust_localname(&self) -> Cow<str> {
-		DefaultElement::rust_localname(self)
+	fn rust_localname(&self, fish_style: FishStyle) -> Cow<str> {
+		DefaultElement::rust_localname(self, fish_style)
 	}
 }
 
-impl fmt::Display for Typedef<'_> {
+impl fmt::Display for Typedef<'_, '_> {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		write!(f, "{}", self.entity.get_display_name().expect("Can't get display name"))
 	}
 }
 
-impl fmt::Debug for Typedef<'_> {
+impl fmt::Debug for Typedef<'_, '_> {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		let mut debug_struct = f.debug_struct("Typedef");
 		self.update_debug_struct(&mut debug_struct)

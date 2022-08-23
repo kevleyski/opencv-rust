@@ -1,20 +1,19 @@
-#![cfg(not(feature = "opencv-32"))]
+#![cfg(ocvrs_has_module_dnn)]
 
 use matches::assert_matches;
 
 use opencv::{
 	core,
-	dnn::{DictTrait, DictValue, LayerTrait, LayerParams, Net},
+	dnn::{DictValue, LayerParams, Net},
 	Error,
 	prelude::*,
 	Result,
 	types::VectorOfMat,
 };
 
-#[cfg(all(feature = "opencv-4", not(target_env = "msvc")))]
-use opencv::dnn::NetTrait;
-
+/// Specialization, passing Vector of boxed objects
 #[test]
+#[cfg(not(ocvrs_opencv_branch_32))]
 fn net() -> Result<()> {
 	let mut net = Net::default()?;
 	assert!(net.empty()?);
@@ -42,26 +41,16 @@ fn net() -> Result<()> {
 	assert_ne!(-1, res);
 	assert!(!net.empty()?);
 	let mut blobs = VectorOfMat::new();
-	blobs.push(Mat::default()?);
+	blobs.push(Mat::default());
 	params.set_blobs(blobs);
 	let blobs = params.blobs();
 	assert_eq!(1, blobs.len());
 	Ok(())
 }
 
+/// Specialization
 #[test]
-fn layer() -> Result<()> {
-	use opencv::dnn::CropAndResizeLayer;
-	let mut params = LayerParams::default()?;
-	params.set("width", &DictValue::from_i32(32)?)?;
-	params.set("height", &DictValue::from_i32(32)?)?;
-	let layer = CropAndResizeLayer::create(&params)?;
-	assert_eq!(0, layer.preferable_target());
-	Ok(())
-}
-
-#[test]
-fn dict() -> Result<()> {
+fn dict_value() -> Result<()> {
 	{
 		let v = DictValue::from_f64(123.456)?;
 		assert!(v.is_real()?);
@@ -70,7 +59,9 @@ fn dict() -> Result<()> {
 		assert_eq!(1, v.size()?);
 		assert_matches!(v.get_i64(-1), Err(Error{code: core::StsAssert, ..}));
 		assert_eq!(123.456, v.get_f64(-1)?);
+		#[cfg(not(ocvrs_opencv_branch_32))]
 		assert_matches!(v.get_int_value(-1), Err(Error{code: core::StsAssert, ..}));
+		assert_matches!(v.get_i32(-1), Err(Error{code: core::StsAssert, ..}));
 	}
 
 	{
@@ -82,7 +73,9 @@ fn dict() -> Result<()> {
 		assert_eq!(123, v.get_i64(-1)?);
 		assert_eq!(123, v.get_i32(-1)?);
 		assert_eq!(123., v.get_f64(-1)?);
+		#[cfg(not(ocvrs_opencv_branch_32))]
 		assert_matches!(v.get_string_value(-1), Err(Error{code: core::StsAssert, ..}));
+		assert_matches!(v.get_str(-1), Err(Error{code: core::StsAssert, ..}));
 	}
 
 	{
@@ -91,9 +84,12 @@ fn dict() -> Result<()> {
 		assert!(!v.is_real()?);
 		assert!(v.is_string()?);
 		assert_eq!(1, v.size()?);
-		assert_eq!(876543, v.get_i64(-1)?);
-		assert_eq!(876543.123, v.get_real_value(-1)?);
-		assert_eq!("876543.123", v.get_string_value(-1)?);
+		#[cfg(not(ocvrs_opencv_branch_32))] {
+			assert_eq!(876543, v.get_i64(-1)?);
+			assert_eq!(876543.123, v.get_real_value(-1)?);
+			assert_eq!("876543.123", v.get_string_value(-1)?);
+		}
+		assert_eq!("876543.123", v.get_str(-1)?);
 	}
 	Ok(())
 }

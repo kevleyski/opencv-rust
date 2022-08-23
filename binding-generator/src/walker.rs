@@ -2,7 +2,7 @@ use std::path::Path;
 
 use clang::{Entity, EntityKind, EntityVisitResult, Type};
 
-use crate::main_opencv_module_from_path;
+use crate::element::main_opencv_module_from_path;
 
 #[allow(unused)]
 pub trait EntityWalkerVisitor<'tu> {
@@ -23,7 +23,7 @@ impl<'tu> EntityWalker<'tu> {
 	fn visit_resolve_types_namespace(ns: Entity<'tu>, visitor: &mut impl EntityWalkerVisitor<'tu>) -> bool {
 		!ns.visit_children(|decl, _| {
 			let res = match decl.get_kind() {
-				EntityKind::TypedefDecl => {
+				EntityKind::TypedefDecl | EntityKind::TypeAliasDecl => {
 					if let Some(typ) = decl.get_typedef_underlying_type() {
 						visitor.visit_resolve_type(typ)
 					} else {
@@ -50,13 +50,12 @@ impl<'tu> EntityWalker<'tu> {
 				}
 				EntityKind::ClassDecl | EntityKind::ClassTemplate | EntityKind::ClassTemplatePartialSpecialization
 				| EntityKind::StructDecl | EntityKind::EnumDecl | EntityKind::FunctionDecl
-				| EntityKind::TypedefDecl | EntityKind::VarDecl => {
+				| EntityKind::TypedefDecl | EntityKind::VarDecl | EntityKind::TypeAliasDecl => {
 					visitor.visit_entity(decl)
 				}
 				EntityKind::Constructor | EntityKind::ConversionFunction | EntityKind::Destructor
 				| EntityKind::Method | EntityKind::UnexposedDecl | EntityKind::FunctionTemplate
-				| EntityKind::UsingDeclaration | EntityKind::UsingDirective | EntityKind::TypeAliasTemplateDecl
-				| EntityKind::TypeAliasDecl => {
+				| EntityKind::UsingDeclaration | EntityKind::UsingDirective | EntityKind::TypeAliasTemplateDecl => {
 					/* ignoring */ true
 				}
 				_ => {
@@ -83,6 +82,8 @@ impl<'tu> EntityWalker<'tu> {
 										Self::visit_resolve_types_namespace(root_decl, &mut visitor)
 									}
 									else if name.starts_with("cv") { // + e.g. cvflann, cvv
+										// fixme: it should be possible to use opencv_module_from_path here,
+										// but it breaks module documentation generation
 										if main_opencv_module_from_path(&file).is_some() {
 											visitor.visit_entity(root_decl);
 										}

@@ -8,9 +8,7 @@
 // todo almost everything from the manual module must be connected to the binding generator, not the main crate
 // todo check that FN_FaceDetector works at all (receiving InputArray, passing as callback)
 // fixme vector<Mat*> get's interpreted as Vector<Mat> which should be wrong (e.g. Layer::forward and Layer::apply_halide_scheduler)
-// fixme most constructors of Mat have invalid comment "download data from GpuMat"
 // fixme MatConstIterator::m return Mat**, is it handled correctly?
-// fixme docs.rs fails to build crates that have opencv as dependency
 // fixme VectorOfMat::get allows mutation
 // fixme TextDetectionModel_EAST (and all others inheriting from Model) seems to have no fields, but it fails when generated as simple, probably makes sense to have a special case for that
 
@@ -34,15 +32,15 @@ use once_cell::sync::Lazy;
 pub use abstract_ref_wrapper::AbstractRefWrapper;
 pub use class::Class;
 pub use constant::Const;
-pub use element::{DefaultElement, Element, EntityElement, is_opencv_path, main_module_from_path, main_opencv_module_from_path, module_from_path};
+pub use element::{DefaultElement, Element, EntityElement, is_opencv_path, opencv_module_from_path};
 pub use entity::EntityExt;
 pub use enumeration::Enum;
 use field::{Field, FieldTypeHint};
-pub use func::{Func, FunctionTypeHint};
+pub use func::{Func, FuncId, FunctionTypeHint};
 use function::Function;
 #[allow(unused)]
 use generator::{dbg_clang_entity, dbg_clang_type};
-pub use generator::{DependentType, Generator, GeneratorVisitor};
+pub use generator::{DependentType, Generator, GeneratorVisitor, is_ephemeral_header};
 pub use generator_env::{ExportConfig, GeneratorEnv};
 pub use iterator_ext::IteratorExt;
 #[allow(unused)]
@@ -51,7 +49,7 @@ use name_pool::NamePool;
 use return_type_wrapper::{DefinitionLocation, ReturnTypeWrapper};
 use smart_ptr::SmartPtr;
 pub use string_ext::{CompiledInterpolation, StrExt, StringExt};
-use type_ref::{Constness, ConstnessOverride, DependentTypeMode, TypeRef, TypeRefTypeHint};
+use type_ref::{Constness, ConstnessOverride, DependentTypeMode, TypeRef};
 pub use typedef::Typedef;
 use vector::Vector;
 pub use walker::{EntityWalker, EntityWalkerVisitor};

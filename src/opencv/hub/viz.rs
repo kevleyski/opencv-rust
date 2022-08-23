@@ -33,7 +33,7 @@
 //! 
 use crate::{mod_prelude::*, core, sys, types};
 pub mod prelude {
-	pub use { super::ColorTrait, super::MeshTrait, super::CameraTrait, super::KeyboardEventTrait, super::MouseEventTrait, super::WidgetTrait, super::Widget3DTrait, super::Widget2DTrait, super::WLineTrait, super::WPlaneTrait, super::WSphereTrait, super::WArrowTrait, super::WCircleTrait, super::WConeTrait, super::WCylinderTrait, super::WCubeTrait, super::WPolyLineTrait, super::WTextTrait, super::WText3DTrait, super::WImageOverlayTrait, super::WImage3DTrait, super::WCoordinateSystemTrait, super::WGridTrait, super::WCameraPositionTrait, super::WTrajectoryTrait, super::WTrajectoryFrustumsTrait, super::WTrajectorySpheresTrait, super::WCloudTrait, super::WPaintedCloudTrait, super::WCloudCollectionTrait, super::WCloudNormalsTrait, super::WMeshTrait, super::WWidgetMergerTrait, super::Viz3dTrait };
+	pub use { super::ColorTraitConst, super::ColorTrait, super::MeshTraitConst, super::MeshTrait, super::CameraTraitConst, super::CameraTrait, super::KeyboardEventTraitConst, super::KeyboardEventTrait, super::MouseEventTraitConst, super::MouseEventTrait, super::WidgetTraitConst, super::WidgetTrait, super::Widget3DTraitConst, super::Widget3DTrait, super::Widget2DTraitConst, super::Widget2DTrait, super::WLineTraitConst, super::WLineTrait, super::WPlaneTraitConst, super::WPlaneTrait, super::WSphereTraitConst, super::WSphereTrait, super::WArrowTraitConst, super::WArrowTrait, super::WCircleTraitConst, super::WCircleTrait, super::WConeTraitConst, super::WConeTrait, super::WCylinderTraitConst, super::WCylinderTrait, super::WCubeTraitConst, super::WCubeTrait, super::WPolyLineTraitConst, super::WPolyLineTrait, super::WTextTraitConst, super::WTextTrait, super::WText3DTraitConst, super::WText3DTrait, super::WImageOverlayTraitConst, super::WImageOverlayTrait, super::WImage3DTraitConst, super::WImage3DTrait, super::WCoordinateSystemTraitConst, super::WCoordinateSystemTrait, super::WGridTraitConst, super::WGridTrait, super::WCameraPositionTraitConst, super::WCameraPositionTrait, super::WTrajectoryTraitConst, super::WTrajectoryTrait, super::WTrajectoryFrustumsTraitConst, super::WTrajectoryFrustumsTrait, super::WTrajectorySpheresTraitConst, super::WTrajectorySpheresTrait, super::WCloudTraitConst, super::WCloudTrait, super::WPaintedCloudTraitConst, super::WPaintedCloudTrait, super::WCloudCollectionTraitConst, super::WCloudCollectionTrait, super::WCloudNormalsTraitConst, super::WCloudNormalsTrait, super::WMeshTraitConst, super::WMeshTrait, super::WWidgetMergerTraitConst, super::WWidgetMergerTrait, super::Viz3dTraitConst, super::Viz3dTrait };
 }
 
 pub const AMBIENT: i32 = 7;
@@ -141,9 +141,14 @@ pub type Viz3d_MouseCallback = Option<Box<dyn FnMut(*const c_void) -> () + Send 
 /// ## Parameters
 /// * mesh: Input mesh.
 /// * normals: Normals at very point in the mesh of type CV_64FC3.
+#[inline]
 pub fn compute_normals(mesh: &crate::viz::Mesh, normals: &mut dyn core::ToOutputArray) -> Result<()> {
 	output_array_arg!(normals);
-	unsafe { sys::cv_viz_computeNormals_const_MeshR_const__OutputArrayR(mesh.as_raw_Mesh(), normals.as_raw__OutputArray()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_viz_computeNormals_const_MeshR_const__OutputArrayR(mesh.as_raw_Mesh(), normals.as_raw__OutputArray(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Retrieves a window by its name.
@@ -156,19 +161,31 @@ pub fn compute_normals(mesh: &crate::viz::Mesh, normals: &mut dyn core::ToOutput
 /// 
 /// Note: If the window with that name already exists, that window is returned. Otherwise, new window is
 /// created with the given name, and it is returned.
+#[inline]
 pub fn get_window_by_name(window_name: &str) -> Result<crate::viz::Viz3d> {
 	extern_container_arg!(window_name);
-	unsafe { sys::cv_viz_getWindowByName_const_StringR(window_name.opencv_as_extern()) }.into_result().map(|r| unsafe { crate::viz::Viz3d::opencv_from_extern(r) } )
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_viz_getWindowByName_const_StringR(window_name.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { crate::viz::Viz3d::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
 /// Displays image in specified window
 /// 
 /// ## C++ default parameters
 /// * window_size: Size(-1,-1)
+#[inline]
 pub fn imshow(window_name: &str, image: &dyn core::ToInputArray, window_size: core::Size) -> Result<crate::viz::Viz3d> {
 	extern_container_arg!(window_name);
 	input_array_arg!(image);
-	unsafe { sys::cv_viz_imshow_const_StringR_const__InputArrayR_const_SizeR(window_name.opencv_as_extern(), image.as_raw__InputArray(), &window_size) }.into_result().map(|r| unsafe { crate::viz::Viz3d::opencv_from_extern(r) } )
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_viz_imshow_const_StringR_const__InputArrayR_const_SizeR(window_name.opencv_as_extern(), image.as_raw__InputArray(), &window_size, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { crate::viz::Viz3d::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
 /// Constructs camera pose from position, focal_point and up_vector (see gluLookAt() for more
@@ -180,8 +197,13 @@ pub fn imshow(window_name: &str, image: &dyn core::ToInputArray, window_size: co
 /// * y_dir: Up vector of the camera in global coordinate frame.
 /// 
 /// This function returns pose of the camera in global coordinate frame.
+#[inline]
 pub fn make_camera_pose(position: core::Vec3d, focal_point: core::Vec3d, y_dir: core::Vec3d) -> Result<core::Affine3d> {
-	unsafe { sys::cv_viz_makeCameraPose_const_Vec3dR_const_Vec3dR_const_Vec3dR(&position, &focal_point, &y_dir) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_viz_makeCameraPose_const_Vec3dR_const_Vec3dR_const_Vec3dR(&position, &focal_point, &y_dir, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Takes coordinate frame data and builds transform to global coordinate frame.
@@ -200,8 +222,13 @@ pub fn make_camera_pose(position: core::Vec3d, focal_point: core::Vec3d, y_dir: 
 /// 
 /// ## C++ default parameters
 /// * origin: Vec3d::all(0)
+#[inline]
 pub fn make_transform_to_global(axis_x: core::Vec3d, axis_y: core::Vec3d, axis_z: core::Vec3d, origin: core::Vec3d) -> Result<core::Affine3d> {
-	unsafe { sys::cv_viz_makeTransformToGlobal_const_Vec3dR_const_Vec3dR_const_Vec3dR_const_Vec3dR(&axis_x, &axis_y, &axis_z, &origin) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_viz_makeTransformToGlobal_const_Vec3dR_const_Vec3dR_const_Vec3dR_const_Vec3dR(&axis_x, &axis_y, &axis_z, &origin, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// ## Parameters
@@ -215,18 +242,30 @@ pub fn make_transform_to_global(axis_x: core::Vec3d, axis_y: core::Vec3d, axis_z
 /// ## C++ default parameters
 /// * colors: noArray()
 /// * normals: noArray()
+#[inline]
 pub fn read_cloud(file: &str, colors: &mut dyn core::ToOutputArray, normals: &mut dyn core::ToOutputArray) -> Result<core::Mat> {
 	extern_container_arg!(file);
 	output_array_arg!(colors);
 	output_array_arg!(normals);
-	unsafe { sys::cv_viz_readCloud_const_StringR_const__OutputArrayR_const__OutputArrayR(file.opencv_as_extern(), colors.as_raw__OutputArray(), normals.as_raw__OutputArray()) }.into_result().map(|r| unsafe { core::Mat::opencv_from_extern(r) } )
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_viz_readCloud_const_StringR_const__OutputArrayR_const__OutputArrayR(file.opencv_as_extern(), colors.as_raw__OutputArray(), normals.as_raw__OutputArray(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { core::Mat::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
 /// ////////////////////////////////////////////////////////////////////////////////////////////
 /// Reads mesh. Only ply format is supported now and no texture load support
+#[inline]
 pub fn read_mesh(file: &str) -> Result<crate::viz::Mesh> {
 	extern_container_arg!(file);
-	unsafe { sys::cv_viz_readMesh_const_StringR(file.opencv_as_extern()) }.into_result().map(|r| unsafe { crate::viz::Mesh::opencv_from_extern(r) } )
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_viz_readMesh_const_StringR(file.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	let ret = unsafe { crate::viz::Mesh::opencv_from_extern(ret) };
+	Ok(ret)
 }
 
 /// ## Parameters
@@ -236,10 +275,15 @@ pub fn read_mesh(file: &str) -> Result<crate::viz::Mesh> {
 /// 
 /// ## C++ default parameters
 /// * tag: "pose"
+#[inline]
 pub fn read_pose(file: &str, pose: &mut core::Affine3d, tag: &str) -> Result<bool> {
 	extern_container_arg!(file);
 	extern_container_arg!(tag);
-	unsafe { sys::cv_viz_readPose_const_StringR_Affine3dR_const_StringR(file.opencv_as_extern(), pose, tag.opencv_as_extern()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_viz_readPose_const_StringR_Affine3dR_const_StringR(file.opencv_as_extern(), pose, tag.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// takes vector<Affine3<T>> with T = float/dobule and loads poses from sequence of files
@@ -259,16 +303,26 @@ pub fn read_pose(file: &str, pose: &mut core::Affine3d, tag: &str) -> Result<boo
 /// * start: 0
 /// * end: INT_MAX
 /// * tag: "pose"
+#[inline]
 pub fn read_trajectory(traj: &mut dyn core::ToOutputArray, files_format: &str, start: i32, end: i32, tag: &str) -> Result<()> {
 	output_array_arg!(traj);
 	extern_container_arg!(files_format);
 	extern_container_arg!(tag);
-	unsafe { sys::cv_viz_readTrajectory_const__OutputArrayR_const_StringR_int_int_const_StringR(traj.as_raw__OutputArray(), files_format.opencv_as_extern(), start, end, tag.opencv_as_extern()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_viz_readTrajectory_const__OutputArrayR_const_StringR_int_int_const_StringR(traj.as_raw__OutputArray(), files_format.opencv_as_extern(), start, end, tag.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// Unregisters all Viz windows from internal database. After it 'getWindowByName()' will create new windows instead of getting existing from the database.
+#[inline]
 pub fn unregister_all_windows() -> Result<()> {
-	unsafe { sys::cv_viz_unregisterAllWindows() }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_viz_unregisterAllWindows(ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// ## Parameters
@@ -283,12 +337,17 @@ pub fn unregister_all_windows() -> Result<()> {
 /// * colors: noArray()
 /// * normals: noArray()
 /// * binary: false
+#[inline]
 pub fn write_cloud(file: &str, cloud: &dyn core::ToInputArray, colors: &dyn core::ToInputArray, normals: &dyn core::ToInputArray, binary: bool) -> Result<()> {
 	extern_container_arg!(file);
 	input_array_arg!(cloud);
 	input_array_arg!(colors);
 	input_array_arg!(normals);
-	unsafe { sys::cv_viz_writeCloud_const_StringR_const__InputArrayR_const__InputArrayR_const__InputArrayR_bool(file.opencv_as_extern(), cloud.as_raw__InputArray(), colors.as_raw__InputArray(), normals.as_raw__InputArray(), binary) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_viz_writeCloud_const_StringR_const__InputArrayR_const__InputArrayR_const__InputArrayR_bool(file.opencv_as_extern(), cloud.as_raw__InputArray(), colors.as_raw__InputArray(), normals.as_raw__InputArray(), binary, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// ## Parameters
@@ -298,10 +357,15 @@ pub fn write_cloud(file: &str, cloud: &dyn core::ToInputArray, colors: &dyn core
 /// 
 /// ## C++ default parameters
 /// * tag: "pose"
+#[inline]
 pub fn write_pose(file: &str, pose: core::Affine3d, tag: &str) -> Result<()> {
 	extern_container_arg!(file);
 	extern_container_arg!(tag);
-	unsafe { sys::cv_viz_writePose_const_StringR_const_Affine3dR_const_StringR(file.opencv_as_extern(), &pose, tag.opencv_as_extern()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_viz_writePose_const_StringR_const_Affine3dR_const_StringR(file.opencv_as_extern(), &pose, tag.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// takes vector<Affine3<T>> with T = float/dobule and writes to a sequence of files with given filename format
@@ -319,51 +383,68 @@ pub fn write_pose(file: &str, pose: core::Affine3d, tag: &str) -> Result<()> {
 /// * files_format: "pose%05d.xml"
 /// * start: 0
 /// * tag: "pose"
+#[inline]
 pub fn write_trajectory(traj: &dyn core::ToInputArray, files_format: &str, start: i32, tag: &str) -> Result<()> {
 	input_array_arg!(traj);
 	extern_container_arg!(files_format);
 	extern_container_arg!(tag);
-	unsafe { sys::cv_viz_writeTrajectory_const__InputArrayR_const_StringR_int_const_StringR(traj.as_raw__InputArray(), files_format.opencv_as_extern(), start, tag.opencv_as_extern()) }.into_result()
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_viz_writeTrajectory_const__InputArrayR_const_StringR_int_const_StringR(traj.as_raw__InputArray(), files_format.opencv_as_extern(), start, tag.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
 }
 
 /// This class wraps intrinsic parameters of a camera.
 /// 
 /// It provides several constructors that can extract the intrinsic parameters from field of
 /// view, intrinsic matrix and projection matrix. :
-pub trait CameraTrait {
+pub trait CameraTraitConst {
 	fn as_raw_Camera(&self) -> *const c_void;
-	fn as_raw_mut_Camera(&mut self) -> *mut c_void;
 
+	#[inline]
 	fn get_clip(&self) -> Result<core::Vec2d> {
-		unsafe { sys::cv_viz_Camera_getClip_const(self.as_raw_Camera()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Camera_getClip_const(self.as_raw_Camera(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn set_clip(&mut self, clip: core::Vec2d) -> Result<()> {
-		unsafe { sys::cv_viz_Camera_setClip_const_Vec2dR(self.as_raw_mut_Camera(), &clip) }.into_result()
-	}
-	
+	#[inline]
 	fn get_window_size(&self) -> Result<core::Size> {
-		unsafe { sys::cv_viz_Camera_getWindowSize_const(self.as_raw_Camera()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Camera_getWindowSize_const(self.as_raw_Camera(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn set_window_size(&mut self, window_size: core::Size) -> Result<()> {
-		unsafe { sys::cv_viz_Camera_setWindowSize_const_SizeR(self.as_raw_mut_Camera(), &window_size) }.into_result()
-	}
-	
+	#[inline]
 	fn get_fov(&self) -> Result<core::Vec2d> {
-		unsafe { sys::cv_viz_Camera_getFov_const(self.as_raw_Camera()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Camera_getFov_const(self.as_raw_Camera(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	fn set_fov(&mut self, fov: core::Vec2d) -> Result<()> {
-		unsafe { sys::cv_viz_Camera_setFov_const_Vec2dR(self.as_raw_mut_Camera(), &fov) }.into_result()
-	}
-	
+	#[inline]
 	fn get_principal_point(&self) -> Result<core::Vec2d> {
-		unsafe { sys::cv_viz_Camera_getPrincipalPoint_const(self.as_raw_Camera()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Camera_getPrincipalPoint_const(self.as_raw_Camera(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
+	#[inline]
 	fn get_focal_length(&self) -> Result<core::Vec2d> {
-		unsafe { sys::cv_viz_Camera_getFocalLength_const(self.as_raw_Camera()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Camera_getFocalLength_const(self.as_raw_Camera(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Computes projection matrix using intrinsic parameters of the camera.
@@ -372,8 +453,45 @@ pub trait CameraTrait {
 	/// ## Parameters
 	/// * proj: Output projection matrix with the following form
 	/// ![block formula](https://latex.codecogs.com/png.latex?%0A%20%20%5Cbegin%7Bbmatrix%7D%0A%20%20%5Cfrac%7B2n%7D%7Br%2Dl%7D%20%26%20%20%20%20%20%20%20%200%20%20%20%20%20%20%20%26%20%5Cfrac%7Br%2Bl%7D%7Br%2Dl%7D%20%20%26%200%5C%5C%0A%20%20%20%20%20%20%20%200%20%20%20%20%20%20%20%20%26%20%5Cfrac%7B2n%7D%7Bt%2Db%7D%20%26%20%5Cfrac%7Bt%2Bb%7D%7Bt%2Db%7D%20%20%26%200%5C%5C%0A%20%20%20%20%20%20%20%200%20%20%20%20%20%20%20%20%26%20%20%20%20%20%20%20%200%20%20%20%20%20%20%20%26%20%2D%5Cfrac%7Bf%2Bn%7D%7Bf%2Dn%7D%20%26%20%2D%5Cfrac%7B2fn%7D%7Bf%2Dn%7D%5C%5C%0A%20%20%20%20%20%20%20%200%20%20%20%20%20%20%20%20%26%20%20%20%20%20%20%20%200%20%20%20%20%20%20%20%26%20%2D1%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%26%200%5C%5C%0A%20%20%5Cend%7Bbmatrix%7D%0A)
+	#[inline]
 	fn compute_projection_matrix(&self, proj: &mut core::Matx44d) -> Result<()> {
-		unsafe { sys::cv_viz_Camera_computeProjectionMatrix_const_Matx44dR(self.as_raw_Camera(), proj) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Camera_computeProjectionMatrix_const_Matx44dR(self.as_raw_Camera(), proj, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+}
+
+pub trait CameraTrait: crate::viz::CameraTraitConst {
+	fn as_raw_mut_Camera(&mut self) -> *mut c_void;
+
+	#[inline]
+	fn set_clip(&mut self, clip: core::Vec2d) -> Result<()> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Camera_setClip_const_Vec2dR(self.as_raw_mut_Camera(), &clip, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
+	fn set_window_size(&mut self, window_size: core::Size) -> Result<()> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Camera_setWindowSize_const_SizeR(self.as_raw_mut_Camera(), &window_size, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
+	fn set_fov(&mut self, fov: core::Vec2d) -> Result<()> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Camera_setFov_const_Vec2dR(self.as_raw_mut_Camera(), &fov, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
@@ -395,15 +513,13 @@ impl Drop for Camera {
 	}
 }
 
-impl Camera {
-	#[inline] pub fn as_raw_Camera(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_Camera(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for Camera {}
 
-impl crate::viz::CameraTrait for Camera {
+impl crate::viz::CameraTraitConst for Camera {
 	#[inline] fn as_raw_Camera(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::CameraTrait for Camera {
 	#[inline] fn as_raw_mut_Camera(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
@@ -417,8 +533,14 @@ impl Camera {
 	/// * cy: y coordinate of the principal point.
 	/// * window_size: Size of the window. This together with focal length and principal
 	/// point determines the field of view.
+	#[inline]
 	pub fn new(fx: f64, fy: f64, cx: f64, cy: f64, window_size: core::Size) -> Result<crate::viz::Camera> {
-		unsafe { sys::cv_viz_Camera_Camera_double_double_double_double_const_SizeR(fx, fy, cx, cy, &window_size) }.into_result().map(|r| unsafe { crate::viz::Camera::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Camera_Camera_double_double_double_double_const_SizeR(fx, fy, cx, cy, &window_size, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Camera::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Constructs a Camera.
@@ -436,8 +558,14 @@ impl Camera {
 	/// * fov: Field of view (horizontal, vertical) in radians
 	/// * window_size: Size of the window. Principal point is at the center of the window
 	///            by default.
+	#[inline]
 	pub fn new_1(fov: core::Vec2d, window_size: core::Size) -> Result<crate::viz::Camera> {
-		unsafe { sys::cv_viz_Camera_Camera_const_Vec2dR_const_SizeR(&fov, &window_size) }.into_result().map(|r| unsafe { crate::viz::Camera::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Camera_Camera_const_Vec2dR_const_SizeR(&fov, &window_size, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Camera::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Constructs a Camera.
@@ -456,8 +584,14 @@ impl Camera {
 	///            ![block formula](https://latex.codecogs.com/png.latex?%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5Cbegin%7Bbmatrix%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20f%5Fx%20%26%20%20%200%20%26%20c%5Fx%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%20f%5Fy%20%26%20c%5Fy%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%20%20%200%20%26%20%20%201%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5Cend%7Bbmatrix%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20)
 	/// * window_size: Size of the window. This together with intrinsic matrix determines
 	///            the field of view.
+	#[inline]
 	pub fn new_2(k: core::Matx33d, window_size: core::Size) -> Result<crate::viz::Camera> {
-		unsafe { sys::cv_viz_Camera_Camera_const_Matx33dR_const_SizeR(&k, &window_size) }.into_result().map(|r| unsafe { crate::viz::Camera::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Camera_Camera_const_Matx33dR_const_SizeR(&k, &window_size, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Camera::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Constructs a Camera.
@@ -477,8 +611,14 @@ impl Camera {
 	/// 
 	/// * window_size: Size of the window. This together with projection matrix determines
 	///            the field of view.
+	#[inline]
 	pub fn new_3(proj: core::Matx44d, window_size: core::Size) -> Result<crate::viz::Camera> {
-		unsafe { sys::cv_viz_Camera_Camera_const_Matx44dR_const_SizeR(&proj, &window_size) }.into_result().map(|r| unsafe { crate::viz::Camera::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Camera_Camera_const_Matx44dR_const_SizeR(&proj, &window_size, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Camera::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Creates a Kinect Camera with
@@ -489,21 +629,36 @@ impl Camera {
 	/// ## Parameters
 	/// * window_size: Size of the window. This together with intrinsic matrix of a Kinect Camera
 	/// determines the field of view.
+	#[inline]
 	pub fn kinect_camera(window_size: core::Size) -> Result<crate::viz::Camera> {
-		unsafe { sys::cv_viz_Camera_KinectCamera_const_SizeR(&window_size) }.into_result().map(|r| unsafe { crate::viz::Camera::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Camera_KinectCamera_const_SizeR(&window_size, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Camera::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
 /// This class represents color in BGR order.
-pub trait ColorTrait {
+pub trait ColorTraitConst {
 	fn as_raw_Color(&self) -> *const c_void;
-	fn as_raw_mut_Color(&mut self) -> *mut c_void;
 
+	#[inline]
 	fn to_vec3b(&self) -> Result<core::Vec3b> {
-		unsafe { sys::cv_viz_Color_operator_cv_Vec3b_const(self.as_raw_Color()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_operator_cv_Vec3b_const(self.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
+}
+
+pub trait ColorTrait: crate::viz::ColorTraitConst {
+	fn as_raw_mut_Color(&mut self) -> *mut c_void;
+
 }
 
 /// This class represents color in BGR order.
@@ -520,216 +675,471 @@ impl Drop for Color {
 	}
 }
 
-impl Color {
-	#[inline] pub fn as_raw_Color(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_Color(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for Color {}
 
-impl crate::viz::ColorTrait for Color {
+impl crate::viz::ColorTraitConst for Color {
 	#[inline] fn as_raw_Color(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::ColorTrait for Color {
 	#[inline] fn as_raw_mut_Color(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl Color {
 	/// ///////////////////////////////////////////////////////////////////////////////////////////////////
 	/// cv::viz::Color
+	#[inline]
 	pub fn default() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_Color() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_Color(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// The three channels will have the same value equal to gray.
+	#[inline]
 	pub fn new(gray: f64) -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_Color_double(gray) }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_Color_double(gray, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn new_1(blue: f64, green: f64, red: f64) -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_Color_double_double_double(blue, green, red) }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_Color_double_double_double(blue, green, red, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn new_2(color: core::Scalar) -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_Color_const_ScalarR(&color) }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_Color_const_ScalarR(&color, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn black() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_black() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_black(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn blue() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_blue() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_blue(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn green() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_green() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_green(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn red() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_red() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_red(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn cyan() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_cyan() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_cyan(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn yellow() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_yellow() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_yellow(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn magenta() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_magenta() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_magenta(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn white() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_white() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_white(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn gray() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_gray() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_gray(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn silver() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_silver() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_silver(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn mlab() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_mlab() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_mlab(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn navy() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_navy() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_navy(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn maroon() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_maroon() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_maroon(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn teal() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_teal() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_teal(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn olive() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_olive() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_olive(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn purple() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_purple() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_purple(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn azure() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_azure() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_azure(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn chartreuse() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_chartreuse() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_chartreuse(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn rose() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_rose() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_rose(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn lime() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_lime() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_lime(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn gold() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_gold() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_gold(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn orange() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_orange() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_orange(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn orange_red() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_orange_red() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_orange_red(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn indigo() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_indigo() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_indigo(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn brown() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_brown() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_brown(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn apricot() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_apricot() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_apricot(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn pink() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_pink() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_pink(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn raspberry() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_raspberry() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_raspberry(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn cherry() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_cherry() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_cherry(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn violet() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_violet() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_violet(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn amethyst() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_amethyst() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_amethyst(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn bluberry() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_bluberry() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_bluberry(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn celestial_blue() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_celestial_blue() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_celestial_blue(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn turquoise() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_turquoise() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_turquoise(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn not_set() -> Result<crate::viz::Color> {
-		unsafe { sys::cv_viz_Color_not_set() }.into_result().map(|r| unsafe { crate::viz::Color::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Color_not_set(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Color::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
 /// This class represents a keyboard event.
-pub trait KeyboardEventTrait {
+pub trait KeyboardEventTraitConst {
 	fn as_raw_KeyboardEvent(&self) -> *const c_void;
+
+	#[inline]
+	fn action(&self) -> crate::viz::KeyboardEvent_Action {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_KeyboardEvent_getPropAction_const(self.as_raw_KeyboardEvent(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		ret
+	}
+	
+	#[inline]
+	fn symbol(&self) -> String {
+		let ret = unsafe { sys::cv_viz_KeyboardEvent_getPropSymbol_const(self.as_raw_KeyboardEvent()) };
+		let ret = unsafe { String::opencv_from_extern(ret) };
+		ret
+	}
+	
+	#[inline]
+	fn code(&self) -> u8 {
+		let ret = unsafe { sys::cv_viz_KeyboardEvent_getPropCode_const(self.as_raw_KeyboardEvent()) };
+		ret
+	}
+	
+	#[inline]
+	fn modifiers(&self) -> i32 {
+		let ret = unsafe { sys::cv_viz_KeyboardEvent_getPropModifiers_const(self.as_raw_KeyboardEvent()) };
+		ret
+	}
+	
+}
+
+pub trait KeyboardEventTrait: crate::viz::KeyboardEventTraitConst {
 	fn as_raw_mut_KeyboardEvent(&mut self) -> *mut c_void;
 
-	fn action(&self) -> crate::viz::KeyboardEvent_Action {
-		unsafe { sys::cv_viz_KeyboardEvent_getPropAction_const(self.as_raw_KeyboardEvent()) }.into_result().expect("Infallible function failed: action")
+	#[inline]
+	fn set_action(&mut self, val: crate::viz::KeyboardEvent_Action) {
+		let ret = unsafe { sys::cv_viz_KeyboardEvent_setPropAction_Action(self.as_raw_mut_KeyboardEvent(), val) };
+		ret
 	}
 	
-	fn set_action(&mut self, val: crate::viz::KeyboardEvent_Action) -> () {
-		unsafe { sys::cv_viz_KeyboardEvent_setPropAction_Action(self.as_raw_mut_KeyboardEvent(), val) }.into_result().expect("Infallible function failed: set_action")
-	}
-	
-	fn symbol(&self) -> String {
-		unsafe { sys::cv_viz_KeyboardEvent_getPropSymbol_const(self.as_raw_KeyboardEvent()) }.into_result().map(|r| unsafe { String::opencv_from_extern(r) } ).expect("Infallible function failed: symbol")
-	}
-	
-	fn set_symbol(&mut self, val: &str) -> () {
+	#[inline]
+	fn set_symbol(&mut self, val: &str) {
 		extern_container_arg!(nofail mut val);
-		unsafe { sys::cv_viz_KeyboardEvent_setPropSymbol_String(self.as_raw_mut_KeyboardEvent(), val.opencv_as_extern_mut()) }.into_result().expect("Infallible function failed: set_symbol")
+		let ret = unsafe { sys::cv_viz_KeyboardEvent_setPropSymbol_String(self.as_raw_mut_KeyboardEvent(), val.opencv_as_extern_mut()) };
+		ret
 	}
 	
-	fn code(&self) -> u8 {
-		unsafe { sys::cv_viz_KeyboardEvent_getPropCode_const(self.as_raw_KeyboardEvent()) }.into_result().expect("Infallible function failed: code")
+	#[inline]
+	fn set_code(&mut self, val: u8) {
+		let ret = unsafe { sys::cv_viz_KeyboardEvent_setPropCode_unsigned_char(self.as_raw_mut_KeyboardEvent(), val) };
+		ret
 	}
 	
-	fn set_code(&mut self, val: u8) -> () {
-		unsafe { sys::cv_viz_KeyboardEvent_setPropCode_unsigned_char(self.as_raw_mut_KeyboardEvent(), val) }.into_result().expect("Infallible function failed: set_code")
-	}
-	
-	fn modifiers(&self) -> i32 {
-		unsafe { sys::cv_viz_KeyboardEvent_getPropModifiers_const(self.as_raw_KeyboardEvent()) }.into_result().expect("Infallible function failed: modifiers")
-	}
-	
-	fn set_modifiers(&mut self, val: i32) -> () {
-		unsafe { sys::cv_viz_KeyboardEvent_setPropModifiers_int(self.as_raw_mut_KeyboardEvent(), val) }.into_result().expect("Infallible function failed: set_modifiers")
+	#[inline]
+	fn set_modifiers(&mut self, val: i32) {
+		let ret = unsafe { sys::cv_viz_KeyboardEvent_setPropModifiers_int(self.as_raw_mut_KeyboardEvent(), val) };
+		ret
 	}
 	
 }
@@ -748,15 +1158,13 @@ impl Drop for KeyboardEvent {
 	}
 }
 
-impl KeyboardEvent {
-	#[inline] pub fn as_raw_KeyboardEvent(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_KeyboardEvent(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for KeyboardEvent {}
 
-impl crate::viz::KeyboardEventTrait for KeyboardEvent {
+impl crate::viz::KeyboardEventTraitConst for KeyboardEvent {
 	#[inline] fn as_raw_KeyboardEvent(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::KeyboardEventTrait for KeyboardEvent {
 	#[inline] fn as_raw_mut_KeyboardEvent(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
@@ -768,74 +1176,114 @@ impl KeyboardEvent {
 	/// * symbol: Name of the key.
 	/// * code: Code of the key.
 	/// * modifiers: Signals if alt, ctrl or shift are pressed or their combination.
+	#[inline]
 	pub fn new(action: crate::viz::KeyboardEvent_Action, symbol: &str, code: u8, modifiers: i32) -> Result<crate::viz::KeyboardEvent> {
 		extern_container_arg!(symbol);
-		unsafe { sys::cv_viz_KeyboardEvent_KeyboardEvent_Action_const_StringR_unsigned_char_int(action, symbol.opencv_as_extern(), code, modifiers) }.into_result().map(|r| unsafe { crate::viz::KeyboardEvent::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_KeyboardEvent_KeyboardEvent_Action_const_StringR_unsigned_char_int(action, symbol.opencv_as_extern(), code, modifiers, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::KeyboardEvent::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
 /// This class wraps mesh attributes, and it can load a mesh from a ply file. :
-pub trait MeshTrait {
+pub trait MeshTraitConst {
 	fn as_raw_Mesh(&self) -> *const c_void;
+
+	/// point coordinates of type CV_32FC3 or CV_64FC3 with only 1 row
+	#[inline]
+	fn cloud(&self) -> core::Mat {
+		let ret = unsafe { sys::cv_viz_Mesh_getPropCloud_const(self.as_raw_Mesh()) };
+		let ret = unsafe { core::Mat::opencv_from_extern(ret) };
+		ret
+	}
+	
+	/// point color of type CV_8UC3 or CV_8UC4 with only 1 row
+	#[inline]
+	fn colors(&self) -> core::Mat {
+		let ret = unsafe { sys::cv_viz_Mesh_getPropColors_const(self.as_raw_Mesh()) };
+		let ret = unsafe { core::Mat::opencv_from_extern(ret) };
+		ret
+	}
+	
+	/// point normals of type CV_32FC3, CV_32FC4, CV_64FC3 or CV_64FC4 with only 1 row
+	#[inline]
+	fn normals(&self) -> core::Mat {
+		let ret = unsafe { sys::cv_viz_Mesh_getPropNormals_const(self.as_raw_Mesh()) };
+		let ret = unsafe { core::Mat::opencv_from_extern(ret) };
+		ret
+	}
+	
+	/// CV_32SC1 with only 1 row
+	#[inline]
+	fn polygons(&self) -> core::Mat {
+		let ret = unsafe { sys::cv_viz_Mesh_getPropPolygons_const(self.as_raw_Mesh()) };
+		let ret = unsafe { core::Mat::opencv_from_extern(ret) };
+		ret
+	}
+	
+	#[inline]
+	fn texture(&self) -> core::Mat {
+		let ret = unsafe { sys::cv_viz_Mesh_getPropTexture_const(self.as_raw_Mesh()) };
+		let ret = unsafe { core::Mat::opencv_from_extern(ret) };
+		ret
+	}
+	
+	/// CV_32FC2 or CV_64FC2 with only 1 row
+	#[inline]
+	fn tcoords(&self) -> core::Mat {
+		let ret = unsafe { sys::cv_viz_Mesh_getPropTcoords_const(self.as_raw_Mesh()) };
+		let ret = unsafe { core::Mat::opencv_from_extern(ret) };
+		ret
+	}
+	
+}
+
+pub trait MeshTrait: crate::viz::MeshTraitConst {
 	fn as_raw_mut_Mesh(&mut self) -> *mut c_void;
 
 	/// point coordinates of type CV_32FC3 or CV_64FC3 with only 1 row
-	fn cloud(&mut self) -> core::Mat {
-		unsafe { sys::cv_viz_Mesh_getPropCloud(self.as_raw_mut_Mesh()) }.into_result().map(|r| unsafe { core::Mat::opencv_from_extern(r) } ).expect("Infallible function failed: cloud")
-	}
-	
-	/// point coordinates of type CV_32FC3 or CV_64FC3 with only 1 row
-	fn set_cloud(&mut self, mut val: core::Mat) -> () {
-		unsafe { sys::cv_viz_Mesh_setPropCloud_Mat(self.as_raw_mut_Mesh(), val.as_raw_mut_Mat()) }.into_result().expect("Infallible function failed: set_cloud")
+	#[inline]
+	fn set_cloud(&mut self, mut val: core::Mat) {
+		let ret = unsafe { sys::cv_viz_Mesh_setPropCloud_Mat(self.as_raw_mut_Mesh(), val.as_raw_mut_Mat()) };
+		ret
 	}
 	
 	/// point color of type CV_8UC3 or CV_8UC4 with only 1 row
-	fn colors(&mut self) -> core::Mat {
-		unsafe { sys::cv_viz_Mesh_getPropColors(self.as_raw_mut_Mesh()) }.into_result().map(|r| unsafe { core::Mat::opencv_from_extern(r) } ).expect("Infallible function failed: colors")
-	}
-	
-	/// point color of type CV_8UC3 or CV_8UC4 with only 1 row
-	fn set_colors(&mut self, mut val: core::Mat) -> () {
-		unsafe { sys::cv_viz_Mesh_setPropColors_Mat(self.as_raw_mut_Mesh(), val.as_raw_mut_Mat()) }.into_result().expect("Infallible function failed: set_colors")
+	#[inline]
+	fn set_colors(&mut self, mut val: core::Mat) {
+		let ret = unsafe { sys::cv_viz_Mesh_setPropColors_Mat(self.as_raw_mut_Mesh(), val.as_raw_mut_Mat()) };
+		ret
 	}
 	
 	/// point normals of type CV_32FC3, CV_32FC4, CV_64FC3 or CV_64FC4 with only 1 row
-	fn normals(&mut self) -> core::Mat {
-		unsafe { sys::cv_viz_Mesh_getPropNormals(self.as_raw_mut_Mesh()) }.into_result().map(|r| unsafe { core::Mat::opencv_from_extern(r) } ).expect("Infallible function failed: normals")
-	}
-	
-	/// point normals of type CV_32FC3, CV_32FC4, CV_64FC3 or CV_64FC4 with only 1 row
-	fn set_normals(&mut self, mut val: core::Mat) -> () {
-		unsafe { sys::cv_viz_Mesh_setPropNormals_Mat(self.as_raw_mut_Mesh(), val.as_raw_mut_Mat()) }.into_result().expect("Infallible function failed: set_normals")
+	#[inline]
+	fn set_normals(&mut self, mut val: core::Mat) {
+		let ret = unsafe { sys::cv_viz_Mesh_setPropNormals_Mat(self.as_raw_mut_Mesh(), val.as_raw_mut_Mat()) };
+		ret
 	}
 	
 	/// CV_32SC1 with only 1 row
-	fn polygons(&mut self) -> core::Mat {
-		unsafe { sys::cv_viz_Mesh_getPropPolygons(self.as_raw_mut_Mesh()) }.into_result().map(|r| unsafe { core::Mat::opencv_from_extern(r) } ).expect("Infallible function failed: polygons")
+	#[inline]
+	fn set_polygons(&mut self, mut val: core::Mat) {
+		let ret = unsafe { sys::cv_viz_Mesh_setPropPolygons_Mat(self.as_raw_mut_Mesh(), val.as_raw_mut_Mat()) };
+		ret
 	}
 	
-	/// CV_32SC1 with only 1 row
-	fn set_polygons(&mut self, mut val: core::Mat) -> () {
-		unsafe { sys::cv_viz_Mesh_setPropPolygons_Mat(self.as_raw_mut_Mesh(), val.as_raw_mut_Mat()) }.into_result().expect("Infallible function failed: set_polygons")
-	}
-	
-	fn texture(&mut self) -> core::Mat {
-		unsafe { sys::cv_viz_Mesh_getPropTexture(self.as_raw_mut_Mesh()) }.into_result().map(|r| unsafe { core::Mat::opencv_from_extern(r) } ).expect("Infallible function failed: texture")
-	}
-	
-	fn set_texture(&mut self, mut val: core::Mat) -> () {
-		unsafe { sys::cv_viz_Mesh_setPropTexture_Mat(self.as_raw_mut_Mesh(), val.as_raw_mut_Mat()) }.into_result().expect("Infallible function failed: set_texture")
+	#[inline]
+	fn set_texture(&mut self, mut val: core::Mat) {
+		let ret = unsafe { sys::cv_viz_Mesh_setPropTexture_Mat(self.as_raw_mut_Mesh(), val.as_raw_mut_Mat()) };
+		ret
 	}
 	
 	/// CV_32FC2 or CV_64FC2 with only 1 row
-	fn tcoords(&mut self) -> core::Mat {
-		unsafe { sys::cv_viz_Mesh_getPropTcoords(self.as_raw_mut_Mesh()) }.into_result().map(|r| unsafe { core::Mat::opencv_from_extern(r) } ).expect("Infallible function failed: tcoords")
-	}
-	
-	/// CV_32FC2 or CV_64FC2 with only 1 row
-	fn set_tcoords(&mut self, mut val: core::Mat) -> () {
-		unsafe { sys::cv_viz_Mesh_setPropTcoords_Mat(self.as_raw_mut_Mesh(), val.as_raw_mut_Mat()) }.into_result().expect("Infallible function failed: set_tcoords")
+	#[inline]
+	fn set_tcoords(&mut self, mut val: core::Mat) {
+		let ret = unsafe { sys::cv_viz_Mesh_setPropTcoords_Mat(self.as_raw_mut_Mesh(), val.as_raw_mut_Mat()) };
+		ret
 	}
 	
 }
@@ -854,19 +1302,27 @@ impl Drop for Mesh {
 	}
 }
 
-impl Mesh {
-	#[inline] pub fn as_raw_Mesh(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_Mesh(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for Mesh {}
 
-impl crate::viz::MeshTrait for Mesh {
+impl crate::viz::MeshTraitConst for Mesh {
 	#[inline] fn as_raw_Mesh(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::MeshTrait for Mesh {
 	#[inline] fn as_raw_mut_Mesh(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl Mesh {
+	#[inline]
+	pub fn default() -> Result<crate::viz::Mesh> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Mesh_Mesh(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Mesh::opencv_from_extern(ret) };
+		Ok(ret)
+	}
+	
 	/// Loads a mesh from a ply or a obj file.
 	/// 
 	/// ## Parameters
@@ -879,48 +1335,80 @@ impl Mesh {
 	/// 
 	/// ## C++ default parameters
 	/// * typ: LOAD_PLY
+	#[inline]
 	pub fn load(file: &str, typ: i32) -> Result<crate::viz::Mesh> {
 		extern_container_arg!(file);
-		unsafe { sys::cv_viz_Mesh_load_const_StringR_int(file.opencv_as_extern(), typ) }.into_result().map(|r| unsafe { crate::viz::Mesh::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Mesh_load_const_StringR_int(file.opencv_as_extern(), typ, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Mesh::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
 /// This class represents a mouse event.
-pub trait MouseEventTrait {
+pub trait MouseEventTraitConst {
 	fn as_raw_MouseEvent(&self) -> *const c_void;
+
+	#[inline]
+	fn typ(&self) -> crate::viz::MouseEvent_Type {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_MouseEvent_getPropType_const(self.as_raw_MouseEvent(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		ret
+	}
+	
+	#[inline]
+	fn button(&self) -> crate::viz::MouseEvent_MouseButton {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_MouseEvent_getPropButton_const(self.as_raw_MouseEvent(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		ret
+	}
+	
+	#[inline]
+	fn pointer(&self) -> core::Point {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_MouseEvent_getPropPointer_const(self.as_raw_MouseEvent(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		ret
+	}
+	
+	#[inline]
+	fn modifiers(&self) -> i32 {
+		let ret = unsafe { sys::cv_viz_MouseEvent_getPropModifiers_const(self.as_raw_MouseEvent()) };
+		ret
+	}
+	
+}
+
+pub trait MouseEventTrait: crate::viz::MouseEventTraitConst {
 	fn as_raw_mut_MouseEvent(&mut self) -> *mut c_void;
 
-	fn typ(&self) -> crate::viz::MouseEvent_Type {
-		unsafe { sys::cv_viz_MouseEvent_getPropType_const(self.as_raw_MouseEvent()) }.into_result().expect("Infallible function failed: typ")
+	#[inline]
+	fn set_type(&mut self, val: crate::viz::MouseEvent_Type) {
+		let ret = unsafe { sys::cv_viz_MouseEvent_setPropType_Type(self.as_raw_mut_MouseEvent(), val) };
+		ret
 	}
 	
-	fn set_type(&mut self, val: crate::viz::MouseEvent_Type) -> () {
-		unsafe { sys::cv_viz_MouseEvent_setPropType_Type(self.as_raw_mut_MouseEvent(), val) }.into_result().expect("Infallible function failed: set_type")
+	#[inline]
+	fn set_button(&mut self, val: crate::viz::MouseEvent_MouseButton) {
+		let ret = unsafe { sys::cv_viz_MouseEvent_setPropButton_MouseButton(self.as_raw_mut_MouseEvent(), val) };
+		ret
 	}
 	
-	fn button(&self) -> crate::viz::MouseEvent_MouseButton {
-		unsafe { sys::cv_viz_MouseEvent_getPropButton_const(self.as_raw_MouseEvent()) }.into_result().expect("Infallible function failed: button")
+	#[inline]
+	fn set_pointer(&mut self, val: core::Point) {
+		let ret = unsafe { sys::cv_viz_MouseEvent_setPropPointer_Point(self.as_raw_mut_MouseEvent(), val.opencv_as_extern()) };
+		ret
 	}
 	
-	fn set_button(&mut self, val: crate::viz::MouseEvent_MouseButton) -> () {
-		unsafe { sys::cv_viz_MouseEvent_setPropButton_MouseButton(self.as_raw_mut_MouseEvent(), val) }.into_result().expect("Infallible function failed: set_button")
-	}
-	
-	fn pointer(&self) -> core::Point {
-		unsafe { sys::cv_viz_MouseEvent_getPropPointer_const(self.as_raw_MouseEvent()) }.into_result().expect("Infallible function failed: pointer")
-	}
-	
-	fn set_pointer(&mut self, val: core::Point) -> () {
-		unsafe { sys::cv_viz_MouseEvent_setPropPointer_Point(self.as_raw_mut_MouseEvent(), val.opencv_as_extern()) }.into_result().expect("Infallible function failed: set_pointer")
-	}
-	
-	fn modifiers(&self) -> i32 {
-		unsafe { sys::cv_viz_MouseEvent_getPropModifiers_const(self.as_raw_MouseEvent()) }.into_result().expect("Infallible function failed: modifiers")
-	}
-	
-	fn set_modifiers(&mut self, val: i32) -> () {
-		unsafe { sys::cv_viz_MouseEvent_setPropModifiers_int(self.as_raw_mut_MouseEvent(), val) }.into_result().expect("Infallible function failed: set_modifiers")
+	#[inline]
+	fn set_modifiers(&mut self, val: i32) {
+		let ret = unsafe { sys::cv_viz_MouseEvent_setPropModifiers_int(self.as_raw_mut_MouseEvent(), val) };
+		ret
 	}
 	
 }
@@ -939,15 +1427,13 @@ impl Drop for MouseEvent {
 	}
 }
 
-impl MouseEvent {
-	#[inline] pub fn as_raw_MouseEvent(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_MouseEvent(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for MouseEvent {}
 
-impl crate::viz::MouseEventTrait for MouseEvent {
+impl crate::viz::MouseEventTraitConst for MouseEvent {
 	#[inline] fn as_raw_MouseEvent(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::MouseEventTrait for MouseEvent {
 	#[inline] fn as_raw_mut_MouseEvent(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
@@ -961,15 +1447,121 @@ impl MouseEvent {
 	/// **RightButton**, **VScroll**.
 	/// * pointer: Position of the event.
 	/// * modifiers: Signals if alt, ctrl or shift are pressed or their combination.
+	#[inline]
 	pub fn new(typ: crate::viz::MouseEvent_Type, button: crate::viz::MouseEvent_MouseButton, pointer: core::Point, modifiers: i32) -> Result<crate::viz::MouseEvent> {
-		unsafe { sys::cv_viz_MouseEvent_MouseEvent_const_TypeR_const_MouseButtonR_const_PointR_int(&typ, &button, &pointer, modifiers) }.into_result().map(|r| unsafe { crate::viz::MouseEvent::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_MouseEvent_MouseEvent_const_TypeR_const_MouseButtonR_const_PointR_int(&typ, &button, &pointer, modifiers, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::MouseEvent::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
 /// The Viz3d class represents a 3D visualizer window. This class is implicitly shared.
-pub trait Viz3dTrait {
+pub trait Viz3dTraitConst {
 	fn as_raw_Viz3d(&self) -> *const c_void;
+
+	/// Retrieves a widget from the window.
+	/// 
+	/// A widget is implicitly shared; that is, if the returned widget is modified, the changes
+	/// will be immediately visible in the window.
+	/// 
+	/// ## Parameters
+	/// * id: The id of the widget that will be returned.
+	#[inline]
+	fn get_widget(&self, id: &str) -> Result<crate::viz::Widget> {
+		extern_container_arg!(id);
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_getWidget_const_const_StringR(self.as_raw_Viz3d(), id.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Widget::opencv_from_extern(ret) };
+		Ok(ret)
+	}
+	
+	/// Returns the current pose of a widget in the window.
+	/// 
+	/// ## Parameters
+	/// * id: The id of the widget whose pose will be returned.
+	#[inline]
+	fn get_widget_pose(&self, id: &str) -> Result<core::Affine3d> {
+		extern_container_arg!(id);
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_getWidgetPose_const_const_StringR(self.as_raw_Viz3d(), id.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	/// Returns a camera object that contains intrinsic parameters of the current viewer.
+	#[inline]
+	fn get_camera(&self) -> Result<crate::viz::Camera> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_getCamera_const(self.as_raw_Viz3d(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Camera::opencv_from_extern(ret) };
+		Ok(ret)
+	}
+	
+	/// Returns the current pose of the viewer.
+	#[inline]
+	fn get_viewer_pose(&self) -> Result<core::Affine3d> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_getViewerPose_const(self.as_raw_Viz3d(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	/// Returns the current size of the window.
+	#[inline]
+	fn get_window_size(&self) -> Result<core::Size> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_getWindowSize_const(self.as_raw_Viz3d(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	/// Returns the name of the window which has been set in the constructor.
+	/// `Viz - ` is prepended to the name if necessary.
+	#[inline]
+	fn get_window_name(&self) -> Result<String> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_getWindowName_const(self.as_raw_Viz3d(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { String::opencv_from_extern(ret) };
+		Ok(ret)
+	}
+	
+	/// Returns the Mat screenshot of the current scene.
+	#[inline]
+	fn get_screenshot(&self) -> Result<core::Mat> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_getScreenshot_const(self.as_raw_Viz3d(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { core::Mat::opencv_from_extern(ret) };
+		Ok(ret)
+	}
+	
+	/// Returns whether the event loop has been stopped.
+	#[inline]
+	fn was_stopped(&self) -> Result<bool> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_wasStopped_const(self.as_raw_Viz3d(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+}
+
+pub trait Viz3dTrait: crate::viz::Viz3dTraitConst {
 	fn as_raw_mut_Viz3d(&mut self) -> *mut c_void;
 
 	/// Shows a widget in the window.
@@ -980,35 +1572,38 @@ pub trait Viz3dTrait {
 	/// 
 	/// ## C++ default parameters
 	/// * pose: Affine3d::Identity()
+	#[inline]
 	fn show_widget(&mut self, id: &str, widget: &crate::viz::Widget, pose: core::Affine3d) -> Result<()> {
 		extern_container_arg!(id);
-		unsafe { sys::cv_viz_Viz3d_showWidget_const_StringR_const_WidgetR_const_Affine3dR(self.as_raw_mut_Viz3d(), id.opencv_as_extern(), widget.as_raw_Widget(), &pose) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_showWidget_const_StringR_const_WidgetR_const_Affine3dR(self.as_raw_mut_Viz3d(), id.opencv_as_extern(), widget.as_raw_Widget(), &pose, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Removes a widget from the window.
 	/// 
 	/// ## Parameters
 	/// * id: The id of the widget that will be removed.
+	#[inline]
 	fn remove_widget(&mut self, id: &str) -> Result<()> {
 		extern_container_arg!(id);
-		unsafe { sys::cv_viz_Viz3d_removeWidget_const_StringR(self.as_raw_mut_Viz3d(), id.opencv_as_extern()) }.into_result()
-	}
-	
-	/// Retrieves a widget from the window.
-	/// 
-	/// A widget is implicitly shared; that is, if the returned widget is modified, the changes
-	/// will be immediately visible in the window.
-	/// 
-	/// ## Parameters
-	/// * id: The id of the widget that will be returned.
-	fn get_widget(&self, id: &str) -> Result<crate::viz::Widget> {
-		extern_container_arg!(id);
-		unsafe { sys::cv_viz_Viz3d_getWidget_const_const_StringR(self.as_raw_Viz3d(), id.opencv_as_extern()) }.into_result().map(|r| unsafe { crate::viz::Widget::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_removeWidget_const_StringR(self.as_raw_mut_Viz3d(), id.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Removes all widgets from the window.
+	#[inline]
 	fn remove_all_widgets(&mut self) -> Result<()> {
-		unsafe { sys::cv_viz_Viz3d_removeAllWidgets(self.as_raw_mut_Viz3d()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_removeAllWidgets(self.as_raw_mut_Viz3d(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Removed all widgets and displays image scaled to whole window area.
@@ -1019,18 +1614,28 @@ pub trait Viz3dTrait {
 	/// 
 	/// ## C++ default parameters
 	/// * window_size: Size(-1,-1)
+	#[inline]
 	fn show_image(&mut self, image: &dyn core::ToInputArray, window_size: core::Size) -> Result<()> {
 		input_array_arg!(image);
-		unsafe { sys::cv_viz_Viz3d_showImage_const__InputArrayR_const_SizeR(self.as_raw_mut_Viz3d(), image.as_raw__InputArray(), &window_size) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_showImage_const__InputArrayR_const_SizeR(self.as_raw_mut_Viz3d(), image.as_raw__InputArray(), &window_size, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Sets pose of a widget in the window.
 	/// 
 	/// ## Parameters
 	/// * id: The id of the widget whose pose will be set. @param pose The new pose of the widget.
+	#[inline]
 	fn set_widget_pose(&mut self, id: &str, pose: core::Affine3d) -> Result<()> {
 		extern_container_arg!(id);
-		unsafe { sys::cv_viz_Viz3d_setWidgetPose_const_StringR_const_Affine3dR(self.as_raw_mut_Viz3d(), id.opencv_as_extern(), &pose) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_setWidgetPose_const_StringR_const_Affine3dR(self.as_raw_mut_Viz3d(), id.opencv_as_extern(), &pose, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Updates pose of a widget in the window by pre-multiplying its current pose.
@@ -1038,58 +1643,64 @@ pub trait Viz3dTrait {
 	/// ## Parameters
 	/// * id: The id of the widget whose pose will be updated. @param pose The pose that the current
 	/// pose of the widget will be pre-multiplied by.
+	#[inline]
 	fn update_widget_pose(&mut self, id: &str, pose: core::Affine3d) -> Result<()> {
 		extern_container_arg!(id);
-		unsafe { sys::cv_viz_Viz3d_updateWidgetPose_const_StringR_const_Affine3dR(self.as_raw_mut_Viz3d(), id.opencv_as_extern(), &pose) }.into_result()
-	}
-	
-	/// Returns the current pose of a widget in the window.
-	/// 
-	/// ## Parameters
-	/// * id: The id of the widget whose pose will be returned.
-	fn get_widget_pose(&self, id: &str) -> Result<core::Affine3d> {
-		extern_container_arg!(id);
-		unsafe { sys::cv_viz_Viz3d_getWidgetPose_const_const_StringR(self.as_raw_Viz3d(), id.opencv_as_extern()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_updateWidgetPose_const_StringR_const_Affine3dR(self.as_raw_mut_Viz3d(), id.opencv_as_extern(), &pose, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Sets the intrinsic parameters of the viewer using Camera.
 	/// 
 	/// ## Parameters
 	/// * camera: Camera object wrapping intrinsic parameters.
+	#[inline]
 	fn set_camera(&mut self, camera: &crate::viz::Camera) -> Result<()> {
-		unsafe { sys::cv_viz_Viz3d_setCamera_const_CameraR(self.as_raw_mut_Viz3d(), camera.as_raw_Camera()) }.into_result()
-	}
-	
-	/// Returns a camera object that contains intrinsic parameters of the current viewer.
-	fn get_camera(&self) -> Result<crate::viz::Camera> {
-		unsafe { sys::cv_viz_Viz3d_getCamera_const(self.as_raw_Viz3d()) }.into_result().map(|r| unsafe { crate::viz::Camera::opencv_from_extern(r) } )
-	}
-	
-	/// Returns the current pose of the viewer.
-	fn get_viewer_pose(&self) -> Result<core::Affine3d> {
-		unsafe { sys::cv_viz_Viz3d_getViewerPose_const(self.as_raw_Viz3d()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_setCamera_const_CameraR(self.as_raw_mut_Viz3d(), camera.as_raw_Camera(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Sets pose of the viewer.
 	/// 
 	/// ## Parameters
 	/// * pose: The new pose of the viewer.
+	#[inline]
 	fn set_viewer_pose(&mut self, pose: core::Affine3d) -> Result<()> {
-		unsafe { sys::cv_viz_Viz3d_setViewerPose_const_Affine3dR(self.as_raw_mut_Viz3d(), &pose) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_setViewerPose_const_Affine3dR(self.as_raw_mut_Viz3d(), &pose, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Resets camera viewpoint to a 3D widget in the scene.
 	/// 
 	/// ## Parameters
 	/// * id: Id of a 3D widget.
+	#[inline]
 	fn reset_camera_viewpoint(&mut self, id: &str) -> Result<()> {
 		extern_container_arg!(id);
-		unsafe { sys::cv_viz_Viz3d_resetCameraViewpoint_const_StringR(self.as_raw_mut_Viz3d(), id.opencv_as_extern()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_resetCameraViewpoint_const_StringR(self.as_raw_mut_Viz3d(), id.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Resets camera.
+	#[inline]
 	fn reset_camera(&mut self) -> Result<()> {
-		unsafe { sys::cv_viz_Viz3d_resetCamera(self.as_raw_mut_Viz3d()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_resetCamera(self.as_raw_mut_Viz3d(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Transforms a point in world coordinate system to window coordinate system.
@@ -1097,8 +1708,13 @@ pub trait Viz3dTrait {
 	/// ## Parameters
 	/// * pt: Point in world coordinate system.
 	/// * window_coord: Output point in window coordinate system.
+	#[inline]
 	fn convert_to_window_coordinates(&mut self, pt: core::Point3d, window_coord: &mut core::Point3d) -> Result<()> {
-		unsafe { sys::cv_viz_Viz3d_convertToWindowCoordinates_const_Point3dR_Point3dR(self.as_raw_mut_Viz3d(), &pt, window_coord) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_convertToWindowCoordinates_const_Point3dR_Point3dR(self.as_raw_mut_Viz3d(), &pt, window_coord, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Transforms a point in window coordinate system to a 3D ray in world coordinate system.
@@ -1106,49 +1722,53 @@ pub trait Viz3dTrait {
 	/// ## Parameters
 	/// * window_coord: Point in window coordinate system. @param origin Output origin of the ray.
 	/// * direction: Output direction of the ray.
+	#[inline]
 	fn conver_to3_d_ray(&mut self, window_coord: core::Point3d, origin: &mut core::Point3d, direction: &mut core::Vec3d) -> Result<()> {
-		unsafe { sys::cv_viz_Viz3d_converTo3DRay_const_Point3dR_Point3dR_Vec3dR(self.as_raw_mut_Viz3d(), &window_coord, origin, direction) }.into_result()
-	}
-	
-	/// Returns the current size of the window.
-	fn get_window_size(&self) -> Result<core::Size> {
-		unsafe { sys::cv_viz_Viz3d_getWindowSize_const(self.as_raw_Viz3d()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_converTo3DRay_const_Point3dR_Point3dR_Vec3dR(self.as_raw_mut_Viz3d(), &window_coord, origin, direction, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Sets the size of the window.
 	/// 
 	/// ## Parameters
 	/// * window_size: New size of the window.
+	#[inline]
 	fn set_window_size(&mut self, window_size: core::Size) -> Result<()> {
-		unsafe { sys::cv_viz_Viz3d_setWindowSize_const_SizeR(self.as_raw_mut_Viz3d(), &window_size) }.into_result()
-	}
-	
-	/// Returns the name of the window which has been set in the constructor.
-	/// `Viz - ` is prepended to the name if necessary.
-	fn get_window_name(&self) -> Result<String> {
-		unsafe { sys::cv_viz_Viz3d_getWindowName_const(self.as_raw_Viz3d()) }.into_result().map(|r| unsafe { String::opencv_from_extern(r) } )
-	}
-	
-	/// Returns the Mat screenshot of the current scene.
-	fn get_screenshot(&self) -> Result<core::Mat> {
-		unsafe { sys::cv_viz_Viz3d_getScreenshot_const(self.as_raw_Viz3d()) }.into_result().map(|r| unsafe { core::Mat::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_setWindowSize_const_SizeR(self.as_raw_mut_Viz3d(), &window_size, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Saves screenshot of the current scene.
 	/// 
 	/// ## Parameters
 	/// * file: Name of the file.
+	#[inline]
 	fn save_screenshot(&mut self, file: &str) -> Result<()> {
 		extern_container_arg!(file);
-		unsafe { sys::cv_viz_Viz3d_saveScreenshot_const_StringR(self.as_raw_mut_Viz3d(), file.opencv_as_extern()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_saveScreenshot_const_StringR(self.as_raw_mut_Viz3d(), file.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Sets the position of the window in the screen.
 	/// 
 	/// ## Parameters
 	/// * window_position: coordinates of the window
+	#[inline]
 	fn set_window_position(&mut self, window_position: core::Point) -> Result<()> {
-		unsafe { sys::cv_viz_Viz3d_setWindowPosition_const_PointR(self.as_raw_mut_Viz3d(), &window_position) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_setWindowPosition_const_PointR(self.as_raw_mut_Viz3d(), &window_position, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Sets or unsets full-screen rendering mode.
@@ -1158,8 +1778,13 @@ pub trait Viz3dTrait {
 	/// 
 	/// ## C++ default parameters
 	/// * mode: true
+	#[inline]
 	fn set_full_screen(&mut self, mode: bool) -> Result<()> {
-		unsafe { sys::cv_viz_Viz3d_setFullScreen_bool(self.as_raw_mut_Viz3d(), mode) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_setFullScreen_bool(self.as_raw_mut_Viz3d(), mode, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Sets background color.
@@ -1167,24 +1792,44 @@ pub trait Viz3dTrait {
 	/// ## C++ default parameters
 	/// * color: Color::black()
 	/// * color2: Color::not_set()
+	#[inline]
 	fn set_background_color(&mut self, color: &crate::viz::Viz3d_Color, color2: &crate::viz::Viz3d_Color) -> Result<()> {
-		unsafe { sys::cv_viz_Viz3d_setBackgroundColor_const_ColorR_const_ColorR(self.as_raw_mut_Viz3d(), color.as_raw_Color(), color2.as_raw_Color()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_setBackgroundColor_const_ColorR_const_ColorR(self.as_raw_mut_Viz3d(), color.as_raw_Color(), color2.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// ## C++ default parameters
 	/// * image: noArray()
+	#[inline]
 	fn set_background_texture(&mut self, image: &dyn core::ToInputArray) -> Result<()> {
 		input_array_arg!(image);
-		unsafe { sys::cv_viz_Viz3d_setBackgroundTexture_const__InputArrayR(self.as_raw_mut_Viz3d(), image.as_raw__InputArray()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_setBackgroundTexture_const__InputArrayR(self.as_raw_mut_Viz3d(), image.as_raw__InputArray(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
+	#[inline]
 	fn set_background_mesh_lab(&mut self) -> Result<()> {
-		unsafe { sys::cv_viz_Viz3d_setBackgroundMeshLab(self.as_raw_mut_Viz3d()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_setBackgroundMeshLab(self.as_raw_mut_Viz3d(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// The window renders and starts the event loop.
+	#[inline]
 	fn spin(&mut self) -> Result<()> {
-		unsafe { sys::cv_viz_Viz3d_spin(self.as_raw_mut_Viz3d()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_spin(self.as_raw_mut_Viz3d(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Starts the event loop for a given time.
@@ -1196,18 +1841,33 @@ pub trait Viz3dTrait {
 	/// ## C++ default parameters
 	/// * time: 1
 	/// * force_redraw: false
+	#[inline]
 	fn spin_once(&mut self, time: i32, force_redraw: bool) -> Result<()> {
-		unsafe { sys::cv_viz_Viz3d_spinOnce_int_bool(self.as_raw_mut_Viz3d(), time, force_redraw) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_spinOnce_int_bool(self.as_raw_mut_Viz3d(), time, force_redraw, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Create a window in memory instead of on the screen.
+	#[inline]
 	fn set_off_screen_rendering(&mut self) -> Result<()> {
-		unsafe { sys::cv_viz_Viz3d_setOffScreenRendering(self.as_raw_mut_Viz3d()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_setOffScreenRendering(self.as_raw_mut_Viz3d(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Remove all lights from the current scene.
+	#[inline]
 	fn remove_all_lights(&mut self) -> Result<()> {
-		unsafe { sys::cv_viz_Viz3d_removeAllLights(self.as_raw_mut_Viz3d()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_removeAllLights(self.as_raw_mut_Viz3d(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Add a light in the scene.
@@ -1226,17 +1886,22 @@ pub trait Viz3dTrait {
 	/// * diffuse_color: Color::white()
 	/// * ambient_color: Color::black()
 	/// * specular_color: Color::white()
+	#[inline]
 	fn add_light(&mut self, position: core::Vec3d, focal_point: core::Vec3d, color: &crate::viz::Viz3d_Color, diffuse_color: &crate::viz::Viz3d_Color, ambient_color: &crate::viz::Viz3d_Color, specular_color: &crate::viz::Viz3d_Color) -> Result<()> {
-		unsafe { sys::cv_viz_Viz3d_addLight_const_Vec3dR_const_Vec3dR_const_ColorR_const_ColorR_const_ColorR_const_ColorR(self.as_raw_mut_Viz3d(), &position, &focal_point, color.as_raw_Color(), diffuse_color.as_raw_Color(), ambient_color.as_raw_Color(), specular_color.as_raw_Color()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_addLight_const_Vec3dR_const_Vec3dR_const_ColorR_const_ColorR_const_ColorR_const_ColorR(self.as_raw_mut_Viz3d(), &position, &focal_point, color.as_raw_Color(), diffuse_color.as_raw_Color(), ambient_color.as_raw_Color(), specular_color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
-	/// Returns whether the event loop has been stopped.
-	fn was_stopped(&self) -> Result<bool> {
-		unsafe { sys::cv_viz_Viz3d_wasStopped_const(self.as_raw_Viz3d()) }.into_result()
-	}
-	
+	#[inline]
 	fn close(&mut self) -> Result<()> {
-		unsafe { sys::cv_viz_Viz3d_close(self.as_raw_mut_Viz3d()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_close(self.as_raw_mut_Viz3d(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Sets keyboard handler.
@@ -1248,10 +1913,15 @@ pub trait Viz3dTrait {
 	/// 
 	/// ## C++ default parameters
 	/// * cookie: 0
+	#[inline]
 	fn register_keyboard_callback(&mut self, callback: crate::viz::Viz3d_KeyboardCallback) -> Result<()> {
 		callback_arg!(callback_trampoline(unnamed: *const c_void, unnamed_1: *mut c_void) -> () => unnamed_1 in callbacks => callback(unnamed: *const c_void) -> ());
 		userdata_arg!(cookie in callbacks => callback);
-		unsafe { sys::cv_viz_Viz3d_registerKeyboardCallback_KeyboardCallback_voidX(self.as_raw_mut_Viz3d(), callback_trampoline, cookie) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_registerKeyboardCallback_KeyboardCallback_voidX(self.as_raw_mut_Viz3d(), callback_trampoline, cookie, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Sets mouse handler.
@@ -1262,10 +1932,15 @@ pub trait Viz3dTrait {
 	/// 
 	/// ## C++ default parameters
 	/// * cookie: 0
+	#[inline]
 	fn register_mouse_callback(&mut self, callback: crate::viz::Viz3d_MouseCallback) -> Result<()> {
 		callback_arg!(callback_trampoline(unnamed: *const c_void, unnamed_1: *mut c_void) -> () => unnamed_1 in callbacks => callback(unnamed: *const c_void) -> ());
 		userdata_arg!(cookie in callbacks => callback);
-		unsafe { sys::cv_viz_Viz3d_registerMouseCallback_MouseCallback_voidX(self.as_raw_mut_Viz3d(), callback_trampoline, cookie) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_registerMouseCallback_MouseCallback_voidX(self.as_raw_mut_Viz3d(), callback_trampoline, cookie, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Sets rendering property of a widget.
@@ -1294,9 +1969,14 @@ pub trait Viz3dTrait {
 	/// *   **SHADING_FLAT**
 	/// *   **SHADING_GOURAUD**
 	/// *   **SHADING_PHONG**
+	#[inline]
 	fn set_rendering_property(&mut self, id: &str, property: i32, value: f64) -> Result<()> {
 		extern_container_arg!(id);
-		unsafe { sys::cv_viz_Viz3d_setRenderingProperty_const_StringR_int_double(self.as_raw_mut_Viz3d(), id.opencv_as_extern(), property, value) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_setRenderingProperty_const_StringR_int_double(self.as_raw_mut_Viz3d(), id.opencv_as_extern(), property, value, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Returns rendering property of a widget.
@@ -1324,9 +2004,14 @@ pub trait Viz3dTrait {
 	/// *   **SHADING_FLAT**
 	/// *   **SHADING_GOURAUD**
 	/// *   **SHADING_PHONG**
+	#[inline]
 	fn get_rendering_property(&mut self, id: &str, property: i32) -> Result<f64> {
 		extern_container_arg!(id);
-		unsafe { sys::cv_viz_Viz3d_getRenderingProperty_const_StringR_int(self.as_raw_mut_Viz3d(), id.opencv_as_extern(), property) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_getRenderingProperty_const_StringR_int(self.as_raw_mut_Viz3d(), id.opencv_as_extern(), property, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Sets geometry representation of the widgets to surface, wireframe or points.
@@ -1336,14 +2021,24 @@ pub trait Viz3dTrait {
 	/// *   **REPRESENTATION_POINTS**
 	/// *   **REPRESENTATION_WIREFRAME**
 	/// *   **REPRESENTATION_SURFACE**
+	#[inline]
 	fn set_representation(&mut self, representation: i32) -> Result<()> {
-		unsafe { sys::cv_viz_Viz3d_setRepresentation_int(self.as_raw_mut_Viz3d(), representation) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_setRepresentation_int(self.as_raw_mut_Viz3d(), representation, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// ## C++ default parameters
 	/// * enabled: false
+	#[inline]
 	fn set_global_warnings(&mut self, enabled: bool) -> Result<()> {
-		unsafe { sys::cv_viz_Viz3d_setGlobalWarnings_bool(self.as_raw_mut_Viz3d(), enabled) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_setGlobalWarnings_bool(self.as_raw_mut_Viz3d(), enabled, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
@@ -1362,15 +2057,13 @@ impl Drop for Viz3d {
 	}
 }
 
-impl Viz3d {
-	#[inline] pub fn as_raw_Viz3d(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_Viz3d(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for Viz3d {}
 
-impl crate::viz::Viz3dTrait for Viz3d {
+impl crate::viz::Viz3dTraitConst for Viz3d {
 	#[inline] fn as_raw_Viz3d(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Viz3dTrait for Viz3d {
 	#[inline] fn as_raw_mut_Viz3d(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
@@ -1382,20 +2075,36 @@ impl Viz3d {
 	/// 
 	/// ## C++ default parameters
 	/// * window_name: String()
+	#[inline]
 	pub fn new(window_name: &str) -> Result<crate::viz::Viz3d> {
 		extern_container_arg!(window_name);
-		unsafe { sys::cv_viz_Viz3d_Viz3d_const_StringR(window_name.opencv_as_extern()) }.into_result().map(|r| unsafe { crate::viz::Viz3d::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_Viz3d_const_StringR(window_name.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Viz3d::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn copy(unnamed: &crate::viz::Viz3d) -> Result<crate::viz::Viz3d> {
-		unsafe { sys::cv_viz_Viz3d_Viz3d_const_Viz3dR(unnamed.as_raw_Viz3d()) }.into_result().map(|r| unsafe { crate::viz::Viz3d::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Viz3d_Viz3d_const_Viz3dR(unnamed.as_raw_Viz3d(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Viz3d::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
 /// This 3D Widget defines an arrow.
-pub trait WArrowTrait: crate::viz::Widget3DTrait {
+pub trait WArrowTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WArrow(&self) -> *const c_void;
+
+}
+
+pub trait WArrowTrait: crate::viz::WArrowTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WArrow(&mut self) -> *mut c_void;
 
 }
@@ -1414,26 +2123,30 @@ impl Drop for WArrow {
 	}
 }
 
-impl WArrow {
-	#[inline] pub fn as_raw_WArrow(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WArrow(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WArrow {}
 
-impl crate::viz::WArrowTrait for WArrow {
-	#[inline] fn as_raw_WArrow(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WArrow(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WArrow {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WArrow {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WArrow {
+impl crate::viz::Widget3DTraitConst for WArrow {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WArrow {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WArrowTraitConst for WArrow {
+	#[inline] fn as_raw_WArrow(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WArrowTrait for WArrow {
+	#[inline] fn as_raw_mut_WArrow(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WArrow {
@@ -1451,15 +2164,29 @@ impl WArrow {
 	/// ## C++ default parameters
 	/// * thickness: 0.03
 	/// * color: Color::white()
+	#[inline]
 	pub fn new(pt1: core::Point3d, pt2: core::Point3d, thickness: f64, color: &crate::viz::Color) -> Result<crate::viz::WArrow> {
-		unsafe { sys::cv_viz_WArrow_WArrow_const_Point3dR_const_Point3dR_double_const_ColorR(&pt1, &pt2, thickness, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WArrow::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WArrow_WArrow_const_Point3dR_const_Point3dR_double_const_ColorR(&pt1, &pt2, thickness, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WArrow::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WArrow, crate::viz::Widget, cv_WArrow_to_Widget }
+
+boxed_cast_base! { WArrow, crate::viz::Widget3D, cv_WArrow_to_Widget3D }
+
 /// This 3D Widget represents camera position in a scene by its axes or viewing frustum. :
-pub trait WCameraPositionTrait: crate::viz::Widget3DTrait {
+pub trait WCameraPositionTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WCameraPosition(&self) -> *const c_void;
+
+}
+
+pub trait WCameraPositionTrait: crate::viz::WCameraPositionTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WCameraPosition(&mut self) -> *mut c_void;
 
 }
@@ -1478,37 +2205,47 @@ impl Drop for WCameraPosition {
 	}
 }
 
-impl WCameraPosition {
-	#[inline] pub fn as_raw_WCameraPosition(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WCameraPosition(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WCameraPosition {}
 
-impl crate::viz::WCameraPositionTrait for WCameraPosition {
-	#[inline] fn as_raw_WCameraPosition(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WCameraPosition(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WCameraPosition {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WCameraPosition {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WCameraPosition {
+impl crate::viz::Widget3DTraitConst for WCameraPosition {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WCameraPosition {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WCameraPositionTraitConst for WCameraPosition {
+	#[inline] fn as_raw_WCameraPosition(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WCameraPositionTrait for WCameraPosition {
+	#[inline] fn as_raw_mut_WCameraPosition(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WCameraPosition {
 	/// Creates camera coordinate frame at the origin.
 	/// 
-	/// ![Camera coordinate frame](https://docs.opencv.org/4.3.0/cpw1.png)
+	/// ![Camera coordinate frame](https://docs.opencv.org/4.6.0/cpw1.png)
 	/// 
 	/// ## C++ default parameters
 	/// * scale: 1.0
+	#[inline]
 	pub fn new(scale: f64) -> Result<crate::viz::WCameraPosition> {
-		unsafe { sys::cv_viz_WCameraPosition_WCameraPosition_double(scale) }.into_result().map(|r| unsafe { crate::viz::WCameraPosition::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCameraPosition_WCameraPosition_double(scale, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WCameraPosition::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Display the viewing frustum
@@ -1519,13 +2256,19 @@ impl WCameraPosition {
 	/// 
 	/// Creates viewing frustum of the camera based on its intrinsic matrix K.
 	/// 
-	/// ![Camera viewing frustum](https://docs.opencv.org/4.3.0/cpw2.png)
+	/// ![Camera viewing frustum](https://docs.opencv.org/4.6.0/cpw2.png)
 	/// 
 	/// ## C++ default parameters
 	/// * scale: 1.0
 	/// * color: Color::white()
+	#[inline]
 	pub fn new_1(k: core::Matx33d, scale: f64, color: &crate::viz::Color) -> Result<crate::viz::WCameraPosition> {
-		unsafe { sys::cv_viz_WCameraPosition_WCameraPosition_const_Matx33dR_double_const_ColorR(&k, scale, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WCameraPosition::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCameraPosition_WCameraPosition_const_Matx33dR_double_const_ColorR(&k, scale, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WCameraPosition::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Display the viewing frustum
@@ -1536,13 +2279,19 @@ impl WCameraPosition {
 	/// 
 	/// Creates viewing frustum of the camera based on its field of view fov.
 	/// 
-	/// ![Camera viewing frustum](https://docs.opencv.org/4.3.0/cpw2.png)
+	/// ![Camera viewing frustum](https://docs.opencv.org/4.6.0/cpw2.png)
 	/// 
 	/// ## C++ default parameters
 	/// * scale: 1.0
 	/// * color: Color::white()
+	#[inline]
 	pub fn new_2(fov: core::Vec2d, scale: f64, color: &crate::viz::Color) -> Result<crate::viz::WCameraPosition> {
-		unsafe { sys::cv_viz_WCameraPosition_WCameraPosition_const_Vec2dR_double_const_ColorR(&fov, scale, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WCameraPosition::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCameraPosition_WCameraPosition_const_Vec2dR_double_const_ColorR(&fov, scale, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WCameraPosition::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Display image on the far plane of the viewing frustum
@@ -1556,17 +2305,23 @@ impl WCameraPosition {
 	/// Creates viewing frustum of the camera based on its intrinsic matrix K, and displays image on
 	/// the far end plane.
 	/// 
-	/// ![Camera viewing frustum with image](https://docs.opencv.org/4.3.0/cpw3.png)
+	/// ![Camera viewing frustum with image](https://docs.opencv.org/4.6.0/cpw3.png)
 	/// 
 	/// ## C++ default parameters
 	/// * scale: 1.0
 	/// * color: Color::white()
+	#[inline]
 	pub fn new_3(k: core::Matx33d, image: &dyn core::ToInputArray, scale: f64, color: &crate::viz::Color) -> Result<crate::viz::WCameraPosition> {
 		input_array_arg!(image);
-		unsafe { sys::cv_viz_WCameraPosition_WCameraPosition_const_Matx33dR_const__InputArrayR_double_const_ColorR(&k, image.as_raw__InputArray(), scale, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WCameraPosition::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCameraPosition_WCameraPosition_const_Matx33dR_const__InputArrayR_double_const_ColorR(&k, image.as_raw__InputArray(), scale, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WCameraPosition::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
-	///  Display image on the far plane of the viewing frustum
+	/// Display image on the far plane of the viewing frustum
 	/// 
 	/// ## Parameters
 	/// * fov: Field of view of the camera (horizontal, vertical).
@@ -1577,21 +2332,35 @@ impl WCameraPosition {
 	/// Creates viewing frustum of the camera based on its intrinsic matrix K, and displays image on
 	/// the far end plane.
 	/// 
-	/// ![Camera viewing frustum with image](https://docs.opencv.org/4.3.0/cpw3.png)
+	/// ![Camera viewing frustum with image](https://docs.opencv.org/4.6.0/cpw3.png)
 	/// 
 	/// ## C++ default parameters
 	/// * scale: 1.0
 	/// * color: Color::white()
+	#[inline]
 	pub fn new_4(fov: core::Vec2d, image: &dyn core::ToInputArray, scale: f64, color: &crate::viz::Color) -> Result<crate::viz::WCameraPosition> {
 		input_array_arg!(image);
-		unsafe { sys::cv_viz_WCameraPosition_WCameraPosition_const_Vec2dR_const__InputArrayR_double_const_ColorR(&fov, image.as_raw__InputArray(), scale, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WCameraPosition::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCameraPosition_WCameraPosition_const_Vec2dR_const__InputArrayR_double_const_ColorR(&fov, image.as_raw__InputArray(), scale, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WCameraPosition::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WCameraPosition, crate::viz::Widget, cv_WCameraPosition_to_Widget }
+
+boxed_cast_base! { WCameraPosition, crate::viz::Widget3D, cv_WCameraPosition_to_Widget3D }
+
 /// This 3D Widget defines a circle.
-pub trait WCircleTrait: crate::viz::Widget3DTrait {
+pub trait WCircleTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WCircle(&self) -> *const c_void;
+
+}
+
+pub trait WCircleTrait: crate::viz::WCircleTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WCircle(&mut self) -> *mut c_void;
 
 }
@@ -1610,26 +2379,30 @@ impl Drop for WCircle {
 	}
 }
 
-impl WCircle {
-	#[inline] pub fn as_raw_WCircle(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WCircle(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WCircle {}
 
-impl crate::viz::WCircleTrait for WCircle {
-	#[inline] fn as_raw_WCircle(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WCircle(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WCircle {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WCircle {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WCircle {
+impl crate::viz::Widget3DTraitConst for WCircle {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WCircle {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WCircleTraitConst for WCircle {
+	#[inline] fn as_raw_WCircle(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WCircleTrait for WCircle {
+	#[inline] fn as_raw_mut_WCircle(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WCircle {
@@ -1643,8 +2416,14 @@ impl WCircle {
 	/// ## C++ default parameters
 	/// * thickness: 0.01
 	/// * color: Color::white()
+	#[inline]
 	pub fn new(radius: f64, thickness: f64, color: &crate::viz::Color) -> Result<crate::viz::WCircle> {
-		unsafe { sys::cv_viz_WCircle_WCircle_double_double_const_ColorR(radius, thickness, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WCircle::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCircle_WCircle_double_double_const_ColorR(radius, thickness, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WCircle::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Constructs repositioned planar circle.
@@ -1659,18 +2438,32 @@ impl WCircle {
 	/// ## C++ default parameters
 	/// * thickness: 0.01
 	/// * color: Color::white()
+	#[inline]
 	pub fn new_1(radius: f64, center: core::Point3d, normal: core::Vec3d, thickness: f64, color: &crate::viz::Color) -> Result<crate::viz::WCircle> {
-		unsafe { sys::cv_viz_WCircle_WCircle_double_const_Point3dR_const_Vec3dR_double_const_ColorR(radius, &center, &normal, thickness, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WCircle::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCircle_WCircle_double_const_Point3dR_const_Vec3dR_double_const_ColorR(radius, &center, &normal, thickness, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WCircle::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
+
+boxed_cast_base! { WCircle, crate::viz::Widget, cv_WCircle_to_Widget }
+
+boxed_cast_base! { WCircle, crate::viz::Widget3D, cv_WCircle_to_Widget3D }
 
 /// This 3D Widget defines a point cloud. :
 /// 
 /// 
 /// Note: In case there are four channels in the cloud, fourth channel is ignored.
-pub trait WCloudTrait: crate::viz::Widget3DTrait {
+pub trait WCloudTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WCloud(&self) -> *const c_void;
+
+}
+
+pub trait WCloudTrait: crate::viz::WCloudTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WCloud(&mut self) -> *mut c_void;
 
 }
@@ -1692,26 +2485,30 @@ impl Drop for WCloud {
 	}
 }
 
-impl WCloud {
-	#[inline] pub fn as_raw_WCloud(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WCloud(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WCloud {}
 
-impl crate::viz::WCloudTrait for WCloud {
-	#[inline] fn as_raw_WCloud(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WCloud(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WCloud {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WCloud {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WCloud {
+impl crate::viz::Widget3DTraitConst for WCloud {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WCloud {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WCloudTraitConst for WCloud {
+	#[inline] fn as_raw_WCloud(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WCloudTrait for WCloud {
+	#[inline] fn as_raw_mut_WCloud(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WCloud {
@@ -1722,10 +2519,16 @@ impl WCloud {
 	/// * colors: Set of colors. It has to be of the same size with cloud.
 	/// 
 	/// Points in the cloud belong to mask when they are set to (NaN, NaN, NaN).
+	#[inline]
 	pub fn new(cloud: &dyn core::ToInputArray, colors: &dyn core::ToInputArray) -> Result<crate::viz::WCloud> {
 		input_array_arg!(cloud);
 		input_array_arg!(colors);
-		unsafe { sys::cv_viz_WCloud_WCloud_const__InputArrayR_const__InputArrayR(cloud.as_raw__InputArray(), colors.as_raw__InputArray()) }.into_result().map(|r| unsafe { crate::viz::WCloud::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCloud_WCloud_const__InputArrayR_const__InputArrayR(cloud.as_raw__InputArray(), colors.as_raw__InputArray(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WCloud::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Constructs a WCloud.
@@ -1737,9 +2540,15 @@ impl WCloud {
 	/// 
 	/// ## C++ default parameters
 	/// * color: Color::white()
+	#[inline]
 	pub fn new_1(cloud: &dyn core::ToInputArray, color: &crate::viz::Color) -> Result<crate::viz::WCloud> {
 		input_array_arg!(cloud);
-		unsafe { sys::cv_viz_WCloud_WCloud_const__InputArrayR_const_ColorR(cloud.as_raw__InputArray(), color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WCloud::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCloud_WCloud_const__InputArrayR_const_ColorR(cloud.as_raw__InputArray(), color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WCloud::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Constructs a WCloud.
@@ -1749,11 +2558,17 @@ impl WCloud {
 	/// * normals: Normals for each point in cloud. Size and type should match with the cloud parameter.
 	/// 
 	/// Points in the cloud belong to mask when they are set to (NaN, NaN, NaN).
+	#[inline]
 	pub fn new_2(cloud: &dyn core::ToInputArray, colors: &dyn core::ToInputArray, normals: &dyn core::ToInputArray) -> Result<crate::viz::WCloud> {
 		input_array_arg!(cloud);
 		input_array_arg!(colors);
 		input_array_arg!(normals);
-		unsafe { sys::cv_viz_WCloud_WCloud_const__InputArrayR_const__InputArrayR_const__InputArrayR(cloud.as_raw__InputArray(), colors.as_raw__InputArray(), normals.as_raw__InputArray()) }.into_result().map(|r| unsafe { crate::viz::WCloud::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCloud_WCloud_const__InputArrayR_const__InputArrayR_const__InputArrayR(cloud.as_raw__InputArray(), colors.as_raw__InputArray(), normals.as_raw__InputArray(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WCloud::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Constructs a WCloud.
@@ -1764,19 +2579,33 @@ impl WCloud {
 	/// 
 	/// Size and type should match with the cloud parameter.
 	/// Points in the cloud belong to mask when they are set to (NaN, NaN, NaN).
+	#[inline]
 	pub fn new_3(cloud: &dyn core::ToInputArray, color: &crate::viz::Color, normals: &dyn core::ToInputArray) -> Result<crate::viz::WCloud> {
 		input_array_arg!(cloud);
 		input_array_arg!(normals);
-		unsafe { sys::cv_viz_WCloud_WCloud_const__InputArrayR_const_ColorR_const__InputArrayR(cloud.as_raw__InputArray(), color.as_raw_Color(), normals.as_raw__InputArray()) }.into_result().map(|r| unsafe { crate::viz::WCloud::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCloud_WCloud_const__InputArrayR_const_ColorR_const__InputArrayR(cloud.as_raw__InputArray(), color.as_raw_Color(), normals.as_raw__InputArray(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WCloud::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WCloud, crate::viz::Widget, cv_WCloud_to_Widget }
+
+boxed_cast_base! { WCloud, crate::viz::Widget3D, cv_WCloud_to_Widget3D }
+
 /// This 3D Widget defines a collection of clouds. :
 /// 
 /// Note: In case there are four channels in the cloud, fourth channel is ignored.
-pub trait WCloudCollectionTrait: crate::viz::Widget3DTrait {
+pub trait WCloudCollectionTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WCloudCollection(&self) -> *const c_void;
+
+}
+
+pub trait WCloudCollectionTrait: crate::viz::WCloudCollectionTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WCloudCollection(&mut self) -> *mut c_void;
 
 	/// Adds a cloud to the collection.
@@ -1788,10 +2617,15 @@ pub trait WCloudCollectionTrait: crate::viz::Widget3DTrait {
 	/// 
 	/// ## C++ default parameters
 	/// * pose: Affine3d::Identity()
+	#[inline]
 	fn add_cloud(&mut self, cloud: &dyn core::ToInputArray, colors: &dyn core::ToInputArray, pose: core::Affine3d) -> Result<()> {
 		input_array_arg!(cloud);
 		input_array_arg!(colors);
-		unsafe { sys::cv_viz_WCloudCollection_addCloud_const__InputArrayR_const__InputArrayR_const_Affine3dR(self.as_raw_mut_WCloudCollection(), cloud.as_raw__InputArray(), colors.as_raw__InputArray(), &pose) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCloudCollection_addCloud_const__InputArrayR_const__InputArrayR_const_Affine3dR(self.as_raw_mut_WCloudCollection(), cloud.as_raw__InputArray(), colors.as_raw__InputArray(), &pose, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Adds a cloud to the collection.
@@ -1804,16 +2638,26 @@ pub trait WCloudCollectionTrait: crate::viz::Widget3DTrait {
 	/// ## C++ default parameters
 	/// * color: Color::white()
 	/// * pose: Affine3d::Identity()
+	#[inline]
 	fn add_cloud_1(&mut self, cloud: &dyn core::ToInputArray, color: &crate::viz::Color, pose: core::Affine3d) -> Result<()> {
 		input_array_arg!(cloud);
-		unsafe { sys::cv_viz_WCloudCollection_addCloud_const__InputArrayR_const_ColorR_const_Affine3dR(self.as_raw_mut_WCloudCollection(), cloud.as_raw__InputArray(), color.as_raw_Color(), &pose) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCloudCollection_addCloud_const__InputArrayR_const_ColorR_const_Affine3dR(self.as_raw_mut_WCloudCollection(), cloud.as_raw__InputArray(), color.as_raw_Color(), &pose, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Finalizes cloud data by repacking to single cloud.
 	/// 
 	/// Useful for large cloud collections to reduce memory usage
+	#[inline]
 	fn finalize(&mut self) -> Result<()> {
-		unsafe { sys::cv_viz_WCloudCollection_finalize(self.as_raw_mut_WCloudCollection()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCloudCollection_finalize(self.as_raw_mut_WCloudCollection(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
@@ -1834,38 +2678,56 @@ impl Drop for WCloudCollection {
 	}
 }
 
-impl WCloudCollection {
-	#[inline] pub fn as_raw_WCloudCollection(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WCloudCollection(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WCloudCollection {}
 
-impl crate::viz::WCloudCollectionTrait for WCloudCollection {
-	#[inline] fn as_raw_WCloudCollection(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WCloudCollection(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WCloudCollection {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WCloudCollection {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WCloudCollection {
+impl crate::viz::Widget3DTraitConst for WCloudCollection {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WCloudCollection {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
+impl crate::viz::WCloudCollectionTraitConst for WCloudCollection {
+	#[inline] fn as_raw_WCloudCollection(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WCloudCollectionTrait for WCloudCollection {
+	#[inline] fn as_raw_mut_WCloudCollection(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
 impl WCloudCollection {
+	#[inline]
 	pub fn default() -> Result<crate::viz::WCloudCollection> {
-		unsafe { sys::cv_viz_WCloudCollection_WCloudCollection() }.into_result().map(|r| unsafe { crate::viz::WCloudCollection::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCloudCollection_WCloudCollection(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WCloudCollection::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WCloudCollection, crate::viz::Widget, cv_WCloudCollection_to_Widget }
+
+boxed_cast_base! { WCloudCollection, crate::viz::Widget3D, cv_WCloudCollection_to_Widget3D }
+
 /// This 3D Widget represents normals of a point cloud. :
-pub trait WCloudNormalsTrait: crate::viz::Widget3DTrait {
+pub trait WCloudNormalsTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WCloudNormals(&self) -> *const c_void;
+
+}
+
+pub trait WCloudNormalsTrait: crate::viz::WCloudNormalsTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WCloudNormals(&mut self) -> *mut c_void;
 
 }
@@ -1884,26 +2746,30 @@ impl Drop for WCloudNormals {
 	}
 }
 
-impl WCloudNormals {
-	#[inline] pub fn as_raw_WCloudNormals(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WCloudNormals(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WCloudNormals {}
 
-impl crate::viz::WCloudNormalsTrait for WCloudNormals {
-	#[inline] fn as_raw_WCloudNormals(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WCloudNormals(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WCloudNormals {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WCloudNormals {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WCloudNormals {
+impl crate::viz::Widget3DTraitConst for WCloudNormals {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WCloudNormals {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WCloudNormalsTraitConst for WCloudNormals {
+	#[inline] fn as_raw_WCloudNormals(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WCloudNormalsTrait for WCloudNormals {
+	#[inline] fn as_raw_mut_WCloudNormals(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WCloudNormals {
@@ -1923,17 +2789,31 @@ impl WCloudNormals {
 	/// * level: 64
 	/// * scale: 0.1
 	/// * color: Color::white()
+	#[inline]
 	pub fn new(cloud: &dyn core::ToInputArray, normals: &dyn core::ToInputArray, level: i32, scale: f64, color: &crate::viz::Color) -> Result<crate::viz::WCloudNormals> {
 		input_array_arg!(cloud);
 		input_array_arg!(normals);
-		unsafe { sys::cv_viz_WCloudNormals_WCloudNormals_const__InputArrayR_const__InputArrayR_int_double_const_ColorR(cloud.as_raw__InputArray(), normals.as_raw__InputArray(), level, scale, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WCloudNormals::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCloudNormals_WCloudNormals_const__InputArrayR_const__InputArrayR_int_double_const_ColorR(cloud.as_raw__InputArray(), normals.as_raw__InputArray(), level, scale, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WCloudNormals::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WCloudNormals, crate::viz::Widget, cv_WCloudNormals_to_Widget }
+
+boxed_cast_base! { WCloudNormals, crate::viz::Widget3D, cv_WCloudNormals_to_Widget3D }
+
 /// This 3D Widget defines a cone. :
-pub trait WConeTrait: crate::viz::Widget3DTrait {
+pub trait WConeTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WCone(&self) -> *const c_void;
+
+}
+
+pub trait WConeTrait: crate::viz::WConeTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WCone(&mut self) -> *mut c_void;
 
 }
@@ -1952,26 +2832,30 @@ impl Drop for WCone {
 	}
 }
 
-impl WCone {
-	#[inline] pub fn as_raw_WCone(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WCone(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WCone {}
 
-impl crate::viz::WConeTrait for WCone {
-	#[inline] fn as_raw_WCone(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WCone(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WCone {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WCone {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WCone {
+impl crate::viz::Widget3DTraitConst for WCone {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WCone {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WConeTraitConst for WCone {
+	#[inline] fn as_raw_WCone(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WConeTrait for WCone {
+	#[inline] fn as_raw_mut_WCone(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WCone {
@@ -1984,10 +2868,16 @@ impl WCone {
 	/// * color: Color of the cone.
 	/// 
 	/// ## C++ default parameters
-	/// * resolution: 6.0
+	/// * resolution: 6
 	/// * color: Color::white()
+	#[inline]
 	pub fn new(length: f64, radius: f64, resolution: i32, color: &crate::viz::Color) -> Result<crate::viz::WCone> {
-		unsafe { sys::cv_viz_WCone_WCone_double_double_int_const_ColorR(length, radius, resolution, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WCone::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCone_WCone_double_double_int_const_ColorR(length, radius, resolution, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WCone::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Constructs repositioned planar cone.
@@ -2000,17 +2890,31 @@ impl WCone {
 	/// * color: Color of the cone.
 	/// 
 	/// ## C++ default parameters
-	/// * resolution: 6.0
+	/// * resolution: 6
 	/// * color: Color::white()
+	#[inline]
 	pub fn new_1(radius: f64, center: core::Point3d, tip: core::Point3d, resolution: i32, color: &crate::viz::Color) -> Result<crate::viz::WCone> {
-		unsafe { sys::cv_viz_WCone_WCone_double_const_Point3dR_const_Point3dR_int_const_ColorR(radius, &center, &tip, resolution, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WCone::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCone_WCone_double_const_Point3dR_const_Point3dR_int_const_ColorR(radius, &center, &tip, resolution, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WCone::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WCone, crate::viz::Widget, cv_WCone_to_Widget }
+
+boxed_cast_base! { WCone, crate::viz::Widget3D, cv_WCone_to_Widget3D }
+
 /// This 3D Widget represents a coordinate system. :
-pub trait WCoordinateSystemTrait: crate::viz::Widget3DTrait {
+pub trait WCoordinateSystemTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WCoordinateSystem(&self) -> *const c_void;
+
+}
+
+pub trait WCoordinateSystemTrait: crate::viz::WCoordinateSystemTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WCoordinateSystem(&mut self) -> *mut c_void;
 
 }
@@ -2029,26 +2933,30 @@ impl Drop for WCoordinateSystem {
 	}
 }
 
-impl WCoordinateSystem {
-	#[inline] pub fn as_raw_WCoordinateSystem(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WCoordinateSystem(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WCoordinateSystem {}
 
-impl crate::viz::WCoordinateSystemTrait for WCoordinateSystem {
-	#[inline] fn as_raw_WCoordinateSystem(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WCoordinateSystem(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WCoordinateSystem {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WCoordinateSystem {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WCoordinateSystem {
+impl crate::viz::Widget3DTraitConst for WCoordinateSystem {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WCoordinateSystem {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WCoordinateSystemTraitConst for WCoordinateSystem {
+	#[inline] fn as_raw_WCoordinateSystem(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WCoordinateSystemTrait for WCoordinateSystem {
+	#[inline] fn as_raw_mut_WCoordinateSystem(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WCoordinateSystem {
@@ -2059,15 +2967,29 @@ impl WCoordinateSystem {
 	/// 
 	/// ## C++ default parameters
 	/// * scale: 1.0
+	#[inline]
 	pub fn new(scale: f64) -> Result<crate::viz::WCoordinateSystem> {
-		unsafe { sys::cv_viz_WCoordinateSystem_WCoordinateSystem_double(scale) }.into_result().map(|r| unsafe { crate::viz::WCoordinateSystem::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCoordinateSystem_WCoordinateSystem_double(scale, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WCoordinateSystem::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WCoordinateSystem, crate::viz::Widget, cv_WCoordinateSystem_to_Widget }
+
+boxed_cast_base! { WCoordinateSystem, crate::viz::Widget3D, cv_WCoordinateSystem_to_Widget3D }
+
 /// This 3D Widget defines a cube.
-pub trait WCubeTrait: crate::viz::Widget3DTrait {
+pub trait WCubeTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WCube(&self) -> *const c_void;
+
+}
+
+pub trait WCubeTrait: crate::viz::WCubeTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WCube(&mut self) -> *mut c_void;
 
 }
@@ -2086,26 +3008,30 @@ impl Drop for WCube {
 	}
 }
 
-impl WCube {
-	#[inline] pub fn as_raw_WCube(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WCube(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WCube {}
 
-impl crate::viz::WCubeTrait for WCube {
-	#[inline] fn as_raw_WCube(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WCube(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WCube {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WCube {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WCube {
+impl crate::viz::Widget3DTraitConst for WCube {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WCube {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WCubeTraitConst for WCube {
+	#[inline] fn as_raw_WCube(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WCubeTrait for WCube {
+	#[inline] fn as_raw_mut_WCube(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WCube {
@@ -2117,22 +3043,36 @@ impl WCube {
 	/// * wire_frame: If true, cube is represented as wireframe.
 	/// * color: Color of the cube.
 	/// 
-	/// ![Cube Widget](https://docs.opencv.org/4.3.0/cube_widget.png)
+	/// ![Cube Widget](https://docs.opencv.org/4.6.0/cube_widget.png)
 	/// 
 	/// ## C++ default parameters
 	/// * min_point: Vec3d::all(-0.5)
 	/// * max_point: Vec3d::all(0.5)
 	/// * wire_frame: true
 	/// * color: Color::white()
+	#[inline]
 	pub fn new(min_point: core::Point3d, max_point: core::Point3d, wire_frame: bool, color: &crate::viz::Color) -> Result<crate::viz::WCube> {
-		unsafe { sys::cv_viz_WCube_WCube_const_Point3dR_const_Point3dR_bool_const_ColorR(&min_point, &max_point, wire_frame, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WCube::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCube_WCube_const_Point3dR_const_Point3dR_bool_const_ColorR(&min_point, &max_point, wire_frame, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WCube::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WCube, crate::viz::Widget, cv_WCube_to_Widget }
+
+boxed_cast_base! { WCube, crate::viz::Widget3D, cv_WCube_to_Widget3D }
+
 /// This 3D Widget defines a cylinder. :
-pub trait WCylinderTrait: crate::viz::Widget3DTrait {
+pub trait WCylinderTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WCylinder(&self) -> *const c_void;
+
+}
+
+pub trait WCylinderTrait: crate::viz::WCylinderTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WCylinder(&mut self) -> *mut c_void;
 
 }
@@ -2151,26 +3091,30 @@ impl Drop for WCylinder {
 	}
 }
 
-impl WCylinder {
-	#[inline] pub fn as_raw_WCylinder(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WCylinder(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WCylinder {}
 
-impl crate::viz::WCylinderTrait for WCylinder {
-	#[inline] fn as_raw_WCylinder(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WCylinder(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WCylinder {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WCylinder {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WCylinder {
+impl crate::viz::Widget3DTraitConst for WCylinder {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WCylinder {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WCylinderTraitConst for WCylinder {
+	#[inline] fn as_raw_WCylinder(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WCylinderTrait for WCylinder {
+	#[inline] fn as_raw_mut_WCylinder(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WCylinder {
@@ -2186,15 +3130,29 @@ impl WCylinder {
 	/// ## C++ default parameters
 	/// * numsides: 30
 	/// * color: Color::white()
+	#[inline]
 	pub fn new(axis_point1: core::Point3d, axis_point2: core::Point3d, radius: f64, numsides: i32, color: &crate::viz::Color) -> Result<crate::viz::WCylinder> {
-		unsafe { sys::cv_viz_WCylinder_WCylinder_const_Point3dR_const_Point3dR_double_int_const_ColorR(&axis_point1, &axis_point2, radius, numsides, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WCylinder::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WCylinder_WCylinder_const_Point3dR_const_Point3dR_double_int_const_ColorR(&axis_point1, &axis_point2, radius, numsides, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WCylinder::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WCylinder, crate::viz::Widget, cv_WCylinder_to_Widget }
+
+boxed_cast_base! { WCylinder, crate::viz::Widget3D, cv_WCylinder_to_Widget3D }
+
 /// This 3D Widget defines a grid. :
-pub trait WGridTrait: crate::viz::Widget3DTrait {
+pub trait WGridTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WGrid(&self) -> *const c_void;
+
+}
+
+pub trait WGridTrait: crate::viz::WGridTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WGrid(&mut self) -> *mut c_void;
 
 }
@@ -2213,26 +3171,30 @@ impl Drop for WGrid {
 	}
 }
 
-impl WGrid {
-	#[inline] pub fn as_raw_WGrid(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WGrid(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WGrid {}
 
-impl crate::viz::WGridTrait for WGrid {
-	#[inline] fn as_raw_WGrid(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WGrid(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WGrid {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WGrid {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WGrid {
+impl crate::viz::Widget3DTraitConst for WGrid {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WGrid {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WGridTraitConst for WGrid {
+	#[inline] fn as_raw_WGrid(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WGridTrait for WGrid {
+	#[inline] fn as_raw_mut_WGrid(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WGrid {
@@ -2247,8 +3209,14 @@ impl WGrid {
 	/// * cells: Vec2i::all(10)
 	/// * cells_spacing: Vec2d::all(1.0)
 	/// * color: Color::white()
+	#[inline]
 	pub fn new(cells: core::Vec2i, cells_spacing: core::Vec2d, color: &crate::viz::Color) -> Result<crate::viz::WGrid> {
-		unsafe { sys::cv_viz_WGrid_WGrid_const_Vec2iR_const_Vec2dR_const_ColorR(&cells, &cells_spacing, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WGrid::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WGrid_WGrid_const_Vec2iR_const_Vec2dR_const_ColorR(&cells, &cells_spacing, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WGrid::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Creates repositioned grid
@@ -2257,32 +3225,56 @@ impl WGrid {
 	/// * cells: Vec2i::all(10)
 	/// * cells_spacing: Vec2d::all(1.0)
 	/// * color: Color::white()
+	#[inline]
 	pub fn new_1(center: core::Point3d, normal: core::Vec3d, new_yaxis: core::Vec3d, cells: core::Vec2i, cells_spacing: core::Vec2d, color: &crate::viz::Color) -> Result<crate::viz::WGrid> {
-		unsafe { sys::cv_viz_WGrid_WGrid_const_Point3dR_const_Vec3dR_const_Vec3dR_const_Vec2iR_const_Vec2dR_const_ColorR(&center, &normal, &new_yaxis, &cells, &cells_spacing, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WGrid::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WGrid_WGrid_const_Point3dR_const_Vec3dR_const_Vec3dR_const_Vec2iR_const_Vec2dR_const_ColorR(&center, &normal, &new_yaxis, &cells, &cells_spacing, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WGrid::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WGrid, crate::viz::Widget, cv_WGrid_to_Widget }
+
+boxed_cast_base! { WGrid, crate::viz::Widget3D, cv_WGrid_to_Widget3D }
+
 /// This 3D Widget represents an image in 3D space. :
-pub trait WImage3DTrait: crate::viz::Widget3DTrait {
+pub trait WImage3DTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WImage3D(&self) -> *const c_void;
+
+}
+
+pub trait WImage3DTrait: crate::viz::WImage3DTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WImage3D(&mut self) -> *mut c_void;
 
 	/// Sets the image content of the widget.
 	/// 
 	/// ## Parameters
 	/// * image: BGR or Gray-Scale image.
+	#[inline]
 	fn set_image(&mut self, image: &dyn core::ToInputArray) -> Result<()> {
 		input_array_arg!(image);
-		unsafe { sys::cv_viz_WImage3D_setImage_const__InputArrayR(self.as_raw_mut_WImage3D(), image.as_raw__InputArray()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WImage3D_setImage_const__InputArrayR(self.as_raw_mut_WImage3D(), image.as_raw__InputArray(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Sets the image size of the widget.
 	/// 
 	/// ## Parameters
 	/// * size: the new size of the image.
+	#[inline]
 	fn set_size(&mut self, size: core::Size) -> Result<()> {
-		unsafe { sys::cv_viz_WImage3D_setSize_const_SizeR(self.as_raw_mut_WImage3D(), &size) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WImage3D_setSize_const_SizeR(self.as_raw_mut_WImage3D(), &size, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
@@ -2301,26 +3293,30 @@ impl Drop for WImage3D {
 	}
 }
 
-impl WImage3D {
-	#[inline] pub fn as_raw_WImage3D(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WImage3D(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WImage3D {}
 
-impl crate::viz::WImage3DTrait for WImage3D {
-	#[inline] fn as_raw_WImage3D(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WImage3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WImage3D {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WImage3D {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WImage3D {
+impl crate::viz::Widget3DTraitConst for WImage3D {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WImage3D {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WImage3DTraitConst for WImage3D {
+	#[inline] fn as_raw_WImage3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WImage3DTrait for WImage3D {
+	#[inline] fn as_raw_mut_WImage3D(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WImage3D {
@@ -2329,9 +3325,15 @@ impl WImage3D {
 	/// ## Parameters
 	/// * image: BGR or Gray-Scale image.
 	/// * size: Size of the image.
+	#[inline]
 	pub fn new(image: &dyn core::ToInputArray, size: core::Size2d) -> Result<crate::viz::WImage3D> {
 		input_array_arg!(image);
-		unsafe { sys::cv_viz_WImage3D_WImage3D_const__InputArrayR_const_Size2dR(image.as_raw__InputArray(), &size) }.into_result().map(|r| unsafe { crate::viz::WImage3D::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WImage3D_WImage3D_const__InputArrayR_const_Size2dR(image.as_raw__InputArray(), &size, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WImage3D::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Constructs an WImage3D.
@@ -2342,25 +3344,44 @@ impl WImage3D {
 	/// * center: Position of the image.
 	/// * normal: Normal of the plane that represents the image.
 	/// * up_vector: Determines orientation of the image.
+	#[inline]
 	pub fn new_1(image: &dyn core::ToInputArray, size: core::Size2d, center: core::Vec3d, normal: core::Vec3d, up_vector: core::Vec3d) -> Result<crate::viz::WImage3D> {
 		input_array_arg!(image);
-		unsafe { sys::cv_viz_WImage3D_WImage3D_const__InputArrayR_const_Size2dR_const_Vec3dR_const_Vec3dR_const_Vec3dR(image.as_raw__InputArray(), &size, &center, &normal, &up_vector) }.into_result().map(|r| unsafe { crate::viz::WImage3D::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WImage3D_WImage3D_const__InputArrayR_const_Size2dR_const_Vec3dR_const_Vec3dR_const_Vec3dR(image.as_raw__InputArray(), &size, &center, &normal, &up_vector, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WImage3D::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WImage3D, crate::viz::Widget, cv_WImage3D_to_Widget }
+
+boxed_cast_base! { WImage3D, crate::viz::Widget3D, cv_WImage3D_to_Widget3D }
+
 /// This 2D Widget represents an image overlay. :
-pub trait WImageOverlayTrait: crate::viz::Widget2DTrait {
+pub trait WImageOverlayTraitConst: crate::viz::Widget2DTraitConst {
 	fn as_raw_WImageOverlay(&self) -> *const c_void;
+
+}
+
+pub trait WImageOverlayTrait: crate::viz::WImageOverlayTraitConst + crate::viz::Widget2DTrait {
 	fn as_raw_mut_WImageOverlay(&mut self) -> *mut c_void;
 
 	/// Sets the image content of the widget.
 	/// 
 	/// ## Parameters
 	/// * image: BGR or Gray-Scale image.
+	#[inline]
 	fn set_image(&mut self, image: &dyn core::ToInputArray) -> Result<()> {
 		input_array_arg!(image);
-		unsafe { sys::cv_viz_WImageOverlay_setImage_const__InputArrayR(self.as_raw_mut_WImageOverlay(), image.as_raw__InputArray()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WImageOverlay_setImage_const__InputArrayR(self.as_raw_mut_WImageOverlay(), image.as_raw__InputArray(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
@@ -2379,26 +3400,30 @@ impl Drop for WImageOverlay {
 	}
 }
 
-impl WImageOverlay {
-	#[inline] pub fn as_raw_WImageOverlay(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WImageOverlay(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WImageOverlay {}
 
-impl crate::viz::WImageOverlayTrait for WImageOverlay {
-	#[inline] fn as_raw_WImageOverlay(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WImageOverlay(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WImageOverlay {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WImageOverlay {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget2DTrait for WImageOverlay {
+impl crate::viz::Widget2DTraitConst for WImageOverlay {
 	#[inline] fn as_raw_Widget2D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget2DTrait for WImageOverlay {
 	#[inline] fn as_raw_mut_Widget2D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WImageOverlayTraitConst for WImageOverlay {
+	#[inline] fn as_raw_WImageOverlay(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WImageOverlayTrait for WImageOverlay {
+	#[inline] fn as_raw_mut_WImageOverlay(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WImageOverlay {
@@ -2407,16 +3432,30 @@ impl WImageOverlay {
 	/// ## Parameters
 	/// * image: BGR or Gray-Scale image.
 	/// * rect: Image is scaled and positioned based on rect.
+	#[inline]
 	pub fn new(image: &dyn core::ToInputArray, rect: core::Rect) -> Result<crate::viz::WImageOverlay> {
 		input_array_arg!(image);
-		unsafe { sys::cv_viz_WImageOverlay_WImageOverlay_const__InputArrayR_const_RectR(image.as_raw__InputArray(), &rect) }.into_result().map(|r| unsafe { crate::viz::WImageOverlay::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WImageOverlay_WImageOverlay_const__InputArrayR_const_RectR(image.as_raw__InputArray(), &rect, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WImageOverlay::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WImageOverlay, crate::viz::Widget, cv_WImageOverlay_to_Widget }
+
+boxed_cast_base! { WImageOverlay, crate::viz::Widget2D, cv_WImageOverlay_to_Widget2D }
+
 /// This 3D Widget defines a finite line.
-pub trait WLineTrait: crate::viz::Widget3DTrait {
+pub trait WLineTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WLine(&self) -> *const c_void;
+
+}
+
+pub trait WLineTrait: crate::viz::WLineTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WLine(&mut self) -> *mut c_void;
 
 }
@@ -2435,26 +3474,30 @@ impl Drop for WLine {
 	}
 }
 
-impl WLine {
-	#[inline] pub fn as_raw_WLine(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WLine(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WLine {}
 
-impl crate::viz::WLineTrait for WLine {
-	#[inline] fn as_raw_WLine(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WLine(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WLine {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WLine {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WLine {
+impl crate::viz::Widget3DTraitConst for WLine {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WLine {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WLineTraitConst for WLine {
+	#[inline] fn as_raw_WLine(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WLineTrait for WLine {
+	#[inline] fn as_raw_mut_WLine(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WLine {
@@ -2467,11 +3510,21 @@ impl WLine {
 	/// 
 	/// ## C++ default parameters
 	/// * color: Color::white()
+	#[inline]
 	pub fn new(pt1: core::Point3d, pt2: core::Point3d, color: &crate::viz::Color) -> Result<crate::viz::WLine> {
-		unsafe { sys::cv_viz_WLine_WLine_const_Point3dR_const_Point3dR_const_ColorR(&pt1, &pt2, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WLine::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WLine_WLine_const_Point3dR_const_Point3dR_const_ColorR(&pt1, &pt2, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WLine::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
+
+boxed_cast_base! { WLine, crate::viz::Widget, cv_WLine_to_Widget }
+
+boxed_cast_base! { WLine, crate::viz::Widget3D, cv_WLine_to_Widget3D }
 
 /// Constructs a WMesh.
 /// 
@@ -2481,8 +3534,12 @@ impl WLine {
 /// * polygons: Points of the mesh object.
 /// * colors: Point colors.
 /// * normals: Point normals.
-pub trait WMeshTrait: crate::viz::Widget3DTrait {
+pub trait WMeshTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WMesh(&self) -> *const c_void;
+
+}
+
+pub trait WMeshTrait: crate::viz::WMeshTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WMesh(&mut self) -> *mut c_void;
 
 }
@@ -2508,48 +3565,72 @@ impl Drop for WMesh {
 	}
 }
 
-impl WMesh {
-	#[inline] pub fn as_raw_WMesh(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WMesh(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WMesh {}
 
-impl crate::viz::WMeshTrait for WMesh {
-	#[inline] fn as_raw_WMesh(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WMesh(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WMesh {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WMesh {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WMesh {
+impl crate::viz::Widget3DTraitConst for WMesh {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WMesh {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
+impl crate::viz::WMeshTraitConst for WMesh {
+	#[inline] fn as_raw_WMesh(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WMeshTrait for WMesh {
+	#[inline] fn as_raw_mut_WMesh(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
 impl WMesh {
+	#[inline]
 	pub fn new(mesh: &crate::viz::Mesh) -> Result<crate::viz::WMesh> {
-		unsafe { sys::cv_viz_WMesh_WMesh_const_MeshR(mesh.as_raw_Mesh()) }.into_result().map(|r| unsafe { crate::viz::WMesh::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WMesh_WMesh_const_MeshR(mesh.as_raw_Mesh(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WMesh::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// ## C++ default parameters
 	/// * colors: noArray()
 	/// * normals: noArray()
+	#[inline]
 	pub fn new_1(cloud: &dyn core::ToInputArray, polygons: &dyn core::ToInputArray, colors: &dyn core::ToInputArray, normals: &dyn core::ToInputArray) -> Result<crate::viz::WMesh> {
 		input_array_arg!(cloud);
 		input_array_arg!(polygons);
 		input_array_arg!(colors);
 		input_array_arg!(normals);
-		unsafe { sys::cv_viz_WMesh_WMesh_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__InputArrayR(cloud.as_raw__InputArray(), polygons.as_raw__InputArray(), colors.as_raw__InputArray(), normals.as_raw__InputArray()) }.into_result().map(|r| unsafe { crate::viz::WMesh::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WMesh_WMesh_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__InputArrayR(cloud.as_raw__InputArray(), polygons.as_raw__InputArray(), colors.as_raw__InputArray(), normals.as_raw__InputArray(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WMesh::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
-pub trait WPaintedCloudTrait: crate::viz::Widget3DTrait {
+boxed_cast_base! { WMesh, crate::viz::Widget, cv_WMesh_to_Widget }
+
+boxed_cast_base! { WMesh, crate::viz::Widget3D, cv_WMesh_to_Widget3D }
+
+pub trait WPaintedCloudTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WPaintedCloud(&self) -> *const c_void;
+
+}
+
+pub trait WPaintedCloudTrait: crate::viz::WPaintedCloudTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WPaintedCloud(&mut self) -> *mut c_void;
 
 }
@@ -2567,52 +3648,82 @@ impl Drop for WPaintedCloud {
 	}
 }
 
-impl WPaintedCloud {
-	#[inline] pub fn as_raw_WPaintedCloud(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WPaintedCloud(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WPaintedCloud {}
 
-impl crate::viz::WPaintedCloudTrait for WPaintedCloud {
-	#[inline] fn as_raw_WPaintedCloud(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WPaintedCloud(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WPaintedCloud {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WPaintedCloud {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WPaintedCloud {
+impl crate::viz::Widget3DTraitConst for WPaintedCloud {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WPaintedCloud {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WPaintedCloudTraitConst for WPaintedCloud {
+	#[inline] fn as_raw_WPaintedCloud(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WPaintedCloudTrait for WPaintedCloud {
+	#[inline] fn as_raw_mut_WPaintedCloud(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WPaintedCloud {
 	/// Paint cloud with default gradient between cloud bounds points
+	#[inline]
 	pub fn new(cloud: &dyn core::ToInputArray) -> Result<crate::viz::WPaintedCloud> {
 		input_array_arg!(cloud);
-		unsafe { sys::cv_viz_WPaintedCloud_WPaintedCloud_const__InputArrayR(cloud.as_raw__InputArray()) }.into_result().map(|r| unsafe { crate::viz::WPaintedCloud::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WPaintedCloud_WPaintedCloud_const__InputArrayR(cloud.as_raw__InputArray(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WPaintedCloud::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Paint cloud with default gradient between given points
+	#[inline]
 	pub fn new_1(cloud: &dyn core::ToInputArray, p1: core::Point3d, p2: core::Point3d) -> Result<crate::viz::WPaintedCloud> {
 		input_array_arg!(cloud);
-		unsafe { sys::cv_viz_WPaintedCloud_WPaintedCloud_const__InputArrayR_const_Point3dR_const_Point3dR(cloud.as_raw__InputArray(), &p1, &p2) }.into_result().map(|r| unsafe { crate::viz::WPaintedCloud::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WPaintedCloud_WPaintedCloud_const__InputArrayR_const_Point3dR_const_Point3dR(cloud.as_raw__InputArray(), &p1, &p2, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WPaintedCloud::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Paint cloud with gradient specified by given colors between given points
+	#[inline]
 	pub fn new_2(cloud: &dyn core::ToInputArray, p1: core::Point3d, p2: core::Point3d, c1: &crate::viz::Color, c2: crate::viz::Color) -> Result<crate::viz::WPaintedCloud> {
 		input_array_arg!(cloud);
-		unsafe { sys::cv_viz_WPaintedCloud_WPaintedCloud_const__InputArrayR_const_Point3dR_const_Point3dR_const_ColorR_const_Color(cloud.as_raw__InputArray(), &p1, &p2, c1.as_raw_Color(), c2.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WPaintedCloud::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WPaintedCloud_WPaintedCloud_const__InputArrayR_const_Point3dR_const_Point3dR_const_ColorR_const_Color(cloud.as_raw__InputArray(), &p1, &p2, c1.as_raw_Color(), c2.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WPaintedCloud::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WPaintedCloud, crate::viz::Widget, cv_WPaintedCloud_to_Widget }
+
+boxed_cast_base! { WPaintedCloud, crate::viz::Widget3D, cv_WPaintedCloud_to_Widget3D }
+
 /// This 3D Widget defines a finite plane.
-pub trait WPlaneTrait: crate::viz::Widget3DTrait {
+pub trait WPlaneTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WPlane(&self) -> *const c_void;
+
+}
+
+pub trait WPlaneTrait: crate::viz::WPlaneTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WPlane(&mut self) -> *mut c_void;
 
 }
@@ -2631,26 +3742,30 @@ impl Drop for WPlane {
 	}
 }
 
-impl WPlane {
-	#[inline] pub fn as_raw_WPlane(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WPlane(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WPlane {}
 
-impl crate::viz::WPlaneTrait for WPlane {
-	#[inline] fn as_raw_WPlane(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WPlane(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WPlane {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WPlane {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WPlane {
+impl crate::viz::Widget3DTraitConst for WPlane {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WPlane {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WPlaneTraitConst for WPlane {
+	#[inline] fn as_raw_WPlane(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WPlaneTrait for WPlane {
+	#[inline] fn as_raw_mut_WPlane(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WPlane {
@@ -2663,8 +3778,14 @@ impl WPlane {
 	/// ## C++ default parameters
 	/// * size: Size2d(1.0,1.0)
 	/// * color: Color::white()
+	#[inline]
 	pub fn new(size: core::Size2d, color: &crate::viz::Color) -> Result<crate::viz::WPlane> {
-		unsafe { sys::cv_viz_WPlane_WPlane_const_Size2dR_const_ColorR(&size, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WPlane::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WPlane_WPlane_const_Size2dR_const_ColorR(&size, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WPlane::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Constructs a repositioned plane
@@ -2679,15 +3800,29 @@ impl WPlane {
 	/// ## C++ default parameters
 	/// * size: Size2d(1.0,1.0)
 	/// * color: Color::white()
+	#[inline]
 	pub fn new_1(center: core::Point3d, normal: core::Vec3d, new_yaxis: core::Vec3d, size: core::Size2d, color: &crate::viz::Color) -> Result<crate::viz::WPlane> {
-		unsafe { sys::cv_viz_WPlane_WPlane_const_Point3dR_const_Vec3dR_const_Vec3dR_const_Size2dR_const_ColorR(&center, &normal, &new_yaxis, &size, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WPlane::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WPlane_WPlane_const_Point3dR_const_Vec3dR_const_Vec3dR_const_Size2dR_const_ColorR(&center, &normal, &new_yaxis, &size, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WPlane::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WPlane, crate::viz::Widget, cv_WPlane_to_Widget }
+
+boxed_cast_base! { WPlane, crate::viz::Widget3D, cv_WPlane_to_Widget3D }
+
 /// This 3D Widget defines a poly line. :
-pub trait WPolyLineTrait: crate::viz::Widget3DTrait {
+pub trait WPolyLineTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WPolyLine(&self) -> *const c_void;
+
+}
+
+pub trait WPolyLineTrait: crate::viz::WPolyLineTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WPolyLine(&mut self) -> *mut c_void;
 
 }
@@ -2706,33 +3841,43 @@ impl Drop for WPolyLine {
 	}
 }
 
-impl WPolyLine {
-	#[inline] pub fn as_raw_WPolyLine(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WPolyLine(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WPolyLine {}
 
-impl crate::viz::WPolyLineTrait for WPolyLine {
-	#[inline] fn as_raw_WPolyLine(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WPolyLine(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WPolyLine {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WPolyLine {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WPolyLine {
+impl crate::viz::Widget3DTraitConst for WPolyLine {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WPolyLine {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
+impl crate::viz::WPolyLineTraitConst for WPolyLine {
+	#[inline] fn as_raw_WPolyLine(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WPolyLineTrait for WPolyLine {
+	#[inline] fn as_raw_mut_WPolyLine(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
 impl WPolyLine {
+	#[inline]
 	pub fn new(points: &dyn core::ToInputArray, colors: &dyn core::ToInputArray) -> Result<crate::viz::WPolyLine> {
 		input_array_arg!(points);
 		input_array_arg!(colors);
-		unsafe { sys::cv_viz_WPolyLine_WPolyLine_const__InputArrayR_const__InputArrayR(points.as_raw__InputArray(), colors.as_raw__InputArray()) }.into_result().map(|r| unsafe { crate::viz::WPolyLine::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WPolyLine_WPolyLine_const__InputArrayR_const__InputArrayR(points.as_raw__InputArray(), colors.as_raw__InputArray(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WPolyLine::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Constructs a WPolyLine.
@@ -2743,16 +3888,30 @@ impl WPolyLine {
 	/// 
 	/// ## C++ default parameters
 	/// * color: Color::white()
+	#[inline]
 	pub fn new_1(points: &dyn core::ToInputArray, color: &crate::viz::Color) -> Result<crate::viz::WPolyLine> {
 		input_array_arg!(points);
-		unsafe { sys::cv_viz_WPolyLine_WPolyLine_const__InputArrayR_const_ColorR(points.as_raw__InputArray(), color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WPolyLine::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WPolyLine_WPolyLine_const__InputArrayR_const_ColorR(points.as_raw__InputArray(), color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WPolyLine::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WPolyLine, crate::viz::Widget, cv_WPolyLine_to_Widget }
+
+boxed_cast_base! { WPolyLine, crate::viz::Widget3D, cv_WPolyLine_to_Widget3D }
+
 /// This 3D Widget defines a sphere. :
-pub trait WSphereTrait: crate::viz::Widget3DTrait {
+pub trait WSphereTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WSphere(&self) -> *const c_void;
+
+}
+
+pub trait WSphereTrait: crate::viz::WSphereTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WSphere(&mut self) -> *mut c_void;
 
 }
@@ -2771,26 +3930,30 @@ impl Drop for WSphere {
 	}
 }
 
-impl WSphere {
-	#[inline] pub fn as_raw_WSphere(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WSphere(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WSphere {}
 
-impl crate::viz::WSphereTrait for WSphere {
-	#[inline] fn as_raw_WSphere(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WSphere(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WSphere {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WSphere {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WSphere {
+impl crate::viz::Widget3DTraitConst for WSphere {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WSphere {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WSphereTraitConst for WSphere {
+	#[inline] fn as_raw_WSphere(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WSphereTrait for WSphere {
+	#[inline] fn as_raw_mut_WSphere(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WSphere {
@@ -2805,29 +3968,54 @@ impl WSphere {
 	/// ## C++ default parameters
 	/// * sphere_resolution: 10
 	/// * color: Color::white()
+	#[inline]
 	pub fn new(center: core::Point3d, radius: f64, sphere_resolution: i32, color: &crate::viz::Color) -> Result<crate::viz::WSphere> {
-		unsafe { sys::cv_viz_WSphere_WSphere_const_Point3dR_double_int_const_ColorR(&center, radius, sphere_resolution, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WSphere::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WSphere_WSphere_const_Point3dR_double_int_const_ColorR(&center, radius, sphere_resolution, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WSphere::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WSphere, crate::viz::Widget, cv_WSphere_to_Widget }
+
+boxed_cast_base! { WSphere, crate::viz::Widget3D, cv_WSphere_to_Widget3D }
+
 /// This 2D Widget represents text overlay.
-pub trait WTextTrait: crate::viz::Widget2DTrait {
+pub trait WTextTraitConst: crate::viz::Widget2DTraitConst {
 	fn as_raw_WText(&self) -> *const c_void;
+
+	/// Returns the current text content of the widget.
+	#[inline]
+	fn get_text(&self) -> Result<String> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WText_getText_const(self.as_raw_WText(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { String::opencv_from_extern(ret) };
+		Ok(ret)
+	}
+	
+}
+
+pub trait WTextTrait: crate::viz::WTextTraitConst + crate::viz::Widget2DTrait {
 	fn as_raw_mut_WText(&mut self) -> *mut c_void;
 
 	/// Sets the text content of the widget.
 	/// 
 	/// ## Parameters
 	/// * text: Text content of the widget.
+	#[inline]
 	fn set_text(&mut self, text: &str) -> Result<()> {
 		extern_container_arg!(text);
-		unsafe { sys::cv_viz_WText_setText_const_StringR(self.as_raw_mut_WText(), text.opencv_as_extern()) }.into_result()
-	}
-	
-	/// Returns the current text content of the widget.
-	fn get_text(&self) -> Result<String> {
-		unsafe { sys::cv_viz_WText_getText_const(self.as_raw_WText()) }.into_result().map(|r| unsafe { String::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WText_setText_const_StringR(self.as_raw_mut_WText(), text.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
@@ -2846,26 +4034,30 @@ impl Drop for WText {
 	}
 }
 
-impl WText {
-	#[inline] pub fn as_raw_WText(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WText(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WText {}
 
-impl crate::viz::WTextTrait for WText {
-	#[inline] fn as_raw_WText(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WText(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WText {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WText {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget2DTrait for WText {
+impl crate::viz::Widget2DTraitConst for WText {
 	#[inline] fn as_raw_Widget2D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget2DTrait for WText {
 	#[inline] fn as_raw_mut_Widget2D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WTextTraitConst for WText {
+	#[inline] fn as_raw_WText(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WTextTrait for WText {
+	#[inline] fn as_raw_mut_WText(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WText {
@@ -2880,30 +4072,55 @@ impl WText {
 	/// ## C++ default parameters
 	/// * font_size: 20
 	/// * color: Color::white()
+	#[inline]
 	pub fn new(text: &str, pos: core::Point, font_size: i32, color: &crate::viz::Color) -> Result<crate::viz::WText> {
 		extern_container_arg!(text);
-		unsafe { sys::cv_viz_WText_WText_const_StringR_const_PointR_int_const_ColorR(text.opencv_as_extern(), &pos, font_size, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WText::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WText_WText_const_StringR_const_PointR_int_const_ColorR(text.opencv_as_extern(), &pos, font_size, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WText::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WText, crate::viz::Widget, cv_WText_to_Widget }
+
+boxed_cast_base! { WText, crate::viz::Widget2D, cv_WText_to_Widget2D }
+
 /// This 3D Widget represents 3D text. The text always faces the camera.
-pub trait WText3DTrait: crate::viz::Widget3DTrait {
+pub trait WText3DTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WText3D(&self) -> *const c_void;
+
+	/// Returns the current text content of the widget.
+	#[inline]
+	fn get_text(&self) -> Result<String> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WText3D_getText_const(self.as_raw_WText3D(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { String::opencv_from_extern(ret) };
+		Ok(ret)
+	}
+	
+}
+
+pub trait WText3DTrait: crate::viz::WText3DTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WText3D(&mut self) -> *mut c_void;
 
 	/// Sets the text content of the widget.
 	/// 
 	/// ## Parameters
 	/// * text: Text content of the widget.
+	#[inline]
 	fn set_text(&mut self, text: &str) -> Result<()> {
 		extern_container_arg!(text);
-		unsafe { sys::cv_viz_WText3D_setText_const_StringR(self.as_raw_mut_WText3D(), text.opencv_as_extern()) }.into_result()
-	}
-	
-	/// Returns the current text content of the widget.
-	fn get_text(&self) -> Result<String> {
-		unsafe { sys::cv_viz_WText3D_getText_const(self.as_raw_WText3D()) }.into_result().map(|r| unsafe { String::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WText3D_setText_const_StringR(self.as_raw_mut_WText3D(), text.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
@@ -2922,26 +4139,30 @@ impl Drop for WText3D {
 	}
 }
 
-impl WText3D {
-	#[inline] pub fn as_raw_WText3D(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WText3D(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WText3D {}
 
-impl crate::viz::WText3DTrait for WText3D {
-	#[inline] fn as_raw_WText3D(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WText3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WText3D {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WText3D {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WText3D {
+impl crate::viz::Widget3DTraitConst for WText3D {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WText3D {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WText3DTraitConst for WText3D {
+	#[inline] fn as_raw_WText3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WText3DTrait for WText3D {
+	#[inline] fn as_raw_mut_WText3D(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WText3D {
@@ -2958,16 +4179,30 @@ impl WText3D {
 	/// * text_scale: 1.
 	/// * face_camera: true
 	/// * color: Color::white()
+	#[inline]
 	pub fn new(text: &str, position: core::Point3d, text_scale: f64, face_camera: bool, color: &crate::viz::Color) -> Result<crate::viz::WText3D> {
 		extern_container_arg!(text);
-		unsafe { sys::cv_viz_WText3D_WText3D_const_StringR_const_Point3dR_double_bool_const_ColorR(text.opencv_as_extern(), &position, text_scale, face_camera, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WText3D::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WText3D_WText3D_const_StringR_const_Point3dR_double_bool_const_ColorR(text.opencv_as_extern(), &position, text_scale, face_camera, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WText3D::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WText3D, crate::viz::Widget, cv_WText3D_to_Widget }
+
+boxed_cast_base! { WText3D, crate::viz::Widget3D, cv_WText3D_to_Widget3D }
+
 /// This 3D Widget represents a trajectory. :
-pub trait WTrajectoryTrait: crate::viz::Widget3DTrait {
+pub trait WTrajectoryTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WTrajectory(&self) -> *const c_void;
+
+}
+
+pub trait WTrajectoryTrait: crate::viz::WTrajectoryTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WTrajectory(&mut self) -> *mut c_void;
 
 }
@@ -2986,26 +4221,30 @@ impl Drop for WTrajectory {
 	}
 }
 
-impl WTrajectory {
-	#[inline] pub fn as_raw_WTrajectory(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WTrajectory(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WTrajectory {}
 
-impl crate::viz::WTrajectoryTrait for WTrajectory {
-	#[inline] fn as_raw_WTrajectory(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WTrajectory(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WTrajectory {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WTrajectory {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WTrajectory {
+impl crate::viz::Widget3DTraitConst for WTrajectory {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WTrajectory {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WTrajectoryTraitConst for WTrajectory {
+	#[inline] fn as_raw_WTrajectory(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WTrajectoryTrait for WTrajectory {
+	#[inline] fn as_raw_mut_WTrajectory(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WTrajectory {
@@ -3027,16 +4266,30 @@ impl WTrajectory {
 	/// * display_mode: WTrajectory::PATH
 	/// * scale: 1.0
 	/// * color: Color::white()
+	#[inline]
 	pub fn new(path: &dyn core::ToInputArray, display_mode: i32, scale: f64, color: &crate::viz::Color) -> Result<crate::viz::WTrajectory> {
 		input_array_arg!(path);
-		unsafe { sys::cv_viz_WTrajectory_WTrajectory_const__InputArrayR_int_double_const_ColorR(path.as_raw__InputArray(), display_mode, scale, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WTrajectory::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WTrajectory_WTrajectory_const__InputArrayR_int_double_const_ColorR(path.as_raw__InputArray(), display_mode, scale, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WTrajectory::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WTrajectory, crate::viz::Widget, cv_WTrajectory_to_Widget }
+
+boxed_cast_base! { WTrajectory, crate::viz::Widget3D, cv_WTrajectory_to_Widget3D }
+
 /// This 3D Widget represents a trajectory. :
-pub trait WTrajectoryFrustumsTrait: crate::viz::Widget3DTrait {
+pub trait WTrajectoryFrustumsTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WTrajectoryFrustums(&self) -> *const c_void;
+
+}
+
+pub trait WTrajectoryFrustumsTrait: crate::viz::WTrajectoryFrustumsTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WTrajectoryFrustums(&mut self) -> *mut c_void;
 
 }
@@ -3055,26 +4308,30 @@ impl Drop for WTrajectoryFrustums {
 	}
 }
 
-impl WTrajectoryFrustums {
-	#[inline] pub fn as_raw_WTrajectoryFrustums(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WTrajectoryFrustums(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WTrajectoryFrustums {}
 
-impl crate::viz::WTrajectoryFrustumsTrait for WTrajectoryFrustums {
-	#[inline] fn as_raw_WTrajectoryFrustums(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WTrajectoryFrustums(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WTrajectoryFrustums {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WTrajectoryFrustums {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WTrajectoryFrustums {
+impl crate::viz::Widget3DTraitConst for WTrajectoryFrustums {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WTrajectoryFrustums {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WTrajectoryFrustumsTraitConst for WTrajectoryFrustums {
+	#[inline] fn as_raw_WTrajectoryFrustums(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WTrajectoryFrustumsTrait for WTrajectoryFrustums {
+	#[inline] fn as_raw_mut_WTrajectoryFrustums(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WTrajectoryFrustums {
@@ -3091,9 +4348,15 @@ impl WTrajectoryFrustums {
 	/// ## C++ default parameters
 	/// * scale: 1.
 	/// * color: Color::white()
+	#[inline]
 	pub fn new(path: &dyn core::ToInputArray, k: core::Matx33d, scale: f64, color: &crate::viz::Color) -> Result<crate::viz::WTrajectoryFrustums> {
 		input_array_arg!(path);
-		unsafe { sys::cv_viz_WTrajectoryFrustums_WTrajectoryFrustums_const__InputArrayR_const_Matx33dR_double_const_ColorR(path.as_raw__InputArray(), &k, scale, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WTrajectoryFrustums::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WTrajectoryFrustums_WTrajectoryFrustums_const__InputArrayR_const_Matx33dR_double_const_ColorR(path.as_raw__InputArray(), &k, scale, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WTrajectoryFrustums::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Constructs a WTrajectoryFrustums.
@@ -3109,19 +4372,33 @@ impl WTrajectoryFrustums {
 	/// ## C++ default parameters
 	/// * scale: 1.
 	/// * color: Color::white()
+	#[inline]
 	pub fn new_1(path: &dyn core::ToInputArray, fov: core::Vec2d, scale: f64, color: &crate::viz::Color) -> Result<crate::viz::WTrajectoryFrustums> {
 		input_array_arg!(path);
-		unsafe { sys::cv_viz_WTrajectoryFrustums_WTrajectoryFrustums_const__InputArrayR_const_Vec2dR_double_const_ColorR(path.as_raw__InputArray(), &fov, scale, color.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WTrajectoryFrustums::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WTrajectoryFrustums_WTrajectoryFrustums_const__InputArrayR_const_Vec2dR_double_const_ColorR(path.as_raw__InputArray(), &fov, scale, color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WTrajectoryFrustums::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
+
+boxed_cast_base! { WTrajectoryFrustums, crate::viz::Widget, cv_WTrajectoryFrustums_to_Widget }
+
+boxed_cast_base! { WTrajectoryFrustums, crate::viz::Widget3D, cv_WTrajectoryFrustums_to_Widget3D }
 
 /// This 3D Widget represents a trajectory using spheres and lines
 /// 
 /// where spheres represent the positions of the camera, and lines represent the direction from
 /// previous position to the current. :
-pub trait WTrajectorySpheresTrait: crate::viz::Widget3DTrait {
+pub trait WTrajectorySpheresTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WTrajectorySpheres(&self) -> *const c_void;
+
+}
+
+pub trait WTrajectorySpheresTrait: crate::viz::WTrajectorySpheresTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WTrajectorySpheres(&mut self) -> *mut c_void;
 
 }
@@ -3143,26 +4420,30 @@ impl Drop for WTrajectorySpheres {
 	}
 }
 
-impl WTrajectorySpheres {
-	#[inline] pub fn as_raw_WTrajectorySpheres(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WTrajectorySpheres(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WTrajectorySpheres {}
 
-impl crate::viz::WTrajectorySpheresTrait for WTrajectorySpheres {
-	#[inline] fn as_raw_WTrajectorySpheres(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WTrajectorySpheres(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WTrajectorySpheres {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WTrajectorySpheres {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WTrajectorySpheres {
+impl crate::viz::Widget3DTraitConst for WTrajectorySpheres {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WTrajectorySpheres {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::viz::WTrajectorySpheresTraitConst for WTrajectorySpheres {
+	#[inline] fn as_raw_WTrajectorySpheres(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WTrajectorySpheresTrait for WTrajectorySpheres {
+	#[inline] fn as_raw_mut_WTrajectorySpheres(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl WTrajectorySpheres {
@@ -3180,12 +4461,22 @@ impl WTrajectorySpheres {
 	/// * radius: 0.007
 	/// * from: Color::red()
 	/// * to: Color::white()
+	#[inline]
 	pub fn new(path: &dyn core::ToInputArray, line_length: f64, radius: f64, from: &crate::viz::Color, to: &crate::viz::Color) -> Result<crate::viz::WTrajectorySpheres> {
 		input_array_arg!(path);
-		unsafe { sys::cv_viz_WTrajectorySpheres_WTrajectorySpheres_const__InputArrayR_double_double_const_ColorR_const_ColorR(path.as_raw__InputArray(), line_length, radius, from.as_raw_Color(), to.as_raw_Color()) }.into_result().map(|r| unsafe { crate::viz::WTrajectorySpheres::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WTrajectorySpheres_WTrajectorySpheres_const__InputArrayR_double_double_const_ColorR_const_ColorR(path.as_raw__InputArray(), line_length, radius, from.as_raw_Color(), to.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WTrajectorySpheres::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
+
+boxed_cast_base! { WTrajectorySpheres, crate::viz::Widget, cv_WTrajectorySpheres_to_Widget }
+
+boxed_cast_base! { WTrajectorySpheres, crate::viz::Widget3D, cv_WTrajectorySpheres_to_Widget3D }
 
 /// This class allows to merge several widgets to single one.
 /// 
@@ -3193,21 +4484,35 @@ impl WTrajectorySpheres {
 /// instance, if widgetA has color array and widgetB has only global color defined, then result
 /// of merge won't have color at all. The class is suitable for merging large amount of similar
 /// widgets. :
-pub trait WWidgetMergerTrait: crate::viz::Widget3DTrait {
+pub trait WWidgetMergerTraitConst: crate::viz::Widget3DTraitConst {
 	fn as_raw_WWidgetMerger(&self) -> *const c_void;
+
+}
+
+pub trait WWidgetMergerTrait: crate::viz::WWidgetMergerTraitConst + crate::viz::Widget3DTrait {
 	fn as_raw_mut_WWidgetMerger(&mut self) -> *mut c_void;
 
 	/// Add widget to merge with optional position change
 	/// 
 	/// ## C++ default parameters
 	/// * pose: Affine3d::Identity()
+	#[inline]
 	fn add_widget(&mut self, widget: &crate::viz::Widget3D, pose: core::Affine3d) -> Result<()> {
-		unsafe { sys::cv_viz_WWidgetMerger_addWidget_const_Widget3DR_const_Affine3dR(self.as_raw_mut_WWidgetMerger(), widget.as_raw_Widget3D(), &pose) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WWidgetMerger_addWidget_const_Widget3DR_const_Affine3dR(self.as_raw_mut_WWidgetMerger(), widget.as_raw_Widget3D(), &pose, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Repacks internal structure to single widget
+	#[inline]
 	fn finalize(&mut self) -> Result<()> {
-		unsafe { sys::cv_viz_WWidgetMerger_finalize(self.as_raw_mut_WWidgetMerger()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WWidgetMerger_finalize(self.as_raw_mut_WWidgetMerger(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
@@ -3231,38 +4536,90 @@ impl Drop for WWidgetMerger {
 	}
 }
 
-impl WWidgetMerger {
-	#[inline] pub fn as_raw_WWidgetMerger(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_WWidgetMerger(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for WWidgetMerger {}
 
-impl crate::viz::WWidgetMergerTrait for WWidgetMerger {
-	#[inline] fn as_raw_WWidgetMerger(&self) -> *const c_void { self.as_raw() }
-	#[inline] fn as_raw_mut_WWidgetMerger(&mut self) -> *mut c_void { self.as_raw_mut() }
+impl crate::viz::WidgetTraitConst for WWidgetMerger {
+	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 }
 
 impl crate::viz::WidgetTrait for WWidgetMerger {
-	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for WWidgetMerger {
+impl crate::viz::Widget3DTraitConst for WWidgetMerger {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for WWidgetMerger {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
+impl crate::viz::WWidgetMergerTraitConst for WWidgetMerger {
+	#[inline] fn as_raw_WWidgetMerger(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WWidgetMergerTrait for WWidgetMerger {
+	#[inline] fn as_raw_mut_WWidgetMerger(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
 impl WWidgetMerger {
+	#[inline]
 	pub fn default() -> Result<crate::viz::WWidgetMerger> {
-		unsafe { sys::cv_viz_WWidgetMerger_WWidgetMerger() }.into_result().map(|r| unsafe { crate::viz::WWidgetMerger::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_WWidgetMerger_WWidgetMerger(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::WWidgetMerger::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { WWidgetMerger, crate::viz::Widget, cv_WWidgetMerger_to_Widget }
+
+boxed_cast_base! { WWidgetMerger, crate::viz::Widget3D, cv_WWidgetMerger_to_Widget3D }
+
 /// Base class of all widgets. Widget is implicitly shared.
-pub trait WidgetTrait {
+pub trait WidgetTraitConst {
 	fn as_raw_Widget(&self) -> *const c_void;
+
+	/// Returns rendering property of the widget.
+	/// 
+	/// ## Parameters
+	/// * property: Property.
+	/// 
+	/// Rendering property can be one of the following:
+	/// *   **POINT_SIZE**
+	/// *   **OPACITY**
+	/// *   **LINE_WIDTH**
+	/// *   **FONT_SIZE**
+	/// *   **AMBIENT**
+	/// 
+	/// REPRESENTATION: Expected values are
+	/// *   **REPRESENTATION_POINTS**
+	/// *   **REPRESENTATION_WIREFRAME**
+	/// *   **REPRESENTATION_SURFACE**
+	/// 
+	/// **IMMEDIATE_RENDERING**:
+	/// *   Turn on immediate rendering by setting the value to 1.
+	/// *   Turn off immediate rendering by setting the value to 0.
+	/// 
+	/// SHADING: Expected values are
+	/// *   **SHADING_FLAT**
+	/// *   **SHADING_GOURAUD**
+	/// *   **SHADING_PHONG**
+	#[inline]
+	fn get_rendering_property(&self, property: i32) -> Result<f64> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Widget_getRenderingProperty_const_int(self.as_raw_Widget(), property, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+}
+
+pub trait WidgetTrait: crate::viz::WidgetTraitConst {
 	fn as_raw_mut_Widget(&mut self) -> *mut c_void;
 
 	/// Sets rendering property of the widget.
@@ -3290,37 +4647,13 @@ pub trait WidgetTrait {
 	/// *   **SHADING_FLAT**
 	/// *   **SHADING_GOURAUD**
 	/// *   **SHADING_PHONG**
+	#[inline]
 	fn set_rendering_property(&mut self, property: i32, value: f64) -> Result<()> {
-		unsafe { sys::cv_viz_Widget_setRenderingProperty_int_double(self.as_raw_mut_Widget(), property, value) }.into_result()
-	}
-	
-	/// Returns rendering property of the widget.
-	/// 
-	/// ## Parameters
-	/// * property: Property.
-	/// 
-	/// Rendering property can be one of the following:
-	/// *   **POINT_SIZE**
-	/// *   **OPACITY**
-	/// *   **LINE_WIDTH**
-	/// *   **FONT_SIZE**
-	/// *   **AMBIENT**
-	/// 
-	/// REPRESENTATION: Expected values are
-	/// *   **REPRESENTATION_POINTS**
-	/// *   **REPRESENTATION_WIREFRAME**
-	/// *   **REPRESENTATION_SURFACE**
-	/// 
-	/// **IMMEDIATE_RENDERING**:
-	/// *   Turn on immediate rendering by setting the value to 1.
-	/// *   Turn off immediate rendering by setting the value to 0.
-	/// 
-	/// SHADING: Expected values are
-	/// *   **SHADING_FLAT**
-	/// *   **SHADING_GOURAUD**
-	/// *   **SHADING_PHONG**
-	fn get_rendering_property(&self, property: i32) -> Result<f64> {
-		unsafe { sys::cv_viz_Widget_getRenderingProperty_const_int(self.as_raw_Widget(), property) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Widget_setRenderingProperty_int_double(self.as_raw_mut_Widget(), property, value, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
@@ -3339,49 +4672,74 @@ impl Drop for Widget {
 	}
 }
 
-impl Widget {
-	#[inline] pub fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for Widget {}
 
-impl crate::viz::WidgetTrait for Widget {
+impl crate::viz::WidgetTraitConst for Widget {
 	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WidgetTrait for Widget {
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl Widget {
+	#[inline]
 	pub fn default() -> Result<crate::viz::Widget> {
-		unsafe { sys::cv_viz_Widget_Widget() }.into_result().map(|r| unsafe { crate::viz::Widget::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Widget_Widget(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Widget::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
+	#[inline]
 	pub fn copy(other: &crate::viz::Widget) -> Result<crate::viz::Widget> {
-		unsafe { sys::cv_viz_Widget_Widget_const_WidgetR(other.as_raw_Widget()) }.into_result().map(|r| unsafe { crate::viz::Widget::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Widget_Widget_const_WidgetR(other.as_raw_Widget(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Widget::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 	/// Creates a widget from ply file.
 	/// 
 	/// ## Parameters
 	/// * file_name: Ply file name.
+	#[inline]
 	pub fn from_ply_file(file_name: &str) -> Result<crate::viz::Widget> {
 		extern_container_arg!(file_name);
-		unsafe { sys::cv_viz_Widget_fromPlyFile_const_StringR(file_name.opencv_as_extern()) }.into_result().map(|r| unsafe { crate::viz::Widget::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Widget_fromPlyFile_const_StringR(file_name.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Widget::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
 /// Base class of all 2D widgets.
-pub trait Widget2DTrait: crate::viz::WidgetTrait {
+pub trait Widget2DTraitConst: crate::viz::WidgetTraitConst {
 	fn as_raw_Widget2D(&self) -> *const c_void;
+
+}
+
+pub trait Widget2DTrait: crate::viz::Widget2DTraitConst + crate::viz::WidgetTrait {
 	fn as_raw_mut_Widget2D(&mut self) -> *mut c_void;
 
 	/// Sets the color of the widget.
 	/// 
 	/// ## Parameters
 	/// * color: color of type Color
+	#[inline]
 	fn set_color(&mut self, color: &crate::viz::Color) -> Result<()> {
-		unsafe { sys::cv_viz_Widget2D_setColor_const_ColorR(self.as_raw_mut_Widget2D(), color.as_raw_Color()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Widget2D_setColor_const_ColorR(self.as_raw_mut_Widget2D(), color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
@@ -3400,70 +4758,108 @@ impl Drop for Widget2D {
 	}
 }
 
-impl Widget2D {
-	#[inline] pub fn as_raw_Widget2D(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_Widget2D(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for Widget2D {}
 
-impl crate::viz::WidgetTrait for Widget2D {
+impl crate::viz::WidgetTraitConst for Widget2D {
 	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WidgetTrait for Widget2D {
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget2DTrait for Widget2D {
+impl crate::viz::Widget2DTraitConst for Widget2D {
 	#[inline] fn as_raw_Widget2D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget2DTrait for Widget2D {
 	#[inline] fn as_raw_mut_Widget2D(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl Widget2D {
+	#[inline]
 	pub fn default() -> Result<crate::viz::Widget2D> {
-		unsafe { sys::cv_viz_Widget2D_Widget2D() }.into_result().map(|r| unsafe { crate::viz::Widget2D::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Widget2D_Widget2D(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Widget2D::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
 
+boxed_cast_base! { Widget2D, crate::viz::Widget, cv_Widget2D_to_Widget }
+
 /// Base class of all 3D widgets.
-pub trait Widget3DTrait: crate::viz::WidgetTrait {
+pub trait Widget3DTraitConst: crate::viz::WidgetTraitConst {
 	fn as_raw_Widget3D(&self) -> *const c_void;
+
+	/// Returns the current pose of the widget.
+	#[inline]
+	fn get_pose(&self) -> Result<core::Affine3d> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Widget3D_getPose_const(self.as_raw_Widget3D(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+}
+
+pub trait Widget3DTrait: crate::viz::Widget3DTraitConst + crate::viz::WidgetTrait {
 	fn as_raw_mut_Widget3D(&mut self) -> *mut c_void;
 
 	/// Sets pose of the widget.
 	/// 
 	/// ## Parameters
 	/// * pose: The new pose of the widget.
+	#[inline]
 	fn set_pose(&mut self, pose: core::Affine3d) -> Result<()> {
-		unsafe { sys::cv_viz_Widget3D_setPose_const_Affine3dR(self.as_raw_mut_Widget3D(), &pose) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Widget3D_setPose_const_Affine3dR(self.as_raw_mut_Widget3D(), &pose, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Updates pose of the widget by pre-multiplying its current pose.
 	/// 
 	/// ## Parameters
 	/// * pose: The pose that the current pose of the widget will be pre-multiplied by.
+	#[inline]
 	fn update_pose(&mut self, pose: core::Affine3d) -> Result<()> {
-		unsafe { sys::cv_viz_Widget3D_updatePose_const_Affine3dR(self.as_raw_mut_Widget3D(), &pose) }.into_result()
-	}
-	
-	/// Returns the current pose of the widget.
-	fn get_pose(&self) -> Result<core::Affine3d> {
-		unsafe { sys::cv_viz_Widget3D_getPose_const(self.as_raw_Widget3D()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Widget3D_updatePose_const_Affine3dR(self.as_raw_mut_Widget3D(), &pose, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Transforms internal widget data (i.e. points, normals) using the given transform.
 	/// 
 	/// ## Parameters
 	/// * transform: Specified transformation to apply.
+	#[inline]
 	fn apply_transform(&mut self, transform: core::Affine3d) -> Result<()> {
-		unsafe { sys::cv_viz_Widget3D_applyTransform_const_Affine3dR(self.as_raw_mut_Widget3D(), &transform) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Widget3D_applyTransform_const_Affine3dR(self.as_raw_mut_Widget3D(), &transform, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 	/// Sets the color of the widget.
 	/// 
 	/// ## Parameters
 	/// * color: color of type Color
+	#[inline]
 	fn set_color(&mut self, color: &crate::viz::Color) -> Result<()> {
-		unsafe { sys::cv_viz_Widget3D_setColor_const_ColorR(self.as_raw_mut_Widget3D(), color.as_raw_Color()) }.into_result()
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Widget3D_setColor_const_ColorR(self.as_raw_mut_Widget3D(), color.as_raw_Color(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
 	}
 	
 }
@@ -3482,26 +4878,35 @@ impl Drop for Widget3D {
 	}
 }
 
-impl Widget3D {
-	#[inline] pub fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
-	#[inline] pub fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
-}
-
 unsafe impl Send for Widget3D {}
 
-impl crate::viz::WidgetTrait for Widget3D {
+impl crate::viz::WidgetTraitConst for Widget3D {
 	#[inline] fn as_raw_Widget(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::WidgetTrait for Widget3D {
 	#[inline] fn as_raw_mut_Widget(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
-impl crate::viz::Widget3DTrait for Widget3D {
+impl crate::viz::Widget3DTraitConst for Widget3D {
 	#[inline] fn as_raw_Widget3D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::viz::Widget3DTrait for Widget3D {
 	#[inline] fn as_raw_mut_Widget3D(&mut self) -> *mut c_void { self.as_raw_mut() }
 }
 
 impl Widget3D {
+	#[inline]
 	pub fn default() -> Result<crate::viz::Widget3D> {
-		unsafe { sys::cv_viz_Widget3D_Widget3D() }.into_result().map(|r| unsafe { crate::viz::Widget3D::opencv_from_extern(r) } )
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_viz_Widget3D_Widget3D(ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { crate::viz::Widget3D::opencv_from_extern(ret) };
+		Ok(ret)
 	}
 	
 }
+
+boxed_cast_base! { Widget3D, crate::viz::Widget, cv_Widget3D_to_Widget }

@@ -17,6 +17,7 @@ use crate::{
 	reserved_rename,
 	settings,
 	StrExt,
+	type_ref::{FishStyle, NameStyle},
 };
 
 pub struct DefaultElement;
@@ -56,7 +57,7 @@ impl DefaultElement {
 		this.rendered_doc_comment_with_prefix("///", opencv_version)
 	}
 
-	pub fn cpp_namespace<'tu>(this: &impl EntityElement<'tu>) -> Cow<str> {
+	pub fn cpp_namespace<'tu>(this: &impl EntityElement<'tu>) -> String {
 		let mut parts = vec![];
 		let mut e = this.entity();
 		while let Some(parent) = e.get_semantic_parent() {
@@ -79,11 +80,10 @@ impl DefaultElement {
 		parts.into_iter()
 			.rev()
 			.join("::")
-			.into()
 	}
 
-	pub fn cpp_name(this: &(impl Element + ?Sized), full: bool) -> Cow<str> {
-		if full {
+	pub fn cpp_name(this: &(impl Element + ?Sized), style: NameStyle) -> Cow<str> {
+		if style.is_reference() {
 			this.cpp_fullname()
 		} else {
 			this.cpp_localname()
@@ -109,7 +109,7 @@ impl DefaultElement {
 		let loc = this.entity().get_location().expect("Can't get location")
 			.get_spelling_location().file.expect("Can't file")
 			.get_path();
-		module_from_path(&loc)
+		opencv_module_from_path(&loc)
 			.map_or_else(|| "core".into(), |x| x.to_string().into())
 	}
 
@@ -122,11 +122,14 @@ impl DefaultElement {
 		}
 	}
 
-	pub fn rust_name(this: &(impl Element + ?Sized), full: bool) -> Cow<str> {
-		if full {
-			this.rust_fullname()
-		} else {
-			this.rust_localname()
+	pub fn rust_name(this: &(impl Element + ?Sized), name_style: NameStyle) -> Cow<str> {
+		match name_style {
+			NameStyle::Declaration => {
+				this.rust_localname(FishStyle::No)
+			}
+			NameStyle::Reference(fish_style) => {
+				this.rust_fullname(fish_style)
+			}
 		}
 	}
 
@@ -134,9 +137,9 @@ impl DefaultElement {
 		reserved_rename(this.cpp_localname().to_snake_case().into())
 	}
 
-	pub fn rust_localname<'tu>(this: &(impl EntityElement<'tu> + Element + ?Sized)) -> Cow<str> {
+	pub fn rust_localname<'tu>(this: &(impl EntityElement<'tu> + Element + ?Sized), fish_style: FishStyle) -> Cow<str> {
 		let mut parts = Vec::with_capacity(4);
-		parts.push(this.rust_leafname().into_owned());
+		parts.push(this.rust_leafname(fish_style).into_owned());
 		let module = Self::rust_module(this);
 		let mut e = this.entity();
 		while let Some(parent) = e.get_semantic_parent() {
@@ -176,15 +179,15 @@ impl DefaultElement {
 			.into()
 	}
 
-	pub fn rust_fullname(this: &(impl Element + ?Sized)) -> Cow<str> {
-		format!("{}::{}", this.rust_namespace(), this.rust_localname()).into()
+	pub fn rust_fullname(this: &(impl Element + ?Sized), fish_style: FishStyle) -> Cow<str> {
+		format!("{}::{}", this.rust_namespace(), this.rust_localname(fish_style)).into()
 	}
 }
 
 pub trait Element: fmt::Debug {
 	fn update_debug_struct<'dref, 'a, 'b>(&self, struct_debug: &'dref mut fmt::DebugStruct<'a, 'b>) -> &'dref mut fmt::DebugStruct<'a, 'b> {
 		struct_debug.field("cpp_fullname", &self.cpp_fullname())
-			.field("rust_fullname", &self.rust_fullname())
+			.field("rust_fullname", &self.rust_fullname(FishStyle::No))
 			.field("is_excluded", &self.is_excluded())
 			.field("is_ignored", &self.is_ignored())
 			.field("is_system", &self.is_system())
@@ -215,8 +218,8 @@ pub trait Element: fmt::Debug {
 
 	fn cpp_namespace(&self) -> Cow<str>;
 
-	fn cpp_name(&self, full: bool) -> Cow<str> {
-		DefaultElement::cpp_name(self, full)
+	fn cpp_name(&self, style: NameStyle) -> Cow<str> {
+		DefaultElement::cpp_name(self, style)
 	}
 
 	fn cpp_localname(&self) -> Cow<str>;
@@ -231,18 +234,18 @@ pub trait Element: fmt::Debug {
 		DefaultElement::rust_namespace(self)
 	}
 
-	fn rust_name(&self, full: bool) -> Cow<str> {
-		DefaultElement::rust_name(self, full)
+	fn rust_name(&self, style: NameStyle) -> Cow<str> {
+		DefaultElement::rust_name(self, style)
 	}
 
-	fn rust_leafname(&self) -> Cow<str> {
+	fn rust_leafname(&self, _fish_style: FishStyle) -> Cow<str> {
 		DefaultElement::rust_leafname(self)
 	}
 
-	fn rust_localname(&self) -> Cow<str>;
+	fn rust_localname(&self, fish_style: FishStyle) -> Cow<str>;
 
-	fn rust_fullname(&self) -> Cow<str> {
-		DefaultElement::rust_fullname(self)
+	fn rust_fullname(&self, fish_style: FishStyle) -> Cow<str> {
+		DefaultElement::rust_fullname(self, fish_style)
 	}
 }
 
@@ -254,7 +257,7 @@ pub fn is_opencv_path(path: &Path) -> bool {
 	path.components()
 		.rfind(|c| {
 			if let Component::Normal(c) = c {
-				if *c == "opencv2" {
+				if *c == "opencv2" || *c == "Headers" {
 					return true;
 				}
 			}
@@ -263,30 +266,17 @@ pub fn is_opencv_path(path: &Path) -> bool {
 		.is_some()
 }
 
-pub fn main_module_from_path(path: &Path) -> Option<&str> {
-	if path.extension().map_or(false, |ext| ext == "hpp") {
-		path.file_stem()
-			.and_then(|m| m.to_str())
-	} else {
-		None
-	}
-}
-
+/// Returns path component that corresponds to OpenCV module name. It's either a directory
+/// (e.g. "calib3d") or a header file (e.g. "dnn.hpp")
 fn opencv_module_component(path: &Path) -> Option<&OsStr> {
 	let mut module_comp = path.components()
 		.rev()
-		.filter_map(|c| {
-			if let Component::Normal(c) = c {
-				Some(c)
-			} else {
-				None
-			}
-		})
+		.filter_map(|c| if let Component::Normal(c) = c { Some(c) } else { None })
 		.peekable();
 	let mut module = None;
 	while let Some(cur) = module_comp.next() {
 		if let Some(&parent) = module_comp.peek() {
-			if parent == "opencv2" || parent == "src_cpp" {
+			if parent == "opencv2" || parent == "src_cpp" || parent == "Headers" {
 				module = Some(cur);
 				break;
 			}
@@ -295,28 +285,16 @@ fn opencv_module_component(path: &Path) -> Option<&OsStr> {
 	module
 }
 
+/// Return OpenCV module name if the path points to the main header file, e.g. "opencv2/dnn.hpp".
 pub fn main_opencv_module_from_path(path: &Path) -> Option<&str> {
 	opencv_module_component(path)
 		.and_then(|m| m.to_str())
-		.and_then(|m| {
-			if let Some(dot_pos) = m.rfind('.') {
-				if &m[dot_pos..] == ".hpp" {
-					Some(&m[..dot_pos])
-				} else {
-					None
-				}
-			} else {
-				None
-			}
-		})
+		.and_then(|m| m.strip_suffix(".hpp"))
 }
 
-pub fn module_from_path(path: &Path) -> Option<&str> {
+/// Return OpenCV module from the given path
+pub fn opencv_module_from_path(path: &Path) -> Option<&str> {
 	opencv_module_component(path)
 		.and_then(|m| m.to_str())
-		.map(|m| m.split('.')
-			.next()
-			.unwrap()
-		)
-
+		.and_then(|m| m.strip_suffix(".hpp").or(Some(m)))
 }

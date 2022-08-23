@@ -6,7 +6,7 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 use maplit::{btreeset, hashmap, hashset};
 use once_cell::sync::Lazy;
 
-use crate::{CompiledInterpolation, ExportConfig, StrExt};
+use crate::{CompiledInterpolation, ExportConfig, func::FuncId, StrExt};
 
 /// map of functions to rename or skip, key is Func.identifier(), value is new name ("+" will be replaced by old name) or "-" to skip
 pub static FUNC_RENAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| hashmap! {
@@ -37,8 +37,10 @@ pub static FUNC_RENAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| hashmap! {
 	"cv_fisheye_stereoRectify_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__InputArrayR_const_SizeR_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__OutputArrayR_const__OutputArrayR_const__OutputArrayR_const__OutputArrayR_int_const_SizeR_double_double" => "fisheye_+",
 	"cv_fisheye_undistortImage_const__InputArrayR_const__OutputArrayR_const__InputArrayR_const__InputArrayR_const__InputArrayR_const_SizeR" => "fisheye_+",
 	"cv_fisheye_undistortPoints_const__InputArrayR_const__OutputArrayR_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__InputArrayR" => "fisheye_+",
-	"cv_recoverPose_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__OutputArrayR_const__InputOutputArrayR" => "+_camera",
-	"cv_recoverPose_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__OutputArrayR_double_const__InputOutputArrayR_const__OutputArrayR" => "+_camera_with_points",
+	"cv_fisheye_undistortPoints_const__InputArrayR_const__OutputArrayR_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__InputArrayR_TermCriteria" => "fisheye_+",
+	"cv_recoverPose_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__OutputArrayR_const__InputOutputArrayR" => "+_estimated",
+	"cv_recoverPose_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__OutputArrayR_double_const__InputOutputArrayR_const__OutputArrayR" => "+_triangulated",
+	"cv_recoverPose_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__OutputArrayR_const__OutputArrayR_const__OutputArrayR_int_double_double_const__InputOutputArrayR" => "+_2_cameras",
 
 	// ### core ###
 	"cv_Algorithm_write_const_const_Ptr_FileStorage_R_const_StringR" => "+_with_name",
@@ -73,6 +75,7 @@ pub static FUNC_RENAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| hashmap! {
 	"cv_Mat_Mat_Size_int" => "+_size",
 	"cv_Mat_Mat_Size_int_const_ScalarR" => "+_size_with_default",
 	"cv_Mat_Mat_Size_int_voidX_size_t" => "+_size_with_data",
+	"cv_Mat_Mat_const_GpuMatR" => "from_gpumat",
 	"cv_Mat_Mat_const_MatR_const_RangeR_const_RangeR" => "rowscols",
 	"cv_Mat_Mat_const_MatR_const_RectR" => "roi",
 	"cv_Mat_Mat_const_MatR_const_vector_Range_R" => "ranges",
@@ -85,15 +88,15 @@ pub static FUNC_RENAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| hashmap! {
 	"cv_Mat_Mat_int_int_int" => "+_rows_cols",
 	"cv_Mat_Mat_int_int_int_const_ScalarR" => "+_rows_cols_with_default",
 	"cv_Mat_Mat_int_int_int_voidX_size_t" => "+_rows_cols_with_data",
-	"cv_Mat_at_Point" => "at_pt_mut",
-	"cv_Mat_at_const_Point" => "at_pt",
-	"cv_Mat_at_const_const_intX" => "at_nd",
-	"cv_Mat_at_const_intX" => "at_nd_mut",
-	"cv_Mat_at_const_int_int" => "at_2d",
-	"cv_Mat_at_const_int_int_int" => "at_3d",
-	"cv_Mat_at_int" => "at_mut",
-	"cv_Mat_at_int_int" => "at_2d_mut",
-	"cv_Mat_at_int_int_int" => "at_3d_mut",
+	"cv_Mat_at_Point" => "+_pt_mut",
+	"cv_Mat_at_const_Point" => "+_pt",
+	"cv_Mat_at_const_const_intX" => "+_nd",
+	"cv_Mat_at_const_intX" => "+_nd_mut",
+	"cv_Mat_at_const_int_int" => "+_2d",
+	"cv_Mat_at_const_int_int_int" => "+_3d",
+	"cv_Mat_at_int" => "+_mut",
+	"cv_Mat_at_int_int" => "+_2d_mut",
+	"cv_Mat_at_int_int_int" => "+_3d_mut",
 	"cv_Mat_colRange_const_int_int" => "col_bounds",
 	"cv_Mat_copyTo_const_const__OutputArrayR_const__InputArrayR" => "+_masked",
 	"cv_Mat_create_Size_int" => "+_size",
@@ -219,7 +222,6 @@ pub static FUNC_RENAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| hashmap! {
 	"cv_max_const_MatR_double" => "+_mat_f64",
 	"cv_max_const_UMatR_const_UMatR_UMatR" => "+_umat_to",
 	"cv_max_double_const_MatR" => "+_f64_mat",
-	"cv_merge_const_MatX_size_t_const__OutputArrayR" => "+_slice",
 	"cv_minMaxLoc_const_SparseMatR_doubleX_doubleX_intX_intX" => "+_sparse",
 	"cv_min_const_MatR_const_MatR" => "+_mat",
 	"cv_min_const_MatR_const_MatR_MatR" => "+_mat_to",
@@ -237,6 +239,7 @@ pub static FUNC_RENAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| hashmap! {
 	"cv_ocl_Kernel_set_int_const_UMatR" => "+_umat",
 	"cv_ocl_ProgramSource_ProgramSource_const_StringR" => "from_str",
 	"cv_ocl_Program_getPrefix_const_StringR" => "+_build_flags",
+	"cv_ogl_Buffer_create_Size_int_Target_bool" => "+_size",
 	"cv_operatorA_const_MatExprR_const_MatExprR" => "+_matexpr_matexpr",
 	"cv_operatorA_const_MatExprR_const_MatR" => "+_matexpr_mat",
 	"cv_operatorA_const_MatExprR_const_ScalarR" => "+_matexpr_scalar",
@@ -253,6 +256,9 @@ pub static FUNC_RENAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| hashmap! {
 	"cv_operatorD_const_MatR_double" => "+_mat_f64",
 	"cv_operatorD_double_const_MatExprR" => "+_f64_matexpr",
 	"cv_operatorD_double_const_MatR" => "+_f64_mat",
+	"cv_operatorEQ_const_FileNodeIteratorR_const_FileNodeIteratorR" => "+_filenode_iter",
+	"cv_operatorEQ_const_MatR_double" => "+_mat_f64",
+	"cv_operatorEQ_double_const_MatR" => "+_f64_mat",
 	"cv_operatorS_const_MatExprR" => "+_matexpr",
 	"cv_operatorS_const_MatExprR_const_MatExprR" => "+_matexpr_matexpr",
 	"cv_operatorS_const_MatExprR_const_MatR" => "+_matexpr_mat",
@@ -319,6 +325,7 @@ pub static FUNC_RENAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| hashmap! {
 	"cv_fastMalloc_size_t" => "-", // manual memory allocation
 	"cv_format_const_charX" => "-", // 3.2 accepts varargs, duplicate definition
 	"cv_hconcat_const_MatX_size_t_const__OutputArrayR" => "-", // duplicate of cv_hconcat_VectorOfMat_Mat, but with pointers
+	"cv_merge_const_MatX_size_t_const__OutputArrayR" => "-", // duplicate of cv_merge_const__InputArrayR_const__OutputArrayR, but with pointers
 	"cv_mixChannels_const_MatX_size_t_MatX_size_t_const_intX_size_t" => "-", // duplicate of cv_mixChannels_VectorOfMat_VectorOfMat_VectorOfint, but with pointers
 	"cv_ocl_ProgramSource_ProgramSource_const_charX" => "-", // has duplicate with String
 	"cv_setImpl_int" => "-",
@@ -327,8 +334,8 @@ pub static FUNC_RENAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| hashmap! {
 	"cv_vconcat_const_MatX_size_t_const__OutputArrayR" => "-", // duplicate of cv_vconcat_VectorOfMat_Mat, but with pointers
 
 	// ### cudaimgproc ###
-	"cv_cuda_histEven_const__InputArrayR_GpuMat_X__4__int_X__4__int_X__4__int_X__4__StreamR" => "-", // slice of boxed objects
-	"cv_cuda_histRange_const__InputArrayR_GpuMat_X__4__const_GpuMat_X__4__StreamR" => "-", // slice of boxed objects
+	"cv_cuda_histEven_const__InputArrayR_GpuMatXX_intXX_intXX_intXX_StreamR" => "-", // slice of boxed objects
+	"cv_cuda_histRange_const__InputArrayR_GpuMatXX_const_GpuMatXX_StreamR" => "-", // slice of boxed objects
 
 	// ### dnn ###
 	"cv_dnn_DictValue_DictValue_bool" => "from_bool",
@@ -349,11 +356,16 @@ pub static FUNC_RENAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| hashmap! {
 	"cv_dnn_Layer_finalize_const_vector_Mat_R_vector_Mat_R" => "+_mat_to",
 	"cv_dnn_Layer_forward_vector_MatX_R_vector_Mat_R_vector_Mat_R" => "+_mat",
 	"cv_dnn_NMSBoxes_const_vector_Rect2d_R_const_vector_float_R_const_float_const_float_vector_int_R_const_float_const_int" => "+_f64",
+	"cv_dnn_Net_addLayerToPrev_const_StringR_const_StringR_const_intR_LayerParamsR" => "+_type",
+	"cv_dnn_Net_addLayer_const_StringR_const_StringR_const_intR_LayerParamsR" => "+_type",
 	"cv_dnn_Net_connect_String_String" => "+_first_second",
 	"cv_dnn_Net_forward_const_StringR" => "+_single",
 	"cv_dnn_Net_forward_const__OutputArrayR_const_StringR" => "+_layer",
-	"cv_dnn_Net_getMemoryConsumption_const_const_vector_MatShape_R_vector_int_R_vector_size_t_R_vector_size_t_R" => "+_for_layers",
 	"cv_dnn_Net_getMemoryConsumption_const_const_int_const_vector_MatShape_R_size_tR_size_tR" => "+_for_layer",
+	"cv_dnn_Net_getMemoryConsumption_const_const_vector_MatShape_R_vector_int_R_vector_size_t_R_vector_size_t_R" => "+_for_layers",
+	"cv_dnn_TextDetectionModel_EAST_TextDetectionModel_EAST_const_stringR_const_stringR" => "from_file",
+	"cv_dnn_TextDetectionModel_detect_const_const__InputArrayR_vector_vector_Point__R_vector_float_R" => "+_with_confidences",
+	"cv_dnn_TextRecognitionModel_TextRecognitionModel_const_stringR_const_stringR" => "from_file",
 	"cv_dnn_blobFromImage_const__InputArrayR_const__OutputArrayR_double_const_SizeR_const_ScalarR_bool_bool_int" => "+_to",
 	"cv_dnn_blobFromImages_const__InputArrayR_const__OutputArrayR_double_Size_const_ScalarR_bool_bool_int" => "+_to",
 	"cv_dnn_readNetFromCaffe_const_charX_size_t_const_charX_size_t" => "+_str",
@@ -409,6 +421,7 @@ pub static FUNC_RENAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| hashmap! {
 
 	// ### imgcodecs ###
 	"cv_imdecode_const__InputArrayR_int_MatX" => "+_to",
+	"cv_imreadmulti_const_StringR_vector_Mat_R_int_int_int" => "+_range",
 
 	// ### imgproc ###
 	"cv_Canny_const__InputArrayR_const__InputArrayR_const__OutputArrayR_double_double_bool" => "+_derivative",
@@ -460,16 +473,20 @@ pub static FUNC_RENAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| hashmap! {
 	"cv_groupRectangles_vector_Rect_R_vector_int_R_int_double" => "+_weights",
 	"cv_groupRectangles_vector_Rect_R_int_double_vector_int_X_vector_double_X" => "+_levelweights",
 
+	"cv_QRCodeDetector_detectAndDecodeMulti_const_const__InputArrayR_vector_string_R_const__OutputArrayR_const__OutputArrayR" => "-", // fixme: stores data to Vector<String>, that doesn't work yet
+
 	// ### optflow ###
 	"cv_optflow_GPCTrainingSamples_operator_cv_optflow_GPCSamplesVector" => "-", // support of "operator &" missing
 
 	// ### photo ###
-	"cv_fastNlMeansDenoisingMulti_const__InputArrayR_const__OutputArrayR_int_int_const_vector_float_R_int_int_int" => "+_vec",
-	"cv_fastNlMeansDenoising_const__InputArrayR_const__OutputArrayR_const_vector_float_R_int_int_int" => "+_vec",
 	"cv_AlignMTB_process_const__InputArrayR_vector_Mat_R_const__InputArrayR_const__InputArrayR" => "+_with_response",
 	"cv_MergeDebevec_process_const__InputArrayR_const__OutputArrayR_const__InputArrayR_const__InputArrayR" => "+_with_response",
 	"cv_MergeMertens_process_const__InputArrayR_const__OutputArrayR_const__InputArrayR_const__InputArrayR" => "+_with_response",
 	"cv_MergeRobertson_process_const__InputArrayR_const__OutputArrayR_const__InputArrayR_const__InputArrayR" => "+_with_response",
+	"cv_cuda_fastNlMeansDenoisingColored_const__InputArrayR_const__OutputArrayR_float_float_int_int_StreamR" => "+_cuda",
+	"cv_cuda_fastNlMeansDenoising_const__InputArrayR_const__OutputArrayR_float_int_int_StreamR" => "+_cuda",
+	"cv_fastNlMeansDenoisingMulti_const__InputArrayR_const__OutputArrayR_int_int_const_vector_float_R_int_int_int" => "+_vec",
+	"cv_fastNlMeansDenoising_const__InputArrayR_const__OutputArrayR_const_vector_float_R_int_int_int" => "+_vec",
 
 	// ### stitching ###
 	"cv_Stitcher_composePanorama_const__InputArrayR_const__OutputArrayR" => "+_images",
@@ -483,21 +500,29 @@ pub static FUNC_RENAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| hashmap! {
 	"cv_text_BaseOCR_run_MatR_MatR_stringR_vector_Rect_X_vector_string_X_vector_float_X_int" => "+_mask",
 	"cv_text_ERStat_getPropPixels" => "-", // fixme: reference to a vector, we don't handle it too well yet
 	"cv_text_ERStat_setPropPixels_vector_int_X" => "-", // fixme: reference to a vector, we don't handle it too well yet
+	"cv_text_OCRBeamSearchDecoder_create_const_StringR_const_StringR_const__InputArrayR_const__InputArrayR_decoder_mode_int" => "+_from_file",
 	"cv_text_OCRBeamSearchDecoder_run_MatR_MatR_stringR_vector_Rect_X_vector_string_X_vector_float_X_int" => "+_multiple_mask",
 	"cv_text_OCRBeamSearchDecoder_run_MatR_stringR_vector_Rect_X_vector_string_X_vector_float_X_int" => "+_multiple",
 	"cv_text_OCRBeamSearchDecoder_run_const__InputArrayR_const__InputArrayR_int_int" => "+_mask",
+	"cv_text_OCRHMMDecoder_create_const_StringR_const_StringR_const__InputArrayR_const__InputArrayR_int_int" => "+_from_file",
 	"cv_text_OCRHMMDecoder_run_MatR_MatR_stringR_vector_Rect_X_vector_string_X_vector_float_X_int" => "+_multiple_mask",
 	"cv_text_OCRHMMDecoder_run_MatR_stringR_vector_Rect_X_vector_string_X_vector_float_X_int" => "+_multiple",
 	"cv_text_OCRHMMDecoder_run_const__InputArrayR_const__InputArrayR_int_int" => "+_mask",
 	"cv_text_OCRHolisticWordRecognizer_run_MatR_MatR_stringR_vector_Rect_X_vector_string_X_vector_float_X_int" => "+_mask",
-	"cv_text_OCRTesseract_run_MatR_stringR_vector_Rect_X_vector_string_X_vector_float_X_int" => "+_multiple",
 	"cv_text_OCRTesseract_run_MatR_MatR_stringR_vector_Rect_X_vector_string_X_vector_float_X_int" => "+_multiple_mask",
+	"cv_text_OCRTesseract_run_MatR_stringR_vector_Rect_X_vector_string_X_vector_float_X_int" => "+_multiple",
 	"cv_text_OCRTesseract_run_const__InputArrayR_const__InputArrayR_int_int" => "+_mask",
+	"cv_text_TextDetectorCNN_create_const_StringR_const_StringR_vector_Size_" => "+_with_sizes",
+	"cv_text_createERFilterNM1_const_StringR_int_float_float_float_bool_float" => "+_from_file",
+	"cv_text_createERFilterNM2_const_StringR_float" => "+_from_file",
+	"cv_text_detectRegions_const__InputArrayR_const_Ptr_ERFilter_R_const_Ptr_ERFilter_R_vector_Rect_R_int_const_StringR_float" => "+_from_file",
 
 	// ### videoio ###
 	"cv_VideoCapture_VideoCapture_const_StringR" => "from_file_default", // 3.2
 	"cv_VideoCapture_VideoCapture_const_StringR_int" => "from_file",
+	"cv_VideoCapture_VideoCapture_const_StringR_int_const_vector_int_R" => "from_file_with_params",
 	"cv_VideoCapture_VideoCapture_int" => "+_default", // 3.4
+	"cv_VideoCapture_VideoCapture_int_int_const_vector_int_R" => "+_with_params",
 	"cv_VideoCapture_open_const_StringR" => "+_file_default", // 3.2
 	"cv_VideoCapture_open_const_StringR_int" => "+_file",
 	"cv_VideoCapture_open_const_StringR_int" => "+_file",
@@ -541,6 +566,9 @@ pub static FUNC_RENAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| hashmap! {
 });
 
 pub static FUNC_CFG_ATTR: Lazy<HashMap<&str, (&str, &str)>> = Lazy::new(|| hashmap! {
+	// ### core ###
+	"cv_SparseMatConstIterator_operatorSS" => ("not(target_os = \"windows\")", "!defined(OCVRS_TARGET_OS_WINDOWS)"),
+
 	// ### imgproc ###
 	"cv_getRotationMatrix2D__Point2f_double_double" => ("not(target_os = \"windows\")", "!defined(OCVRS_TARGET_OS_WINDOWS)"),
 
@@ -557,12 +585,14 @@ pub static FUNC_CFG_ATTR: Lazy<HashMap<&str, (&str, &str)>> = Lazy::new(|| hashm
 	"cv_TrackerStateEstimatorMILBoosting_TrackerMILTargetState_setTargetFg_bool" => ("not(target_os = \"windows\")", "!defined(OCVRS_TARGET_OS_WINDOWS)"),
 });
 
+/// cpp_fullname
 pub static ELEMENT_EXCLUDE: Lazy<HashSet<&str>> = Lazy::new(|| hashset! {
 	"cv::String",
 	"cv::internal::format", // 3.2 duplicate definition
 	"cv::face::FacemarkLBF::BBox", // not used, not exported in windows dll
 });
 
+/// cpp_fullname
 pub static ELEMENT_IGNORE: Lazy<HashSet<&str>> = Lazy::new(|| hashset! {
 	"CV_DEPRECATED",
 	"CV_EXPORTS",
@@ -580,7 +610,9 @@ pub static ELEMENT_IGNORE: Lazy<HashSet<&str>> = Lazy::new(|| hashset! {
 	"std::random_access_iterator_tag",
 });
 
-pub static ELEMENT_EXPORT: Lazy<HashMap<&str, ExportConfig>> = Lazy::new(|| hashmap! {
+/// Manual export config in form of "cpp_fullname" => ExportConfig, will totally override what's
+/// detected from the headers. Use it to add export config where none exists.
+pub static ELEMENT_EXPORT_MANUAL: Lazy<HashMap<&str, ExportConfig>> = Lazy::new(|| hashmap! {
 	"VADisplay" => ExportConfig::default(),
 	"VASurfaceID" => ExportConfig::default(),
 	"cv::Mat_" => ExportConfig::default(),
@@ -620,6 +652,7 @@ pub static ELEMENT_EXPORT: Lazy<HashMap<&str, ExportConfig>> = Lazy::new(|| hash
 	"cv::PlaneWarper" => ExportConfig::default(), // 3.2 3.4 stitching warpers
 	"cv::AffineWarper" => ExportConfig::default(), // 3.2 3.4 stitching warpers
 	"cv::CylindricalWarper" => ExportConfig::default(), // 3.2 3.4 stitching warpers
+	"cv::CylindricalWarperGpu" => ExportConfig::default(), // 3.2 3.4 stitching warpers
 	"cv::SphericalWarper" => ExportConfig::default(), // 3.2 3.4 stitching warpers
 	"cv::FisheyeWarper" => ExportConfig::default(), // 3.2 3.4 stitching warpers
 	"cv::StereographicWarper" => ExportConfig::default(), // 3.2 3.4 stitching warpers
@@ -627,89 +660,70 @@ pub static ELEMENT_EXPORT: Lazy<HashMap<&str, ExportConfig>> = Lazy::new(|| hash
 	"cv::CompressedRectilinearPortraitWarper" => ExportConfig::default(), // 3.2 3.4 stitching warpers
 	"cv::PaniniWarper" => ExportConfig::default(), // 3.2 3.4 stitching warpers
 	"cv::PaniniPortraitWarper" => ExportConfig::default(), // 3.2 3.4 stitching warpers
+	"cv::PlaneWarperGpu" => ExportConfig::default(), // 3.2 3.4 stitching warpers
 	"cv::MercatorWarper" => ExportConfig::default(), // 3.2 3.4 stitching warpers
+	"cv::SphericalWarperGpu" => ExportConfig::default(), // 3.2 3.4 stitching warpers
 	"cv::TransverseMercatorWarper" => ExportConfig::default(), // 3.2 3.4 stitching warpers
 	"cv::TermCriteria" => ExportConfig::simple(),
 	"cv::optflow::GPCTrainingParams" => ExportConfig::simple(),
 	"cv::optflow::GPCMatchingParams" => ExportConfig::simple(),
 	"cv::cudacodec::FormatInfo" => ExportConfig::simple(),
 	"cv::kinfu::Intr" => ExportConfig::simple(),
+	"cv::videostab::MaskFrameSource" => ExportConfig::default(),
 
 	// override boxed
 	"cv::DetectionBasedTracker::ExtObject" => ExportConfig::default(),
 	"cv::DetectionBasedTracker::IDetector" => ExportConfig::default(),
 	"cv::FileNode" => ExportConfig::default(), // return references in methods, generally looks like not simple
-	"cv::detail::CameraParams" => ExportConfig::default(), // contains non-copy stuff
-	"cv::detail::ImageFeatures" => ExportConfig::default(), // contains non-copy stuff
-	"cv::detail::MatchesInfo" => ExportConfig::default(), // contains non-copy stuff
-	"cv::detail::ProjectorBase" => ExportConfig::default(), // other classes inherit from this one
-	"cv::dnn::ClassificationModel" => ExportConfig::default(),
-	"cv::dnn::DetectionModel" => ExportConfig::default(),
-	"cv::dnn::Model" => ExportConfig::default(),
 	"cv::dnn::Net" => ExportConfig::default(), // incorrectly marked as simple
-	"cv::dnn::TextDetectionModel_DB" => ExportConfig::default(), // incorrectly marked as simple
-	"cv::dnn::TextDetectionModel_EAST" => ExportConfig::default(), // incorrectly marked as simple
-	"cv::dnn::TextRecognitionModel" => ExportConfig::default(), // incorrectly marked as simple
-	"cv::linemod::Match" => ExportConfig::default(), // contains String
-	"cv::linemod::Template" => ExportConfig::default(), // contains String
 	"cv::linemod::QuantizedPyramid" => ExportConfig::default(), // missing export in 3.2
 	"cv::ocl::Device" => ExportConfig::default(),
-	"cv::tracking::TrackerCSRT::Params" => ExportConfig::default(), // contains String, so no Copy
-	"cv::TrackerGOTURN::Params" => ExportConfig::default(), // contains String, so no Copy
+});
+
+#[allow(clippy::type_complexity)]
+pub static ELEMENT_EXPORT_TWEAK: Lazy<HashMap<&str, fn (&mut ExportConfig)>> = Lazy::new(|| hashmap! {
+	"cv::dnn::ClassificationModel" => ExportConfig::make_boxed as _,
+	"cv::dnn::DetectionModel" => ExportConfig::make_boxed as _,
+	"cv::dnn::KeypointsModel" => ExportConfig::make_boxed as _, // marked as simple from OpenCV 4.5.2
+	"cv::dnn::Model" => ExportConfig::make_boxed as _,
+	"cv::dnn::SegmentationModel" => ExportConfig::make_boxed as _, // marked as simple from OpenCV 4.5.2
+	"cv::dnn::TextDetectionModel" => ExportConfig::make_boxed as _, // inappropriately marked as simple
+	"cv::dnn::TextDetectionModel_DB" => ExportConfig::make_boxed as _, // inappropriately marked as simple
+	"cv::dnn::TextDetectionModel_EAST" => ExportConfig::make_boxed as _, // inappropriately marked as simple
+	"cv::dnn::TextRecognitionModel" => ExportConfig::make_boxed as _, // inappropriately marked as simple
 });
 
 /// set of functions that should have unsafe in their declaration, element is Func.identifier()
-pub static FUNC_UNSAFE: Lazy<HashSet<&str>> = Lazy::new(|| hashset! {
+pub static FUNC_UNSAFE: Lazy<HashSet<FuncId>> = Lazy::new(|| hashset! {
 	// allocates uninitialized memory
-	"cv_Mat_Mat_Size_int",
-	"cv_Mat_Mat_const_vector_int_R_int",
-	"cv_Mat_Mat_int_const_intX_int",
-	"cv_Mat_Mat_int_int_int",
-	"cv_Mat_create_Size_int",
-	"cv_Mat_create_const_vector_int_R_int",
-	"cv_Mat_create_int_const_intX_int",
-	"cv_Mat_create_int_int_int",
-	"cv_UMat_UMat_Size_int_UMatUsageFlags",
-	"cv_UMat_UMat_int_const_intX_int_UMatUsageFlags",
-	"cv_UMat_UMat_int_int_int_UMatUsageFlags",
-	"cv_UMat_create_Size_int_UMatUsageFlags",
-	"cv_UMat_create_const_vector_int_R_int_UMatUsageFlags",
-	"cv_UMat_create_int_const_intX_int_UMatUsageFlags",
-	"cv_UMat_create_int_int_int_UMatUsageFlags",
-	"cv__OutputArray_createSameSize_const_const__InputArrayR_int",
-	"cv__OutputArray_create_const_Size_int_int_bool_int",
-	"cv__OutputArray_create_const_int_const_intX_int_int_bool_int",
-	"cv__OutputArray_create_const_int_int_int_int_bool_int",
-	// allows passing arbitrary data
-	"cv_Mat_Mat_Size_int_voidX_size_t",
-	"cv_Mat_Mat_const_vector_int_R_int_voidX_const_size_tX",
-	"cv_Mat_Mat_int_const_intX_int_voidX_const_size_tX",
-	"cv_Mat_Mat_int_int_int_voidX_size_t",
-	"cv_Mat_setPropData_unsigned_charX",
-	"cv_UMatData_setPropData_unsigned_charX",
-	"cv_cuda_GpuMat_GpuMat_int_int_int_voidX_size_t",
-	"cv_cuda_GpuMat_GpuMat_Size_int_voidX_size_t",
-	// no bounds checking
-	"cv_Mat_ptr_const_const_intX",
-	"cv_Mat_ptr_const_int",
-	"cv_Mat_ptr_const_intX",
-	"cv_Mat_ptr_const_int_int",
-	"cv_Mat_ptr_const_int_int_int",
-	"cv_Mat_ptr_int",
-	"cv_Mat_ptr_int_int",
-	"cv_Mat_ptr_int_int_int",
+	FuncId::new("cv::Mat::Mat", ["size", "type"]),
+	FuncId::new("cv::Mat::Mat", ["sizes", "type"]),
+	FuncId::new("cv::Mat::Mat", ["ndims", "sizes", "type"]),
+	FuncId::new("cv::Mat::Mat", ["rows", "cols", "type"]),
+	FuncId::new("cv::Mat::create", ["size", "type"]),
+	FuncId::new("cv::Mat::create", ["sizes", "type"]),
+	FuncId::new("cv::Mat::create", ["ndims", "sizes", "type"]),
+	FuncId::new("cv::Mat::create", ["rows", "cols", "type"]),
+	FuncId::new("cv::UMat::UMat", ["size", "type", "usageFlags"]),
+	FuncId::new("cv::UMat::UMat", ["ndims", "sizes", "type", "usageFlags"]),
+	FuncId::new("cv::UMat::UMat", ["rows", "cols", "type", "usageFlags"]),
+	FuncId::new("cv::UMat::create", ["size", "type", "usageFlags"]),
+	FuncId::new("cv::UMat::create", ["size", "type", "usageFlags"]),
+	FuncId::new("cv::UMat::create", ["ndims", "sizes", "type", "usageFlags"]),
+	FuncId::new("cv::UMat::create", ["sizes", "type", "usageFlags"]),
+	FuncId::new("cv::UMat::create", ["rows", "cols", "type", "usageFlags"]),
+	FuncId::new("cv::_OutputArray::createSameSize", ["arr", "mtype"]),
 	// pointer to internal data
-	"cv_dnn_Dict_ptr_const_StringR",
-	"cv_dnn_Dict_ptr_const_const_StringR",
+	FuncId::new("cv::dnn::Dict::ptr", ["key"]),
 	// takes reference and stores it for the lifetime of an object (fixme: add lifetime management)
-	"cv_cuda_GpuMat_GpuMat_AllocatorX",
-	"cv_cuda_GpuMat_GpuMat_Size_int_AllocatorX",
-	"cv_cuda_GpuMat_GpuMat_Size_int_Scalar_AllocatorX",
-	"cv_cuda_GpuMat_GpuMat_const__InputArrayR_AllocatorX",
-	"cv_cuda_GpuMat_GpuMat_int_int_int_AllocatorX",
-	"cv_cuda_GpuMat_GpuMat_int_int_int_Scalar_AllocatorX",
-	"cv_cuda_GpuMat_setPropAllocator_AllocatorX",
-	"cv_cuda_GpuMat_setDefaultAllocator_AllocatorX", // fixme, should take 'static
+	FuncId::new("cv::cuda::GpuMat::GpuMat", ["allocator"]),
+	FuncId::new("cv::cuda::GpuMat::GpuMat", ["size", "type", "allocator"]),
+	FuncId::new("cv::cuda::GpuMat::GpuMat", ["size", "type", "s", "allocator"]),
+	FuncId::new("cv::cuda::GpuMat::GpuMat", ["arr", "allocator"]),
+	FuncId::new("cv::cuda::GpuMat::GpuMat", ["rows", "cols", "type", "allocator"]),
+	FuncId::new("cv::cuda::GpuMat::GpuMat", ["rows", "cols", "type", "s", "allocator"]),
+	FuncId::new("cv::cuda::GpuMat::allocator", ["val"]),
+	FuncId::new("cv::cuda::GpuMat::setDefaultAllocator", ["allocator"]), // fixme, should take 'static
 });
 
 pub static IMPLEMENTED_FUNCTION_LIKE_MACROS: Lazy<HashSet<&str>> = Lazy::new(|| hashset! {
@@ -744,16 +758,16 @@ pub static RESERVED_RENAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| hashmap! {
 ///   keys: "rust_safe", "rust_extern", "cpp", missing key means skip particular implementation
 ///   values: template to use for manual implementation or "~" to use default implementation
 pub static FUNC_MANUAL: Lazy<HashMap<&str, CompiledInterpolation>> = Lazy::new(|| hashmap! {
-	"cv_Mat_at_int" => include_str!("../tpl/settings/rust_mat_at_mut.rs").compile_interpolation(),
-	"cv_Mat_at_const_int" => include_str!("../tpl/settings/rust_mat_at_const.rs").compile_interpolation(),
-	"cv_Mat_at_int_int" => include_str!("../tpl/settings/rust_mat_at_mut.rs").compile_interpolation(),
-	"cv_Mat_at_const_int_int" => include_str!("../tpl/settings/rust_mat_at_const.rs").compile_interpolation(),
-	"cv_Mat_at_Point" => include_str!("../tpl/settings/rust_mat_at_mut.rs").compile_interpolation(),
-	"cv_Mat_at_const_Point" => include_str!("../tpl/settings/rust_mat_at_const.rs").compile_interpolation(),
-	"cv_Mat_at_int_int_int" => include_str!("../tpl/settings/rust_mat_at_mut.rs").compile_interpolation(),
-	"cv_Mat_at_const_int_int_int" => include_str!("../tpl/settings/rust_mat_at_const.rs").compile_interpolation(),
-	"cv_Mat_at_const_intX" => include_str!("../tpl/settings/rust_mat_at_mut.rs").compile_interpolation(),
-	"cv_Mat_at_const_const_intX" => include_str!("../tpl/settings/rust_mat_at_const.rs").compile_interpolation(),
+	"cv_Mat_at_int" => include_str!("../tpl/settings/rust_mat_at_mut.tpl.rs").compile_interpolation(),
+	"cv_Mat_at_const_int" => include_str!("../tpl/settings/rust_mat_at_const.tpl.rs").compile_interpolation(),
+	"cv_Mat_at_int_int" => include_str!("../tpl/settings/rust_mat_at_mut.tpl.rs").compile_interpolation(),
+	"cv_Mat_at_const_int_int" => include_str!("../tpl/settings/rust_mat_at_const.tpl.rs").compile_interpolation(),
+	"cv_Mat_at_Point" => include_str!("../tpl/settings/rust_mat_at_mut.tpl.rs").compile_interpolation(),
+	"cv_Mat_at_const_Point" => include_str!("../tpl/settings/rust_mat_at_const.tpl.rs").compile_interpolation(),
+	"cv_Mat_at_int_int_int" => include_str!("../tpl/settings/rust_mat_at_mut.tpl.rs").compile_interpolation(),
+	"cv_Mat_at_const_int_int_int" => include_str!("../tpl/settings/rust_mat_at_const.tpl.rs").compile_interpolation(),
+	"cv_Mat_at_const_intX" => include_str!("../tpl/settings/rust_mat_at_mut.tpl.rs").compile_interpolation(),
+	"cv_Mat_at_const_const_intX" => include_str!("../tpl/settings/rust_mat_at_const.tpl.rs").compile_interpolation(),
 });
 
 pub static FUNC_SPECIALIZE: Lazy<HashMap<&str, Vec<HashMap<&str, &str>>>> = Lazy::new(|| hashmap! {
@@ -776,6 +790,7 @@ pub static FORCE_CLASS_ABSTRACT: Lazy<HashSet<&str>> = Lazy::new(|| hashset! {
 	"cv::detail::BlocksCompensator",
 });
 
+/// cpp_fullname
 pub static FORCE_CONSTANT_METHOD: Lazy<HashSet<&str>> = Lazy::new(|| hashset! {
 	"cv::Mat::size",
 	"cv::Mat::step",
@@ -783,6 +798,55 @@ pub static FORCE_CONSTANT_METHOD: Lazy<HashSet<&str>> = Lazy::new(|| hashset! {
 	"cv::UMat::step",
 });
 
+pub static FORCE_INFALLIBLE: Lazy<HashSet<FuncId>> = Lazy::new(|| hashset! {
+	// just returns static/constant data
+	FuncId::new("cv::noArray", []),
+	FuncId::new("cv::getVersionMajor", []),
+	FuncId::new("cv::getVersionMinor", []),
+	FuncId::new("cv::getVersionRevision", []),
+	// not doing anything that can cause an exception
+	FuncId::new("cv::Mat::empty", []),
+	FuncId::new("cv::Mat::total", []),
+	FuncId::new("cv::Mat::isContinuous", []),
+	FuncId::new("cv::Mat::isSubmatrix", []),
+	FuncId::new("cv::Mat::elemSize1", []),
+	FuncId::new("cv::Mat::type", []),
+	FuncId::new("cv::Mat::depth", []),
+	FuncId::new("cv::Mat::channels", []),
+	FuncId::new("cv::UMat::empty", []),
+	FuncId::new("cv::UMat::total", []),
+	FuncId::new("cv::UMat::isContinuous", []),
+	FuncId::new("cv::UMat::isSubmatrix", []),
+	FuncId::new("cv::UMat::elemSize1", []),
+	FuncId::new("cv::UMat::type", []),
+	FuncId::new("cv::UMat::depth", []),
+	FuncId::new("cv::UMat::channels", []),
+	FuncId::new("cv::SparseMat::elemSize", []),
+	FuncId::new("cv::SparseMat::elemSize1", []),
+	FuncId::new("cv::SparseMat::type", []),
+	FuncId::new("cv::SparseMat::depth", []),
+	FuncId::new("cv::SparseMat::channels", []),
+	// marked CV_NOEXCEPT since OpenCV 4.5.2, propagate those changes to earlier versions
+	FuncId::new("cv::Mat::Mat", []),
+	FuncId::new("cv::MatSize::MatSize", ["_p"]),
+	FuncId::new("cv::MatSize::dims", []),
+	FuncId::new("cv::MatSize::operator const int *", []),
+	FuncId::new("cv::MatStep::MatStep", []),
+	FuncId::new("cv::MatStep::operator[]", ["i"]),
+	FuncId::new("cv::UMat::UMat", ["usageFlags"]),
+	FuncId::new("cv::ocl::Context::Context", []),
+	FuncId::new("cv::ocl::Device::Device", []),
+	FuncId::new("cv::ocl::Image2D::Image2D", []),
+	FuncId::new("cv::ocl::Kernel::Kernel", []),
+	FuncId::new("cv::ocl::KernelArg::KernelArg", []),
+	FuncId::new("cv::ocl::Platform::Platform", []),
+	FuncId::new("cv::ocl::PlatformInfo::PlatformInfo", []),
+	FuncId::new("cv::ocl::Program::Program", []),
+	FuncId::new("cv::ocl::ProgramSource::ProgramSource", []),
+	FuncId::new("cv::ocl::Queue::Queue", []),
+});
+
+/// cpp_fullname => ( rust_fullname, cpp_fullname )
 pub static PRIMITIVE_TYPEDEFS: Lazy<HashMap<&str, (&str, &str)>> = Lazy::new(|| hashmap! {
 	"size_t" => ("size_t", "size_t"),
 	"ptrdiff_t" => ("ptrdiff_t", "ptrdiff_t"),
@@ -824,6 +888,7 @@ pub static DATA_TYPES: Lazy<BTreeSet<&str>> = Lazy::new(|| btreeset! {
 	"cv::Rect", "cv::Rect2i", "cv::Rect2f", "cv::Rect2d",
 });
 
+/// cpp_fullname
 pub static IMPLEMENTED_GENERICS: Lazy<HashSet<&str>> = Lazy::new(|| hashset! {
 	"cv::Affine3",
 	"cv::Mat_",
@@ -833,73 +898,122 @@ pub static IMPLEMENTED_GENERICS: Lazy<HashSet<&str>> = Lazy::new(|| hashset! {
 	"cv::Rect_",
 	"cv::Scalar_",
 	"cv::Size_",
+});
+
+/// cpp_fullname
+pub static IMPLEMENTED_CONST_GENERICS: Lazy<HashSet<&str>> = Lazy::new(|| hashset! {
 	"cv::Vec",
 });
 
-#[derive(Debug)]
-pub enum SliceHint {
-	Slice,
+#[derive(Clone, Copy, Debug)]
+pub enum ArgOverride {
+	Nullable,
 	NullableSlice,
+	Slice,
 	LenForSlice(&'static str, usize),
+	StringAsBytes,
 }
 
-/// cpp_fullname, number of arguments
-pub static SLICE_ARGUMENT: Lazy<HashMap<(&str, usize), HashMap<&str, SliceHint>>> = Lazy::new(|| hashmap! {
-	("cv::Mat::at", 1) => hashmap! {
-		"idx" => SliceHint::Slice
+pub static ARGUMENT_OVERRIDE: Lazy<HashMap<FuncId, HashMap<&str, ArgOverride>>> = Lazy::new(|| hashmap! {
+	FuncId::new("cv::Mat::at", ["idx"]) => hashmap! {
+		"idx" => ArgOverride::Slice
 	},
-	("cv::Mat::ptr", 1) => hashmap! {
-		"idx" => SliceHint::Slice
+	FuncId::new("cv::Mat::ptr", ["idx"])  => hashmap! {
+		"idx" => ArgOverride::Slice
 	},
-	("cv::Mat::Mat", 4) => hashmap! {
-		"steps" => SliceHint::NullableSlice,
-		"sizes" => SliceHint::Slice,
-		"ndims" => SliceHint::LenForSlice("sizes", 1),
+	FuncId::new("cv::Mat::Mat", ["sizes", "type", "data", "steps"]) => hashmap! {
+		"steps" => ArgOverride::NullableSlice,
+		"sizes" => ArgOverride::Slice,
+		"ndims" => ArgOverride::LenForSlice("sizes", 1),
 	},
-	("cv::Mat::Mat", 5) => hashmap! {
-		"steps" => SliceHint::NullableSlice,
-		"sizes" => SliceHint::Slice,
-		"ndims" => SliceHint::LenForSlice("sizes", 1),
+	FuncId::new("cv::Mat::Mat", ["ndims", "sizes", "type", "s"]) => hashmap! {
+		"steps" => ArgOverride::NullableSlice,
+		"sizes" => ArgOverride::Slice,
+		"ndims" => ArgOverride::LenForSlice("sizes", 1),
 	},
-	("cv::Mat::zeros", 3) => hashmap! {
-		"sz" => SliceHint::Slice,
-		"ndims" => SliceHint::LenForSlice("sz", 1),
+	FuncId::new("cv::Mat::Mat", ["ndims", "sizes", "type", "data", "steps"]) => hashmap! {
+		"steps" => ArgOverride::NullableSlice,
+		"sizes" => ArgOverride::Slice,
+		"ndims" => ArgOverride::LenForSlice("sizes", 1),
 	},
-	("cv::Mat::ones", 3) => hashmap! {
-		"sz" => SliceHint::Slice,
-		"ndims" => SliceHint::LenForSlice("sz", 1),
+	FuncId::new("cv::Mat::zeros", ["ndims", "sz", "type"]) => hashmap! {
+		"sz" => ArgOverride::Slice,
+		"ndims" => ArgOverride::LenForSlice("sz", 1),
 	},
-	("cv::Mat::create", 3) => hashmap! {
-		"sizes" => SliceHint::Slice,
-		"ndims" => SliceHint::LenForSlice("sizes", 1),
+	FuncId::new("cv::Mat::ones", ["ndims", "sz", "type"]) => hashmap! {
+		"sz" => ArgOverride::Slice,
+		"ndims" => ArgOverride::LenForSlice("sz", 1),
 	},
-	("cv::Mat::reshape", 3) => hashmap! {
-		"newsz" => SliceHint::Slice,
-		"newndims" => SliceHint::LenForSlice("newsz", 1),
+	FuncId::new("cv::Mat::create", ["ndims", "sizes", "type"]) => hashmap! {
+		"sizes" => ArgOverride::Slice,
+		"ndims" => ArgOverride::LenForSlice("sizes", 1),
 	},
-	("cv::SparseMat::Hdr::Hdr", 3) => hashmap! {
-		"_sizes" => SliceHint::Slice,
-		"_dims" => SliceHint::LenForSlice("_sizes", 1),
+	FuncId::new("cv::Mat::reshape", ["cn", "newndims", "newsz"]) => hashmap! {
+		"newsz" => ArgOverride::Slice,
+		"newndims" => ArgOverride::LenForSlice("newsz", 1),
 	},
-	("cv::UMat::UMat", 4) => hashmap! {
-		"sizes" => SliceHint::Slice,
-		"ndims" => SliceHint::LenForSlice("sizes", 1),
+	FuncId::new("cv::SparseMat::Hdr::Hdr", ["_dims", "_sizes", "_type"]) => hashmap! {
+		"_sizes" => ArgOverride::Slice,
+		"_dims" => ArgOverride::LenForSlice("_sizes", 1),
 	},
-	("cv::UMat::UMat", 5) => hashmap! {
-		"sizes" => SliceHint::Slice,
-		"ndims" => SliceHint::LenForSlice("sizes", 1),
+	FuncId::new("cv::UMat::UMat", ["ndims", "sizes", "type", "usageFlags"]) => hashmap! {
+		"sizes" => ArgOverride::Slice,
+		"ndims" => ArgOverride::LenForSlice("sizes", 1),
 	},
-	("cv::UMat::create", 4) => hashmap! {
-		"sizes" => SliceHint::Slice,
-		"ndims" => SliceHint::LenForSlice("sizes", 1),
+	FuncId::new("cv::UMat::UMat", ["ndims", "sizes", "type", "s", "usageFlags"]) => hashmap! {
+		"sizes" => ArgOverride::Slice,
+		"ndims" => ArgOverride::LenForSlice("sizes", 1),
 	},
-	("cv::_OutputArray::create", 6) => hashmap! {
-		"size" => SliceHint::Slice,
-		"dims" => SliceHint::LenForSlice("size", 1),
+	FuncId::new("cv::UMat::create", ["ndims", "sizes", "type", "usageFlags"]) => hashmap! {
+		"sizes" => ArgOverride::Slice,
+		"ndims" => ArgOverride::LenForSlice("sizes", 1),
 	},
-	("cv::mixChannels", 4) => hashmap! {
-		"from_to" => SliceHint::Slice,
-		"npairs" => SliceHint::LenForSlice("from_to", 2),
+	FuncId::new("cv::_OutputArray::create", ["dims", "size", "type", "i", "allowTransposed", "fixedDepthMask"]) => hashmap! {
+		"size" => ArgOverride::Slice,
+		"dims" => ArgOverride::LenForSlice("size", 1),
+	},
+	FuncId::new("cv::mixChannels", ["src", "dst", "fromTo", "npairs"]) => hashmap! {
+		"fromTo" => ArgOverride::Slice,
+		"npairs" => ArgOverride::LenForSlice("from_to", 2),
+	},
+	FuncId::new("cv::createTrackbar", ["trackbarname", "winname", "value", "count", "onChange", "userdata"]) => hashmap! {
+		"value" => ArgOverride::Nullable,
+	},
+	FuncId::new("cv::minMaxLoc", ["src", "minVal", "maxVal", "minLoc", "maxLoc", "mask"]) => hashmap! {
+		"minVal" => ArgOverride::Nullable,
+		"maxVal" => ArgOverride::Nullable,
+		"minLoc" => ArgOverride::Nullable,
+		"maxLoc" => ArgOverride::Nullable,
+	},
+	FuncId::new("cv::minMaxLoc", ["a", "minVal", "maxVal", "minIdx", "maxIdx"]) => hashmap! {
+		"minVal" => ArgOverride::Nullable,
+		"maxVal" => ArgOverride::Nullable,
+		"minIdx" => ArgOverride::Nullable,
+		"maxIdx" => ArgOverride::Nullable,
+	},
+	FuncId::new("cv::minMaxIdx", ["src", "minVal", "maxVal", "minIdx", "maxIdx", "mask"]) => hashmap! {
+		"minVal" => ArgOverride::Nullable,
+		"maxVal" => ArgOverride::Nullable,
+		"minIdx" => ArgOverride::Nullable,
+		"maxIdx" => ArgOverride::Nullable,
+	},
+	FuncId::new("cv::decodeQRCode", ["in", "points", "decoded_info", "straight_qrcode"]) => hashmap! {
+		"decoded_info" => ArgOverride::StringAsBytes,
+	},
+	FuncId::new("cv::QRCodeDetector::decode", ["img", "points", "straight_qrcode"]) => hashmap! {
+		"return" => ArgOverride::StringAsBytes,
+	},
+	FuncId::new("cv::QRCodeDetector::decodeCurved", ["img", "points", "straight_qrcode"]) => hashmap! {
+		"return" => ArgOverride::StringAsBytes,
+	},
+	FuncId::new("cv::QRCodeDetector::detectAndDecode", ["img", "points", "straight_qrcode"]) => hashmap! {
+		"return" => ArgOverride::StringAsBytes,
+	},
+	FuncId::new("cv::QRCodeDetector::detectAndDecodeCurved", ["img", "points", "straight_qrcode"]) => hashmap! {
+		"return" => ArgOverride::StringAsBytes,
+	},
+	FuncId::new("cv::getOptimalNewCameraMatrix", ["cameraMatrix", "distCoeffs", "imageSize", "alpha", "newImgSize", "validPixROI", "centerPrincipalPoint"]) => hashmap! {
+		"validPixROI" => ArgOverride::Nullable,
 	},
 });
 
@@ -909,6 +1023,7 @@ pub static NO_SKIP_NAMESPACE_IN_LOCALNAME: Lazy<HashMap<&str, HashMap<&str, &str
 		"dynafu" => "Dynafu",
 		"fisheye" => "Fisheye",
 		"kinfu" => "Kinfu",
+		"colored_kinfu" => "ColoredKinfu",
 		"linemod" => "Linemod",
 		"superres" => "Superres",
 	},
@@ -935,7 +1050,148 @@ pub static NO_SKIP_NAMESPACE_IN_LOCALNAME: Lazy<HashMap<&str, HashMap<&str, &str
 	}
 });
 
-pub static FORCE_VECTOR_TYPEDEF_GENERATION: Lazy<HashSet<&str>> = Lazy::new(|| hashset! {
+pub static PREVENT_VECTOR_TYPEDEF_GENERATION: Lazy<HashSet<&str>> = Lazy::new(|| hashset! {
 	"cv::ppf_match_3d::Pose3DPtr",
 	"cv::dnn::Net::LayerId",
+});
+
+#[derive(Default)]
+pub struct ModuleTweak {
+	pub includes: Vec<&'static str>,
+	pub resolve_types: Vec<&'static str>,
+	pub generate_types: Vec<&'static str>,
+}
+
+pub static GENERATOR_MODULE_TWEAKS: Lazy<HashMap<&str, ModuleTweak>> = Lazy::new(|| hashmap! {
+	"*" => ModuleTweak {
+		resolve_types: vec![
+			// void is used as return type for property setters
+			"void",
+			// base types
+			"bool",
+			"int",
+			"unsigned int",
+			"double",
+			// return of String
+			"const char*",
+			"void*",
+			// handling vector of strings
+			"std::vector<cv::String>",
+			"std::vector<std::string>",
+			// for return of vector<DataType> types
+			"cv::_InputArray",
+			"cv::_OutputArray",
+			"cv::_InputOutputArray",
+		],
+		..Default::default()
+	},
+	"aruco" => ModuleTweak {
+		generate_types: vec![
+			"std::vector<cv::Vec3f>",
+			"std::vector<cv::Vec3d>",
+		],
+		..Default::default()
+	},
+	"calib3d" => ModuleTweak {
+		generate_types: vec![
+			// for calibrate_camera
+			"std::vector<cv::Point3i>",
+			"std::vector<std::vector<cv::Point3i>>",
+			"std::vector<cv::Point3f>",
+			"std::vector<std::vector<cv::Point3f>>",
+			"std::vector<cv::Point3d>",
+			"std::vector<std::vector<cv::Point3d>>",
+			"std::vector<cv::Vec3f>",
+			"std::vector<std::vector<cv::Vec3f>>",
+			// for solve_pnp tvec and rvec parameters
+			"std::vector<std::vector<double>>",
+		],
+		..Default::default()
+	},
+	"core" => ModuleTweak {
+		includes: vec![
+			"core.hpp",
+		],
+		generate_types: vec![
+			"cv::Ptr<float>", // for 3.2, no function uses that so it's not generated
+		],
+		..Default::default()
+	},
+	"dnn" => ModuleTweak {
+		includes: vec![
+			"dnn/dict.hpp",
+		],
+		resolve_types: vec![
+			// for specializing cv::dnn::Dict::set
+			"cv::dnn::DictValue",
+			// for specializing cv::dnn::DictValue::get
+			"cv::String",
+			"int64_t",
+		],
+		..Default::default()
+	},
+	"face" => ModuleTweak {
+		includes: vec![
+			"face.hpp",
+		],
+		..Default::default()
+	},
+	"features2d" => ModuleTweak {
+		includes: vec![
+			"features2d.hpp",
+		],
+		// type used in other modules, thus needs casting (https://github.com/twistedfall/opencv-rust/issues/218)
+		generate_types: vec![
+			"cv::Ptr<cv::Feature2D>",
+		],
+		..Default::default()
+	},
+	"imgproc" => ModuleTweak {
+		generate_types: vec![
+			// for findContours()
+			"std::vector<cv::Vec4i>",
+			"std::vector<std::vector<cv::Point>>",
+			// for HoughLines()
+			"std::vector<cv::Vec2f>",
+			"std::vector<cv::Vec2d>",
+			"std::vector<cv::Vec3f>",
+			"std::vector<cv::Vec3d>",
+		],
+		..Default::default()
+	},
+	"shape" => ModuleTweak {
+		includes: vec![
+			"shape.hpp",
+		],
+		..Default::default()
+	},
+	"stitching" => ModuleTweak {
+		includes: vec![
+			"stitching.hpp",
+		],
+		..Default::default()
+	},
+	"tracking" => ModuleTweak {
+		includes: vec![
+			"tracking.hpp",
+		],
+		..Default::default()
+	},
+	"videostab" => ModuleTweak {
+		includes: vec![
+			"videostab.hpp",
+		],
+		..Default::default()
+	},
+	"ximgproc" => ModuleTweak {
+		includes: vec![
+			"ximgproc.hpp",
+		],
+		..Default::default()
+	},
+});
+
+/// list of module names that must use manual module comment extraction
+pub static IGNORE_CLANG_MODULE_COMMENT: Lazy<HashSet<&str>> = Lazy::new(|| hashset! {
+	"tracking",
 });

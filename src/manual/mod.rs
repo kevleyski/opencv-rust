@@ -1,12 +1,15 @@
+#[cfg(ocvrs_has_module_core)]
 pub mod core;
-#[cfg(any(not(feature = "opencv-32"), feature = "contrib"))]
+#[cfg(ocvrs_has_module_dnn)]
 pub mod dnn;
+#[cfg(ocvrs_has_module_features2d)]
 pub mod features2d;
 pub mod sys;
 pub mod types;
 
 pub mod prelude {
-	pub use super::{core::{MatConstIteratorTraitManual, MatTraitManual, MatxTrait, UMatTraitManual}};
-	#[cfg(feature = "opencv-32")]
-	pub use super::core::MatSizeTraitManual;
+	#[cfg(ocvrs_has_module_core)]
+	pub use super::core::{MatConstIteratorTraitManual, MatTraitConstManual, MatTraitManual, MatxTrait, UMatTraitConstManual};
+	#[cfg(all(ocvrs_has_module_core, ocvrs_opencv_branch_32))]
+	pub use super::core::MatSizeTraitConstManual;
 }
