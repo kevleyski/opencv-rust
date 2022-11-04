@@ -1,7 +1,4 @@
-use std::{
-	ffi::NulError,
-	fmt,
-};
+use std::{char::TryFromCharError, ffi::NulError, fmt};
 
 use crate::core;
 
@@ -14,7 +11,10 @@ pub struct Error {
 impl Error {
 	#[inline]
 	pub fn new(code: i32, message: impl Into<String>) -> Self {
-		Self { code, message: message.into() }
+		Self {
+			code,
+			message: message.into(),
+		}
 	}
 }
 
@@ -29,6 +29,13 @@ impl From<NulError> for Error {
 	#[inline]
 	fn from(_: NulError) -> Self {
 		Self::new(core::StsBadArg, "Passed Rust string contains nul byte")
+	}
+}
+
+impl From<TryFromCharError> for Error {
+	#[inline]
+	fn from(_: TryFromCharError) -> Self {
+		Self::new(core::StsBadArg, "Passed Rust char can't be converted to C++ char")
 	}
 }
 

@@ -1,16 +1,12 @@
-use std::{
-	env,
-	fs::File,
-	io::{BufRead, BufReader},
-	path::{Path, PathBuf},
-};
+use std::env;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
+use std::path::{Path, PathBuf};
 
 use clang::Clang;
 
-use opencv_binding_generator::{
-	Generator,
-	writer::RustNativeBindingWriter,
-};
+use opencv_binding_generator::writer::RustNativeBindingWriter;
+use opencv_binding_generator::Generator;
 
 fn get_version_header(header_dir: &Path) -> Option<PathBuf> {
 	let out = header_dir.join("opencv2/core/version.hpp");
@@ -81,7 +77,8 @@ fn main() {
 	let module = module.to_str().expect("Not a valid module name");
 	let version = get_version_from_headers(&opencv_header_dir).expect("Can't find the version in the headers");
 	let additional_include_dirs = if let Some(additional_include_dirs) = args.next() {
-		 additional_include_dirs.to_str()
+		additional_include_dirs
+			.to_str()
 			.map(|s| s.split(','))
 			.into_iter()
 			.flatten()
@@ -94,5 +91,5 @@ fn main() {
 	let clang = Clang::new().expect("Cannot initialize clang");
 	let bindings_writer = RustNativeBindingWriter::new(&src_cpp_dir, &out_dir, module, &version, debug);
 	Generator::new(&opencv_header_dir, &additional_include_dirs, &src_cpp_dir, clang)
-		.process_opencv_module(&module, bindings_writer);
+		.process_opencv_module(module, bindings_writer);
 }

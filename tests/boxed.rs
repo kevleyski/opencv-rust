@@ -1,13 +1,10 @@
-use std::{
-	ffi::c_void,
-	mem::transmute,
-};
+use std::{ffi::c_void, mem::transmute};
 
 use opencv::{
 	core::{Algorithm, Scalar, Vec4f},
 	prelude::*,
-	Result,
 	types::{PtrOfFeature2D, VectorOfVec4f},
+	Result,
 };
 
 #[test]
@@ -63,13 +60,13 @@ fn into_raw() -> Result<()> {
 #[test]
 fn smart_ptr_crate_and_cast_to_base_class() -> Result<()> {
 	#![cfg(ocvrs_has_module_videostab)]
+	#[cfg(ocvrs_opencv_branch_4)]
+	use opencv::features2d::FastFeatureDetector_DetectorType;
 	use opencv::{
 		core::Ptr,
 		features2d::{FastFeatureDetector, Feature2D},
 		videostab::{KeypointBasedMotionEstimator, MotionEstimatorRansacL2, MotionModel},
 	};
-	#[cfg(ocvrs_opencv_branch_4)]
-	use opencv::features2d::FastFeatureDetector_DetectorType;
 
 	let est = MotionEstimatorRansacL2::new(MotionModel::MM_AFFINE).unwrap();
 	let est_ptr = Ptr::new(est);
@@ -93,14 +90,14 @@ fn smart_ptr_cast_base() -> Result<()> {
 	use opencv::features2d::{AKAZE_DESCRIPTOR_MLDB as DESCRIPTOR_MLDB, KAZE_DIFF_PM_G2 as DIFF_PM_G2};
 
 	let d = <dyn AKAZE>::create(DESCRIPTOR_MLDB, 0, 3, 0.001, 4, 4, DIFF_PM_G2)?;
-	assert_eq!(true, Feature2DTraitConst::empty(&d)?);
+	assert!(Feature2DTraitConst::empty(&d)?);
 	if !cfg!(ocvrs_opencv_branch_32) {
 		assert_eq!("Feature2D.AKAZE", Feature2DTraitConst::get_default_name(&d)?);
 	} else {
 		assert_eq!("my_object", Feature2DTraitConst::get_default_name(&d)?);
 	}
 	let a = PtrOfFeature2D::from(d);
-	assert_eq!(true, Feature2DTraitConst::empty(&a)?);
+	assert!(Feature2DTraitConst::empty(&a)?);
 	if !cfg!(ocvrs_opencv_branch_32) {
 		assert_eq!("Feature2D.AKAZE", Feature2DTraitConst::get_default_name(&a)?);
 	} else {
@@ -112,13 +109,13 @@ fn smart_ptr_cast_base() -> Result<()> {
 #[test]
 fn cast_base() -> Result<()> {
 	#![cfg(ocvrs_has_module_features2d)]
-	use opencv::{features2d::BFMatcher, core::NORM_L2};
+	use opencv::{core::NORM_L2, features2d::BFMatcher};
 
 	let m = BFMatcher::new(NORM_L2, false)?;
-	assert_eq!(true, <dyn AlgorithmTrait>::empty(&m)?);
+	assert!(<dyn AlgorithmTrait>::empty(&m)?);
 	assert_eq!("my_object", &m.get_default_name()?);
 	let a = Algorithm::from(m);
-	assert_eq!(true, a.empty()?);
+	assert!(a.empty()?);
 	assert_eq!("my_object", &a.get_default_name()?);
 	Ok(())
 }
@@ -126,8 +123,8 @@ fn cast_base() -> Result<()> {
 #[test]
 fn cast_descendant() -> Result<()> {
 	#![cfg(ocvrs_has_module_rgbd)]
-	use std::convert::TryFrom;
 	use opencv::rgbd::{OdometryFrame, RgbdFrame};
+	use std::convert::TryFrom;
 
 	let image = Mat::new_rows_cols_with_default(1, 2, i32::typ(), Scalar::from(1.))?;
 	let depth = Mat::default();
@@ -150,12 +147,12 @@ fn cast_descendant() -> Result<()> {
 #[test]
 fn cast_descendant_fail() -> Result<()> {
 	#![cfg(ocvrs_has_module_stitching)]
-	use std::convert::TryFrom;
 	use opencv::{
 		core,
-		stitching::{Detail_FeatherBlender, Detail_MultiBandBlender, Detail_Blender},
+		stitching::{Detail_Blender, Detail_FeatherBlender, Detail_MultiBandBlender},
 		Error,
 	};
+	use std::convert::TryFrom;
 
 	let child = Detail_FeatherBlender::new(43.)?;
 	assert_eq!(43., child.sharpness()?);
@@ -163,7 +160,13 @@ fn cast_descendant_fail() -> Result<()> {
 	let correct_child = Detail_FeatherBlender::try_from(base)?;
 	let base = Detail_Blender::from(correct_child);
 	let incorrect_child = Detail_MultiBandBlender::try_from(base);
-	if !matches!(incorrect_child, Err(Error { code: core::StsBadArg, .. })) {
+	if !matches!(
+		incorrect_child,
+		Err(Error {
+			code: core::StsBadArg,
+			..
+		})
+	) {
 		panic!("It shouldn't be possible to downcast to the incorrect descendant class");
 	}
 	Ok(())

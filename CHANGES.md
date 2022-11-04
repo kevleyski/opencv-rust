@@ -1,3 +1,26 @@
+* 0.71.0
+  * Multiple improvements to the `Vector` type:
+    * `VectorRefIterator` is not cloneable.
+    * Better performance and correctness for `Vector` iterators.
+    * Implement `Vector::from_elem()`.
+    * Make sure that `Vector<T: Send + Sync>` is also `Send + Sync`.
+  * Fix building on platforms where `c_char` ≠ `u8`.
+
+* 0.70.0
+  * Internal improvements and reorganization
+
+* 0.69.0
+  * Fix building with clang-15.
+  * Rename `distort_points` to `fisheye_distort_points` for consistency.
+
+* 0.68.0
+  * Make sure that `howToGetFeatures` argument of the `createStructuredEdgeDetection()` is nullable.
+  * Add `OutputArray` and `InputOutputArray` implementations for `Mat_`.
+
+* 0.67.0
+  * Change `fourcc` method to accept `char`s instead of `i8`s.
+  * Remove `gapi` feature as this module is not supported at the moment.
+
 * 0.66.0
   * Generate `valid_pix_roi` argument of `get_optimal_new_camera_matrix` as optional argument (fixes [#349](https://github.com/twistedfall/opencv-rust/issues/349)).
   * `clang-runtime` feature has been dropped and the associated behavior is now the default. It's caused by the changed API of the

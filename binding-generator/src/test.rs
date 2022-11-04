@@ -3,12 +3,9 @@ use std::collections::HashMap;
 use maplit::hashmap;
 use regex::Regex;
 
-use crate::{
-	comment::render_doc_comment,
-	StrExt,
-	string_ext::Indent,
-	StringExt,
-};
+use crate::comment::render_doc_comment;
+use crate::string_ext::Indent;
+use crate::{StrExt, StringExt};
 
 #[test]
 fn replace_in_place() {
@@ -31,7 +28,7 @@ fn replace_in_place() {
 		// allocate string after the one already allocated to force realloc to move
 		let _s = "test string".to_string();
 		let ptr_before = s.as_bytes().as_ptr();
-		let big_text = " ".repeat(1024 * 1024).to_string();
+		let big_text = " ".repeat(1024 * 1024);
 		let pad_string = "padding string".to_string();
 		assert!(s.replace_in_place("t", &big_text));
 		let ptr_after = s.as_bytes().as_ptr();
@@ -205,17 +202,13 @@ fn replace_in_place_regex_cb() {
 
 	{
 		let mut s = "ABCABCABCABABC".to_string();
-		assert!(s.replace_in_place_regex_cb(&Regex::new("AB").unwrap(), |_, _| {
-			Some("!!!".into())
-		}));
+		assert!(s.replace_in_place_regex_cb(&Regex::new("AB").unwrap(), |_, _| { Some("!!!".into()) }));
 		assert_eq!(s, "!!!C!!!C!!!C!!!!!!C");
 	}
 
 	{
 		let mut s = "ABCABCABCABABC".to_string();
-		assert!(s.replace_in_place_regex_cb(&Regex::new("AB").unwrap(), |_, _| {
-			Some("!".into())
-		}));
+		assert!(s.replace_in_place_regex_cb(&Regex::new("AB").unwrap(), |_, _| { Some("!".into()) }));
 		assert_eq!(s, "!C!C!C!!C");
 	}
 
@@ -231,25 +224,19 @@ fn replace_in_place_regex_cb() {
 
 	{
 		let mut s = "".to_string();
-		assert!(!s.replace_in_place_regex_cb(&Regex::new("AB").unwrap(), |_, _| {
-			Some("!".into())
-		}));
+		assert!(!s.replace_in_place_regex_cb(&Regex::new("AB").unwrap(), |_, _| { Some("!".into()) }));
 		assert_eq!(s, "");
 	}
 
 	{
 		let mut s = "ABCABCABCABABC".to_string();
-		assert!(!s.replace_in_place_regex_cb(&Regex::new("D").unwrap(), |_, _| {
-			Some("!".into())
-		}));
+		assert!(!s.replace_in_place_regex_cb(&Regex::new("D").unwrap(), |_, _| { Some("!".into()) }));
 		assert_eq!(s, "ABCABCABCABABC");
 	}
 
 	{
 		let mut s = "ABC".to_string();
-		assert!(!s.replace_in_place_regex_cb(&Regex::new("").unwrap(), |_, _| {
-			Some("!".into())
-		}));
+		assert!(!s.replace_in_place_regex_cb(&Regex::new("").unwrap(), |_, _| { Some("!".into()) }));
 		assert_eq!(s, "ABC");
 	}
 }
@@ -303,6 +290,18 @@ fn bump_counter() {
 		s.bump_counter();
 		assert_eq!("12345_1", s);
 	}
+
+	{
+		let mut s = "func_-1".to_string();
+		s.bump_counter();
+		assert_eq!("func_-1_1", s);
+	}
+
+	{
+		let mut s = "func_99999999999999999999999".to_string();
+		s.bump_counter();
+		assert_eq!("func_99999999999999999999999_1", s);
+	}
 }
 
 #[test]
@@ -327,8 +326,11 @@ fn interpolate() {
 			"name2" => "test2",
 			"name3" => "test3",
 		});
-		assert_eq!("test1, test2, {{name3
-		}}, {<parameter not found>}", res);
+		assert_eq!(
+			"test1, test2, {{name3
+		}}, {<parameter not found>}",
+			res
+		);
 	}
 
 	{
@@ -345,13 +347,15 @@ fn interpolate() {
 			"name3" => "test3",
 		});
 		assert_eq!(
-"test1 tt
+			"test1 tt
 line
 	start test21
 	test22 end
 test3 end
 
-", res);
+",
+			res
+		);
 	}
 
 	{
@@ -365,9 +369,11 @@ test3 end
 			"name3" => "",
 		});
 		assert_eq!(
-"test1
+			"test1
    test21
-   test22", res);
+   test22",
+			res
+		);
 	}
 
 	{

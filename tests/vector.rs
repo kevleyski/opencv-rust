@@ -1,32 +1,13 @@
 use matches::assert_matches;
 
 use opencv::{
-	core::{
-		self,
-		DMatch,
-		Point2d,
-		Point2f,
-		Scalar,
-		SparseMat_Hdr,
-		Vec4i,
-	},
-	Error,
+	core::{self, DMatch, Point2d, Point2f, Scalar, SparseMat_Hdr, Vec4i},
 	prelude::*,
-	Result,
 	types::{
-		VectorOfbool,
-		VectorOfDMatch,
-		VectorOff64,
-		VectorOfi32,
-		VectorOfi8,
-		VectorOfMat,
-		VectorOfPoint2d,
-		VectorOfPoint2f,
-		VectorOfString,
-		VectorOfu8,
-		VectorOfVec4i,
-		VectorOfVectorOfPoint2f,
-	}
+		VectorOfDMatch, VectorOfMat, VectorOfPoint2d, VectorOfPoint2f, VectorOfRange, VectorOfString, VectorOfVec4i,
+		VectorOfVectorOfPoint2f, VectorOfbool, VectorOff64, VectorOfi32, VectorOfi8, VectorOfu8,
+	},
+	Error, Result,
 };
 
 #[test]
@@ -44,7 +25,9 @@ fn boxed() -> Result<()> {
 		assert_eq!(i32::typ(), vec.get(2)?.typ());
 		assert_eq!(3, *vec.get(2)?.at_2d::<i32>(0, 1)?);
 		vec.set(0, Mat::new_rows_cols_with_default(1, 3, f32::typ(), Scalar::all(3.))?)?;
-		unsafe { vec.set_unchecked(1, Mat::new_rows_cols_with_default(1, 3, f64::typ(), Scalar::all(4.))?); }
+		unsafe {
+			vec.set_unchecked(1, Mat::new_rows_cols_with_default(1, 3, f64::typ(), Scalar::all(4.))?);
+		}
 		vec.set(2, Mat::new_rows_cols_with_default(1, 3, i16::typ(), Scalar::all(5.))?)?;
 		assert_eq!(f32::typ(), unsafe { vec.get_unchecked(0) }.typ());
 		assert_eq!(3., *unsafe { vec.get_unchecked(0) }.at_2d::<f32>(0, 1)?);
@@ -56,10 +39,13 @@ fn boxed() -> Result<()> {
 
 	#[cfg(ocvrs_has_module_imgproc)]
 	{
-		use opencv::{imgproc, types, core::{Vec3b, Point}};
+		use opencv::{
+			core::{Point, Vec3b},
+			imgproc,
+		};
 
 		let mut m = Mat::new_rows_cols_with_default(10, 10, Vec3b::typ(), Scalar::default())?;
-		let mut ps = types::VectorOfMat::new();
+		let mut ps = VectorOfMat::new();
 		assert_eq!(ps.len(), 0);
 		let mut p1 = unsafe { Mat::new_rows_cols(3, 2, i32::typ()) }?;
 		p1.at_row_mut::<i32>(0)?.copy_from_slice(&[0, 0]);
@@ -95,7 +81,9 @@ fn string() -> Result<()> {
 	assert_eq!("888", vec.get(3)?);
 	assert_eq!("", vec.get(4)?);
 	vec.set(0, "qqq")?;
-	unsafe { vec.set_unchecked(1, "www"); }
+	unsafe {
+		vec.set_unchecked(1, "www");
+	}
 	vec.set(2, "eee")?;
 	assert_eq!("qqq", unsafe { vec.get_unchecked(0) });
 	assert_eq!("www", unsafe { vec.get_unchecked(1) });
@@ -105,6 +93,7 @@ fn string() -> Result<()> {
 
 #[test]
 fn boolean() -> Result<()> {
+	#![allow(clippy::bool_assert_comparison)]
 	let mut vec = VectorOfbool::new();
 	vec.push(true);
 	vec.push(true);
@@ -113,10 +102,12 @@ fn boolean() -> Result<()> {
 	assert_eq!(true, vec.get(1)?);
 	assert_eq!(false, vec.get(2)?);
 	vec.set(0, false)?;
-	unsafe { vec.set_unchecked(1, true); }
+	unsafe {
+		vec.set_unchecked(1, false);
+	}
 	vec.set(2, true)?;
 	assert_eq!(false, unsafe { vec.get_unchecked(0) });
-	assert_eq!(true, unsafe { vec.get_unchecked(1) });
+	assert_eq!(false, unsafe { vec.get_unchecked(1) });
 	assert_eq!(true, unsafe { vec.get_unchecked(2) });
 	Ok(())
 }
@@ -161,21 +152,21 @@ fn simple_struct() -> Result<()> {
 fn simple() -> Result<()> {
 	let mut matches = VectorOfDMatch::new();
 	let m = DMatch::new_index(0, 1, 10, 12.4)?;
-	matches.push(m.clone());
+	matches.push(m);
 	assert_eq!(m.distance, matches.get(0)?.distance);
 	assert_eq!(m.query_idx, matches.get(0)?.query_idx);
 	assert_eq!(m.img_idx, matches.get(0)?.img_idx);
 	assert_eq!(m.train_idx, matches.get(0)?.train_idx);
 
 	let m = DMatch::new_index(2, 13, 9, 98.1)?;
-	matches.set(0, m.clone())?;
+	matches.set(0, m)?;
 	assert_eq!(m.distance, unsafe { matches.get_unchecked(0) }.distance);
 	assert_eq!(m.query_idx, unsafe { matches.get_unchecked(0) }.query_idx);
 	assert_eq!(m.img_idx, unsafe { matches.get_unchecked(0) }.img_idx);
 	assert_eq!(m.train_idx, unsafe { matches.get_unchecked(0) }.train_idx);
 
 	let m = DMatch::new_index(3, 7, 19, 76.)?;
-	unsafe { matches.set_unchecked(0, m.clone()) };
+	unsafe { matches.set_unchecked(0, m) };
 	assert_eq!(m.distance, unsafe { matches.get_unchecked(0) }.distance);
 	assert_eq!(m.query_idx, unsafe { matches.get_unchecked(0) }.query_idx);
 	assert_eq!(m.img_idx, unsafe { matches.get_unchecked(0) }.img_idx);
@@ -217,6 +208,20 @@ fn vector_of_vector_simple_struct() -> Result<()> {
 	outer.remove(1)?;
 	assert_eq!(9., outer.get(1)?.get(2)?.x);
 	Ok(())
+}
+
+#[test]
+fn from_elem() {
+	let v = VectorOfi32::from_elem(5, 10);
+	assert_eq!(10, v.len());
+	assert!(v.iter().all(|v| v == 5));
+
+	let v = VectorOfMat::from_elem(Mat::default(), 0);
+	assert_eq!(0, v.len());
+
+	let v = VectorOfString::from_elem("test", 3);
+	assert_eq!(3, v.len());
+	assert!(v.iter().all(|v| v == "test"));
 }
 
 #[test]
@@ -271,7 +276,13 @@ fn insert() -> Result<()> {
 	assert_eq!(5, vec.len());
 	assert_eq!(8, vec.get(0)?);
 	assert_eq!(1, vec.get(1)?);
-	assert_matches!(vec.insert(10, 10), Err(Error { code: core::StsOutOfRange, .. }));
+	assert_matches!(
+		vec.insert(10, 10),
+		Err(Error {
+			code: core::StsOutOfRange,
+			..
+		})
+	);
 	vec.insert(5, 10)?;
 	assert_eq!(6, vec.len());
 	assert_eq!(10, vec.get(5)?);
@@ -296,7 +307,13 @@ fn remove() -> Result<()> {
 	vec.clear();
 	assert_eq!(0, vec.len());
 	assert_eq!(10, vec.capacity());
-	assert_matches!(vec.remove(0), Err(Error { code: core::StsOutOfRange, .. }));
+	assert_matches!(
+		vec.remove(0),
+		Err(Error {
+			code: core::StsOutOfRange,
+			..
+		})
+	);
 	Ok(())
 }
 
@@ -313,8 +330,20 @@ fn swap() -> Result<()> {
 		assert_eq!(3, vec.get(0)?);
 		assert_eq!(1, vec.get(1)?);
 
-		assert_matches!(vec.swap(0, 4), Err(Error { code: core::StsOutOfRange, .. }));
-		assert_matches!(vec.swap(6, 1), Err(Error { code: core::StsOutOfRange, .. }));
+		assert_matches!(
+			vec.swap(0, 4),
+			Err(Error {
+				code: core::StsOutOfRange,
+				..
+			})
+		);
+		assert_matches!(
+			vec.swap(6, 1),
+			Err(Error {
+				code: core::StsOutOfRange,
+				..
+			})
+		);
 	}
 
 	{
@@ -328,6 +357,7 @@ fn swap() -> Result<()> {
 		assert_eq!("123", vec.get(2)?);
 	}
 
+	#[allow(clippy::bool_assert_comparison)]
 	{
 		let mut vec = VectorOfbool::new();
 		vec.push(true);
@@ -345,6 +375,7 @@ fn swap() -> Result<()> {
 
 #[test]
 fn nth() -> Result<()> {
+	#[allow(clippy::iter_nth_zero)]
 	{
 		let mut vec = VectorOfi32::new();
 		assert_eq!(None, vec.iter().nth(0));
@@ -362,11 +393,29 @@ fn nth() -> Result<()> {
 #[test]
 fn out_of_bounds() -> Result<()> {
 	let mut vec = VectorOff64::new();
-	assert_matches!(vec.get(0), Err(Error { code: core::StsOutOfRange, .. }));
+	assert_matches!(
+		vec.get(0),
+		Err(Error {
+			code: core::StsOutOfRange,
+			..
+		})
+	);
 	vec.push(1.);
 	vec.push(2.);
-	assert_matches!(vec.get(3), Err(Error { code: core::StsOutOfRange, .. }));
-	assert_matches!(vec.set(3, 5.), Err(Error { code: core::StsOutOfRange, .. }));
+	assert_matches!(
+		vec.get(3),
+		Err(Error {
+			code: core::StsOutOfRange,
+			..
+		})
+	);
+	assert_matches!(
+		vec.set(3, 5.),
+		Err(Error {
+			code: core::StsOutOfRange,
+			..
+		})
+	);
 	Ok(())
 }
 
@@ -381,7 +430,7 @@ fn from_iter() -> Result<()> {
 	}
 
 	{
-		let vec = VectorOfi8::from_iter([1, 2, 3].iter().map(|x| *x));
+		let vec = VectorOfi8::from_iter([1, 2, 3].iter().copied());
 		assert_eq!(3, vec.len());
 		assert_eq!(1, vec.get(0)?);
 		assert_eq!(2, vec.get(1)?);
@@ -417,7 +466,7 @@ fn iter() -> Result<()> {
 	{
 		let vec = VectorOfMat::from_iter(vec![]);
 		for _ in vec {
-			assert!(false, "iterator must not yield any elements")
+			panic!("iterator must not yield any elements")
 		}
 	}
 
@@ -426,11 +475,13 @@ fn iter() -> Result<()> {
 		let mut vec_iter = vec.into_iter();
 		let mut len = vec_iter.len();
 		assert_eq!(4, len);
-		while let Some(..) = vec_iter.next() {
+		while let Some(n) = vec_iter.next() {
 			len -= 1;
+			assert_eq!(n, 4 - len as i32);
 			assert_eq!(len, vec_iter.len());
 			assert_eq!((len, Some(len)), vec_iter.size_hint());
 		}
+		assert_eq!((0, Some(0)), vec_iter.size_hint());
 	}
 
 	{
@@ -438,11 +489,41 @@ fn iter() -> Result<()> {
 		let mut vec_iter = vec.iter();
 		let mut len = vec_iter.len();
 		assert_eq!(4, len);
-		while let Some(..) = vec_iter.next() {
+		while let Some(n) = vec_iter.next() {
 			len -= 1;
+			assert_eq!(n, 4 - len as i32);
 			assert_eq!(len, vec_iter.len());
 			assert_eq!((len, Some(len)), vec_iter.size_hint());
 		}
+		assert_eq!((0, Some(0)), vec_iter.size_hint());
+	}
+
+	{
+		let vec = VectorOfi32::from_iter(vec![1, 2, 3, 4]);
+		let mut vec_iter = vec.iter();
+		assert_eq!(Some(1), vec_iter.next());
+		let mut len = vec_iter.len();
+		assert_eq!(3, len);
+		let mut vec_iter_clone = vec_iter.clone();
+		while let Some(n) = vec_iter.next() {
+			len -= 1;
+			assert_eq!(n, 4 - len as i32);
+			assert_eq!(len, vec_iter.len());
+			assert_eq!((len, Some(len)), vec_iter.size_hint());
+		}
+		let mut len = vec_iter_clone.len();
+		assert_eq!(3, len);
+		while let Some(n) = vec_iter_clone.next() {
+			len -= 1;
+			assert_eq!(n, 4 - len as i32);
+			assert_eq!(len, vec_iter_clone.len());
+			assert_eq!((len, Some(len)), vec_iter_clone.size_hint());
+		}
+	}
+
+	// clone works for iterators for &Vectors of non-Clone elements
+	{
+		let _ = VectorOfRange::new().iter().clone();
 	}
 
 	Ok(())
@@ -469,7 +550,7 @@ fn as_slice() -> Result<()> {
 	}
 	{
 		let src = vec![Point2d::new(10., 20.), Point2d::new(60.5, 90.3), Point2d::new(-40.333, 89.)];
-		let mut vec = VectorOfPoint2d::from_iter(src.clone());
+		let mut vec = VectorOfPoint2d::from_iter(src);
 		let slice = vec.as_slice();
 		assert_eq!(20., slice[0].y);
 		assert_eq!(60.5, slice[1].x);
@@ -479,12 +560,15 @@ fn as_slice() -> Result<()> {
 		slice[0].y = 90.;
 		slice[1] = Point2d::new(91.5, 92.6);
 		slice.swap(0, 1);
-		assert_eq!(&[Point2d::new(91.5, 92.6), Point2d::new(15., 90.), Point2d::new(-40.333, 89.)], vec.as_slice());
+		assert_eq!(
+			&[Point2d::new(91.5, 92.6), Point2d::new(15., 90.), Point2d::new(-40.333, 89.)],
+			vec.as_slice()
+		);
 	}
 	{
 		let default = DMatch::default()?;
 		let src = vec![DMatch::default()?, DMatch::new(1, 2, 9.)?];
-		let mut vec = VectorOfDMatch::from_iter(src.clone());
+		let mut vec = VectorOfDMatch::from_iter(src);
 		let slice = vec.as_slice();
 		assert_eq!(slice[0].distance, default.distance);
 		assert_eq!(slice[0].img_idx, default.img_idx);
@@ -621,11 +705,14 @@ fn clone() -> Result<()> {
 			VectorOfPoint2f::from_iter(vec![Point2f::new(20., 21.), Point2f::new(22., 23.)]),
 			VectorOfPoint2f::from_iter(vec![Point2f::new(30., 31.), Point2f::new(32., 33.)]),
 		];
-		let mut vec_of_vec = VectorOfVectorOfPoint2f::from_iter(src.clone());
+		let mut vec_of_vec = VectorOfVectorOfPoint2f::from_iter(src);
 		let vec_of_vec_clone = vec_of_vec.clone();
 		assert_eq!(21., vec_of_vec.get(1)?.get(0)?.y);
 		assert_eq!(21., vec_of_vec_clone.get(1)?.get(0)?.y);
-		vec_of_vec.set(1, VectorOfPoint2f::from_iter(vec![Point2f::new(40., 41.), Point2f::new(42., 43.)]))?;
+		vec_of_vec.set(
+			1,
+			VectorOfPoint2f::from_iter(vec![Point2f::new(40., 41.), Point2f::new(42., 43.)]),
+		)?;
 		assert_eq!(41., vec_of_vec.get(1)?.get(0)?.y);
 		assert_eq!(21., vec_of_vec_clone.get(1)?.get(0)?.y);
 	}
@@ -657,4 +744,23 @@ fn from_slice() -> Result<()> {
 	}
 
 	Ok(())
+}
+
+#[test]
+fn send() {
+	fn must_be_send<T: Send>(_: T) {}
+
+	must_be_send(VectorOfi32::new());
+	must_be_send(VectorOfMat::new());
+	must_be_send(VectorOfString::new());
+	must_be_send(VectorOfPoint2d::new());
+}
+
+#[test]
+fn sync() {
+	fn must_be_sync<T: Sync>(_: T) {}
+
+	must_be_sync(VectorOfi32::new());
+	must_be_sync(VectorOfString::new());
+	must_be_sync(VectorOfPoint2d::new());
 }
