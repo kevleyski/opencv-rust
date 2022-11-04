@@ -74,6 +74,18 @@ pub const CAP_INTELPERC_UVDEPTH_MAP: i32 = 1;
 pub const CAP_INTEL_MFX: i32 = 2300;
 /// Microsoft Media Foundation (via videoInput)
 pub const CAP_MSMF: i32 = 1400;
+/// For Orbbec 3D-Sensor device/module (Astra+, Femto)
+pub const CAP_OBSENSOR: i32 = 2600;
+/// Data given from BGR stream generator
+pub const CAP_OBSENSOR_BGR_IMAGE: i32 = 1;
+pub const CAP_OBSENSOR_DEPTH_GENERATOR: i32 = 536870912;
+/// Depth values in mm (CV_16UC1)
+pub const CAP_OBSENSOR_DEPTH_MAP: i32 = 0;
+pub const CAP_OBSENSOR_GENERATORS_MASK: i32 = 939524096;
+pub const CAP_OBSENSOR_IMAGE_GENERATOR: i32 = 268435456;
+pub const CAP_OBSENSOR_IR_GENERATOR: i32 = 134217728;
+/// Data given from IR stream generator(CV_16UC1)
+pub const CAP_OBSENSOR_IR_IMAGE: i32 = 2;
 /// Built-in OpenCV MotionJPEG codec
 pub const CAP_OPENCV_MJPEG: i32 = 2200;
 /// OpenNI (for Kinect)
@@ -188,6 +200,8 @@ pub const CAP_PROP_FPS: i32 = 5;
 pub const CAP_PROP_FRAME_COUNT: i32 = 7;
 /// Height of the frames in the video stream.
 pub const CAP_PROP_FRAME_HEIGHT: i32 = 4;
+/// (read-only) FFmpeg back-end only - Frame type ascii code (73 = 'I', 80 = 'P', 66 = 'B' or 63 = '?' if unknown) of the most recently read frame.
+pub const CAP_PROP_FRAME_TYPE: i32 = 69;
 /// Width of the frames in the video stream.
 pub const CAP_PROP_FRAME_WIDTH: i32 = 3;
 /// Gain of the image (only for those cameras that support).
@@ -243,6 +257,12 @@ pub const CAP_PROP_LRF_HAS_KEY_FRAME: i32 = 67;
 /// Backend-specific value indicating the current capture mode.
 pub const CAP_PROP_MODE: i32 = 9;
 pub const CAP_PROP_MONOCHROME: i32 = 19;
+/// (**open-only**) Set the maximum number of threads to use. Use 0 to use as many threads as CPU cores (applicable for FFmpeg back-end only).
+pub const CAP_PROP_N_THREADS: i32 = 70;
+pub const CAP_PROP_OBSENSOR_INTRINSIC_CX: i32 = 26003;
+pub const CAP_PROP_OBSENSOR_INTRINSIC_CY: i32 = 26004;
+pub const CAP_PROP_OBSENSOR_INTRINSIC_FX: i32 = 26001;
+pub const CAP_PROP_OBSENSOR_INTRINSIC_FY: i32 = 26002;
 pub const CAP_PROP_OPENNI2_MIRROR: i32 = 111;
 pub const CAP_PROP_OPENNI2_SYNC: i32 = 110;
 pub const CAP_PROP_OPENNI_APPROX_FRAME_SYNC: i32 = 105;
@@ -678,7 +698,7 @@ pub const CAP_WINRT: i32 = 1410;
 pub const CAP_XIAPI: i32 = 1100;
 /// XINE engine (Linux)
 pub const CAP_XINE: i32 = 2400;
-pub const CV__CAP_PROP_LATEST: i32 = 69;
+pub const CV__CAP_PROP_LATEST: i32 = 71;
 pub const CV__VIDEOWRITER_PROP_LATEST: i32 = 9;
 /// Defaults to CV_8U.
 pub const VIDEOWRITER_PROP_DEPTH: i32 = 5;
@@ -821,9 +841,51 @@ pub enum VideoCaptureAPIs {
 	CAP_XINE = 2400,
 	/// uEye Camera API
 	CAP_UEYE = 2500,
+	/// For Orbbec 3D-Sensor device/module (Astra+, Femto)
+	CAP_OBSENSOR = 2600,
 }
 
 opencv_type_enum! { crate::videoio::VideoCaptureAPIs }
+
+/// @name OBSENSOR (for Orbbec 3D-Sensor device/module )
+/// 
+/// //! OBSENSOR data given from image generator
+#[repr(C)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum VideoCaptureOBSensorDataType {
+	/// Depth values in mm (CV_16UC1)
+	CAP_OBSENSOR_DEPTH_MAP = 0,
+	/// Data given from BGR stream generator
+	CAP_OBSENSOR_BGR_IMAGE = 1,
+	/// Data given from IR stream generator(CV_16UC1)
+	CAP_OBSENSOR_IR_IMAGE = 2,
+}
+
+opencv_type_enum! { crate::videoio::VideoCaptureOBSensorDataType }
+
+/// OBSENSOR stream generator
+#[repr(C)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum VideoCaptureOBSensorGenerators {
+	CAP_OBSENSOR_DEPTH_GENERATOR = 536870912,
+	CAP_OBSENSOR_IMAGE_GENERATOR = 268435456,
+	CAP_OBSENSOR_IR_GENERATOR = 134217728,
+	CAP_OBSENSOR_GENERATORS_MASK = 939524096,
+}
+
+opencv_type_enum! { crate::videoio::VideoCaptureOBSensorGenerators }
+
+/// OBSENSOR properties
+#[repr(C)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum VideoCaptureOBSensorProperties {
+	CAP_PROP_OBSENSOR_INTRINSIC_FX = 26001,
+	CAP_PROP_OBSENSOR_INTRINSIC_FY = 26002,
+	CAP_PROP_OBSENSOR_INTRINSIC_CX = 26003,
+	CAP_PROP_OBSENSOR_INTRINSIC_CY = 26004,
+}
+
+opencv_type_enum! { crate::videoio::VideoCaptureOBSensorProperties }
 
 /// cv::VideoCapture generic properties identifier.
 /// 
@@ -953,7 +1015,11 @@ pub enum VideoCaptureProperties {
 	CAP_PROP_LRF_HAS_KEY_FRAME = 67,
 	/// Positive index indicates that returning extra data is supported by the video back end.  This can be retrieved as cap.retrieve(data, <returned index>).  E.g. When reading from a h264 encoded RTSP stream, the FFmpeg backend could return the SPS and/or PPS if available (if sent in reply to a DESCRIBE request), from calls to cap.retrieve(data, <returned index>).
 	CAP_PROP_CODEC_EXTRADATA_INDEX = 68,
-	CV__CAP_PROP_LATEST = 69,
+	/// (read-only) FFmpeg back-end only - Frame type ascii code (73 = 'I', 80 = 'P', 66 = 'B' or 63 = '?' if unknown) of the most recently read frame.
+	CAP_PROP_FRAME_TYPE = 69,
+	/// (**open-only**) Set the maximum number of threads to use. Use 0 to use as many threads as CPU cores (applicable for FFmpeg back-end only).
+	CAP_PROP_N_THREADS = 70,
+	CV__CAP_PROP_LATEST = 71,
 }
 
 opencv_type_enum! { crate::videoio::VideoCaptureProperties }
@@ -1846,9 +1912,11 @@ impl VideoWriter {
 	/// ## Parameters
 	/// * filename: Name of the output video file.
 	/// * fourcc: 4-character code of codec used to compress the frames. For example,
-	///    VideoWriter::fourcc('P','I','M','1') is a MPEG-1 codec, VideoWriter::fourcc('M','J','P','G') is a
-	///    motion-jpeg codec etc. List of codes can be obtained at [Video Codecs by
-	///    FOURCC](http://www.fourcc.org/codecs.php) page. FFMPEG backend with MP4 container natively uses
+	///    VideoWriter::fourcc('P','I','M','1') is a MPEG-1 codec, VideoWriter::fourcc('M','J','P','G')
+	///    is a motion-jpeg codec etc. List of codes can be obtained at
+	///    [MSDN](https://docs.microsoft.com/en-us/windows/win32/medfound/video-fourccs) page
+	///    or with this [archived page](https://web.archive.org/web/20220316062600/http://www.fourcc.org/codecs.php)
+	///    of the fourcc site for a more complete list). FFMPEG backend with MP4 container natively uses
 	///    other values as fourcc code: see [ObjectType](http://mp4ra.org/#/codecs),
 	///    so you may receive a warning message from OpenCV about fourcc code conversion.
 	/// * fps: Framerate of the created video stream.

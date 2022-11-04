@@ -1307,10 +1307,10 @@ pub fn check_chessboard(img: &dyn core::ToInputArray, size: core::Size) -> Resul
 /// ![block formula](https://latex.codecogs.com/png.latex?%5Cbegin%7Barray%7D%7Bl%7D%20%5Ctexttt%7Brvec3%7D%20%3D%20%20%5Cmathrm%7Brodrigues%7D%20%5E%7B%2D1%7D%20%5Cleft%20%28%20%5Cmathrm%7Brodrigues%7D%20%28%20%5Ctexttt%7Brvec2%7D%20%29%20%20%5Ccdot%20%5Cmathrm%7Brodrigues%7D%20%28%20%5Ctexttt%7Brvec1%7D%20%29%20%5Cright%20%29%20%20%5C%5C%20%5Ctexttt%7Btvec3%7D%20%3D%20%20%5Cmathrm%7Brodrigues%7D%20%28%20%5Ctexttt%7Brvec2%7D%20%29%20%20%5Ccdot%20%5Ctexttt%7Btvec1%7D%20%2B%20%20%5Ctexttt%7Btvec2%7D%20%5Cend%7Barray%7D%20%2C)
 /// 
 /// where ![inline formula](https://latex.codecogs.com/png.latex?%5Cmathrm%7Brodrigues%7D) denotes a rotation vector to a rotation matrix transformation, and
-/// ![inline formula](https://latex.codecogs.com/png.latex?%5Cmathrm%7Brodrigues%7D%5E%7B%2D1%7D) denotes the inverse transformation. See Rodrigues for details.
+/// ![inline formula](https://latex.codecogs.com/png.latex?%5Cmathrm%7Brodrigues%7D%5E%7B%2D1%7D) denotes the inverse transformation. See #Rodrigues for details.
 /// 
 /// Also, the functions can compute the derivatives of the output vectors with regards to the input
-/// vectors (see matMulDeriv ). The functions are used inside #stereoCalibrate but can also be used in
+/// vectors (see #matMulDeriv ). The functions are used inside #stereoCalibrate but can also be used in
 /// your own code where Levenberg-Marquardt or another gradient-based solver is used to optimize a
 /// function that contains a matrix multiplication.
 /// 
@@ -1451,12 +1451,12 @@ pub fn convert_points_to_homogeneous(src: &dyn core::ToInputArray, dst: &mut dyn
 /// * newPoints1: The optimized points1.
 /// * newPoints2: The optimized points2.
 /// 
-/// The function implements the Optimal Triangulation Method (see Multiple View Geometry for details).
+/// The function implements the Optimal Triangulation Method (see Multiple View Geometry [HartleyZ00](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_HartleyZ00) for details).
 /// For each given point correspondence points1[i] \<-\> points2[i], and a fundamental matrix F, it
 /// computes the corrected correspondences newPoints1[i] \<-\> newPoints2[i] that minimize the geometric
 /// error ![inline formula](https://latex.codecogs.com/png.latex?d%28points1%5Bi%5D%2C%20newPoints1%5Bi%5D%29%5E2%20%2B%20d%28points2%5Bi%5D%2CnewPoints2%5Bi%5D%29%5E2) (where ![inline formula](https://latex.codecogs.com/png.latex?d%28a%2Cb%29) is the
 /// geometric distance between points ![inline formula](https://latex.codecogs.com/png.latex?a) and ![inline formula](https://latex.codecogs.com/png.latex?b) ) subject to the epipolar constraint
-/// ![inline formula](https://latex.codecogs.com/png.latex?newPoints2%5ET%20%2A%20F%20%2A%20newPoints1%20%3D%200) .
+/// ![inline formula](https://latex.codecogs.com/png.latex?newPoints2%5ET%20%5Ccdot%20F%20%5Ccdot%20newPoints1%20%3D%200) .
 #[inline]
 pub fn correct_matches(f: &dyn core::ToInputArray, points1: &dyn core::ToInputArray, points2: &dyn core::ToInputArray, new_points1: &mut dyn core::ToOutputArray, new_points2: &mut dyn core::ToOutputArray) -> Result<()> {
 	input_array_arg!(f);
@@ -1513,7 +1513,7 @@ pub fn decompose_essential_mat(e: &dyn core::ToInputArray, r1: &mut dyn core::To
 /// 
 /// This function extracts relative camera motion between two views of a planar object and returns up to
 /// four mathematical solution tuples of rotation, translation, and plane normal. The decomposition of
-/// the homography matrix H is described in detail in [Malis](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Malis).
+/// the homography matrix H is described in detail in [Malis2007](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Malis2007).
 /// 
 /// If the homography H, induced by the plane, gives the constraint
 /// ![block formula](https://latex.codecogs.com/png.latex?s%5Fi%20%5Cbegin%7Bbmatrix%7D%20x%27%5Fi%5C%5C%20y%27%5Fi%5C%5C%201%20%5Cend%7Bbmatrix%7D%20%5Csim%20H%20%5Cbegin%7Bbmatrix%7D%20x%5Fi%5C%5C%20y%5Fi%5C%5C%201%20%5Cend%7Bbmatrix%7D) on the source image points
@@ -1559,7 +1559,7 @@ pub fn decompose_homography_mat(h: &dyn core::ToInputArray, k: &dyn core::ToInpu
 /// principal axes that results in the same orientation of an object, e.g. see [Slabaugh](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Slabaugh) . Returned
 /// tree rotation matrices and corresponding three Euler angles are only one of the possible solutions.
 /// 
-/// The function is based on RQDecomp3x3 .
+/// The function is based on #RQDecomp3x3 .
 /// 
 /// ## C++ default parameters
 /// * rot_matrix_x: noArray()
@@ -1941,7 +1941,7 @@ pub fn estimate_translation_3d(src: &dyn core::ToInputArray, dst: &dyn core::ToI
 /// * pointsMask: optional Mat/Vector of 8u type representing the mask for the inliers as given by the #findHomography function
 /// 
 /// This function is intended to filter the output of the #decomposeHomographyMat based on additional
-/// information as described in [Malis](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Malis) . The summary of the method: the #decomposeHomographyMat function
+/// information as described in [Malis2007](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Malis2007) . The summary of the method: the #decomposeHomographyMat function
 /// returns 2 unique solutions and their "opposites" for a total of 4 solutions. If we have access to the
 /// sets of points visible in the camera frame before and after the homography transformation is applied,
 /// we can determine which are the true potential solutions and which are the opposites by verifying which
@@ -2143,7 +2143,7 @@ pub fn find_chessboard_corners_sb_with_meta(image: &dyn core::ToInputArray, patt
 /// * flags: Various operation flags that can be zero or a combination of the following values:
 /// *   @ref CALIB_CB_ADAPTIVE_THRESH Use adaptive thresholding to convert the image to black
 /// and white, rather than a fixed threshold level (computed from the average image brightness).
-/// *   @ref CALIB_CB_NORMALIZE_IMAGE Normalize the image gamma with equalizeHist before
+/// *   @ref CALIB_CB_NORMALIZE_IMAGE Normalize the image gamma with #equalizeHist before
 /// applying fixed or adaptive thresholding.
 /// *   @ref CALIB_CB_FILTER_QUADS Use additional criteria (like contour area, perimeter,
 /// square-like shape) to filter out false quads extracted at the contour retrieval stage.
@@ -2157,7 +2157,7 @@ pub fn find_chessboard_corners_sb_with_meta(image: &dyn core::ToInputArray, patt
 /// Otherwise, if the function fails to find all the corners or reorder them, it returns 0. For example,
 /// a regular chessboard has 8 x 8 squares and 7 x 7 internal corners, that is, points where the black
 /// squares touch each other. The detected coordinates are approximate, and to determine their positions
-/// more accurately, the function calls cornerSubPix. You also may use the function cornerSubPix with
+/// more accurately, the function calls #cornerSubPix. You also may use the function #cornerSubPix with
 /// different parameters if returned coordinates are not accurate enough.
 /// 
 /// Sample usage of detecting and drawing chessboard corners: :
@@ -2414,7 +2414,7 @@ pub fn find_essential_mat_3(points1: &dyn core::ToInputArray, points2: &dyn core
 /// 
 /// where ![inline formula](https://latex.codecogs.com/png.latex?E) is an essential matrix, ![inline formula](https://latex.codecogs.com/png.latex?p%5F1) and ![inline formula](https://latex.codecogs.com/png.latex?p%5F2) are corresponding points in the first and the
 /// second images, respectively. The result of this function may be passed further to
-/// #decomposeEssentialMat or  #recoverPose to recover the relative pose between cameras.
+/// #decomposeEssentialMat or #recoverPose to recover the relative pose between cameras.
 /// 
 /// ## Overloaded parameters
 #[inline]
@@ -2463,7 +2463,7 @@ pub fn find_essential_mat_matrix(points1: &dyn core::ToInputArray, points2: &dyn
 /// 
 /// where ![inline formula](https://latex.codecogs.com/png.latex?E) is an essential matrix, ![inline formula](https://latex.codecogs.com/png.latex?p%5F1) and ![inline formula](https://latex.codecogs.com/png.latex?p%5F2) are corresponding points in the first and the
 /// second images, respectively. The result of this function may be passed further to
-/// #decomposeEssentialMat or  #recoverPose to recover the relative pose between cameras.
+/// #decomposeEssentialMat or #recoverPose to recover the relative pose between cameras.
 /// 
 /// ## C++ default parameters
 /// * method: RANSAC
@@ -2517,7 +2517,7 @@ pub fn find_essential_mat(points1: &dyn core::ToInputArray, points2: &dyn core::
 /// 
 /// where ![inline formula](https://latex.codecogs.com/png.latex?E) is an essential matrix, ![inline formula](https://latex.codecogs.com/png.latex?p%5F1) and ![inline formula](https://latex.codecogs.com/png.latex?p%5F2) are corresponding points in the first and the
 /// second images, respectively. The result of this function may be passed further to
-/// #decomposeEssentialMat or  #recoverPose to recover the relative pose between cameras.
+/// #decomposeEssentialMat or #recoverPose to recover the relative pose between cameras.
 /// 
 /// ## Overloaded parameters
 #[inline]
@@ -2565,7 +2565,7 @@ pub fn find_essential_mat_2(points1: &dyn core::ToInputArray, points2: &dyn core
 /// 
 /// where ![inline formula](https://latex.codecogs.com/png.latex?E) is an essential matrix, ![inline formula](https://latex.codecogs.com/png.latex?p%5F1) and ![inline formula](https://latex.codecogs.com/png.latex?p%5F2) are corresponding points in the first and the
 /// second images, respectively. The result of this function may be passed further to
-/// #decomposeEssentialMat or  #recoverPose to recover the relative pose between cameras.
+/// #decomposeEssentialMat or #recoverPose to recover the relative pose between cameras.
 /// 
 /// ## Overloaded parameters
 /// 
@@ -2659,7 +2659,7 @@ pub fn find_fundamental_mat_2(points1: &dyn core::ToInputArray, points2: &dyn co
 /// algorithm, the function may return up to 3 solutions ( ![inline formula](https://latex.codecogs.com/png.latex?9%20%5Ctimes%203) matrix that stores all 3
 /// matrices sequentially).
 /// 
-/// The calculated fundamental matrix may be passed further to computeCorrespondEpilines that finds the
+/// The calculated fundamental matrix may be passed further to #computeCorrespondEpilines that finds the
 /// epipolar lines corresponding to the specified points. It can also be passed to
 /// #stereoRectifyUncalibrated to compute the rectification transformation. :
 /// ```ignore
@@ -2731,7 +2731,7 @@ pub fn find_fundamental_mat_mask(points1: &dyn core::ToInputArray, points2: &dyn
 /// algorithm, the function may return up to 3 solutions ( ![inline formula](https://latex.codecogs.com/png.latex?9%20%5Ctimes%203) matrix that stores all 3
 /// matrices sequentially).
 /// 
-/// The calculated fundamental matrix may be passed further to computeCorrespondEpilines that finds the
+/// The calculated fundamental matrix may be passed further to #computeCorrespondEpilines that finds the
 /// epipolar lines corresponding to the specified points. It can also be passed to
 /// #stereoRectifyUncalibrated to compute the rectification transformation. :
 /// ```ignore
@@ -2804,7 +2804,7 @@ pub fn find_fundamental_mat_1(points1: &dyn core::ToInputArray, points2: &dyn co
 /// algorithm, the function may return up to 3 solutions ( ![inline formula](https://latex.codecogs.com/png.latex?9%20%5Ctimes%203) matrix that stores all 3
 /// matrices sequentially).
 /// 
-/// The calculated fundamental matrix may be passed further to computeCorrespondEpilines that finds the
+/// The calculated fundamental matrix may be passed further to #computeCorrespondEpilines that finds the
 /// epipolar lines corresponding to the specified points. It can also be passed to
 /// #stereoRectifyUncalibrated to compute the rectification transformation. :
 /// ```ignore
@@ -2867,7 +2867,7 @@ pub fn find_homography_1(src_points: &dyn core::ToInputArray, dst_points: &dyn c
 /// *   @ref RHO - PROSAC-based robust method
 /// * ransacReprojThreshold: Maximum allowed reprojection error to treat a point pair as an inlier
 /// (used in the RANSAC and RHO methods only). That is, if
-/// ![block formula](https://latex.codecogs.com/png.latex?%5C%7C%20%5Ctexttt%7BdstPoints%7D%20%5Fi%20%2D%20%20%5Ctexttt%7BconvertPointsHomogeneous%7D%20%28%20%5Ctexttt%7BH%7D%20%2A%20%5Ctexttt%7BsrcPoints%7D%20%5Fi%29%20%5C%7C%5F2%20%20%3E%20%20%5Ctexttt%7BransacReprojThreshold%7D)
+/// ![block formula](https://latex.codecogs.com/png.latex?%5C%7C%20%5Ctexttt%7BdstPoints%7D%20%5Fi%20%2D%20%20%5Ctexttt%7BconvertPointsHomogeneous%7D%20%28%20%5Ctexttt%7BH%7D%20%5Ccdot%20%5Ctexttt%7BsrcPoints%7D%20%5Fi%29%20%5C%7C%5F2%20%20%3E%20%20%5Ctexttt%7BransacReprojThreshold%7D)
 /// then the point ![inline formula](https://latex.codecogs.com/png.latex?i) is considered as an outlier. If srcPoints and dstPoints are measured in pixels,
 /// it usually makes sense to set this parameter somewhere in the range of 1 to 10.
 /// * mask: Optional output mask set by a robust method ( RANSAC or LMeDS ). Note that the input
@@ -2944,7 +2944,7 @@ pub fn find_homography(src_points: &dyn core::ToInputArray, dst_points: &dyn cor
 /// *   @ref RHO - PROSAC-based robust method
 /// * ransacReprojThreshold: Maximum allowed reprojection error to treat a point pair as an inlier
 /// (used in the RANSAC and RHO methods only). That is, if
-/// ![block formula](https://latex.codecogs.com/png.latex?%5C%7C%20%5Ctexttt%7BdstPoints%7D%20%5Fi%20%2D%20%20%5Ctexttt%7BconvertPointsHomogeneous%7D%20%28%20%5Ctexttt%7BH%7D%20%2A%20%5Ctexttt%7BsrcPoints%7D%20%5Fi%29%20%5C%7C%5F2%20%20%3E%20%20%5Ctexttt%7BransacReprojThreshold%7D)
+/// ![block formula](https://latex.codecogs.com/png.latex?%5C%7C%20%5Ctexttt%7BdstPoints%7D%20%5Fi%20%2D%20%20%5Ctexttt%7BconvertPointsHomogeneous%7D%20%28%20%5Ctexttt%7BH%7D%20%5Ccdot%20%5Ctexttt%7BsrcPoints%7D%20%5Fi%29%20%5C%7C%5F2%20%20%3E%20%20%5Ctexttt%7BransacReprojThreshold%7D)
 /// then the point ![inline formula](https://latex.codecogs.com/png.latex?i) is considered as an outlier. If srcPoints and dstPoints are measured in pixels,
 /// it usually makes sense to set this parameter somewhere in the range of 1 to 10.
 /// * mask: Optional output mask set by a robust method ( RANSAC or LMeDS ). Note that the input
@@ -3249,6 +3249,15 @@ pub fn fisheye_project_points_vec(object_points: &dyn core::ToInputArray, image_
 /// * imageSize: Size of the image used only to initialize camera intrinsic matrix.
 /// * R: Output rotation matrix between the 1st and the 2nd camera coordinate systems.
 /// * T: Output translation vector between the coordinate systems of the cameras.
+/// * rvecs: Output vector of rotation vectors ( @ref Rodrigues ) estimated for each pattern view in the
+/// coordinate system of the first camera of the stereo pair (e.g. std::vector<cv::Mat>). More in detail, each
+/// i-th rotation vector together with the corresponding i-th translation vector (see the next output parameter
+/// description) brings the calibration pattern from the object coordinate space (in which object points are
+/// specified) to the camera coordinate space of the first camera of the stereo pair. In more technical terms,
+/// the tuple of the i-th rotation and translation vector performs a change of basis from object coordinate space
+/// to camera coordinate space of the first camera of the stereo pair.
+/// * tvecs: Output vector of translation vectors estimated for each pattern view, see parameter description
+/// of previous output parameter ( rvecs ).
 /// * flags: Different flags that may be zero or a combination of the following values:
 /// *    @ref fisheye::CALIB_FIX_INTRINSIC  Fix K1, K2? and D1, D2? so that only R, T matrices
 /// are estimated.
@@ -3262,6 +3271,73 @@ pub fn fisheye_project_points_vec(object_points: &dyn core::ToInputArray, image_
 /// *   @ref fisheye::CALIB_FIX_K1,..., @ref fisheye::CALIB_FIX_K4 Selected distortion coefficients are set to zeros and stay
 /// zero.
 /// * criteria: Termination criteria for the iterative optimization algorithm.
+/// 
+/// ## C++ default parameters
+/// * flags: fisheye::CALIB_FIX_INTRINSIC
+/// * criteria: TermCriteria(TermCriteria::COUNT+TermCriteria::EPS,100,DBL_EPSILON)
+#[inline]
+pub fn stereo_calibrate_2(object_points: &dyn core::ToInputArray, image_points1: &dyn core::ToInputArray, image_points2: &dyn core::ToInputArray, k1: &mut dyn core::ToInputOutputArray, d1: &mut dyn core::ToInputOutputArray, k2: &mut dyn core::ToInputOutputArray, d2: &mut dyn core::ToInputOutputArray, image_size: core::Size, r: &mut dyn core::ToOutputArray, t: &mut dyn core::ToOutputArray, rvecs: &mut dyn core::ToOutputArray, tvecs: &mut dyn core::ToOutputArray, flags: i32, criteria: core::TermCriteria) -> Result<f64> {
+	input_array_arg!(object_points);
+	input_array_arg!(image_points1);
+	input_array_arg!(image_points2);
+	input_output_array_arg!(k1);
+	input_output_array_arg!(d1);
+	input_output_array_arg!(k2);
+	input_output_array_arg!(d2);
+	output_array_arg!(r);
+	output_array_arg!(t);
+	output_array_arg!(rvecs);
+	output_array_arg!(tvecs);
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_fisheye_stereoCalibrate_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__InputOutputArrayR_const__InputOutputArrayR_const__InputOutputArrayR_const__InputOutputArrayR_Size_const__OutputArrayR_const__OutputArrayR_const__OutputArrayR_const__OutputArrayR_int_TermCriteria(object_points.as_raw__InputArray(), image_points1.as_raw__InputArray(), image_points2.as_raw__InputArray(), k1.as_raw__InputOutputArray(), d1.as_raw__InputOutputArray(), k2.as_raw__InputOutputArray(), d2.as_raw__InputOutputArray(), image_size.opencv_as_extern(), r.as_raw__OutputArray(), t.as_raw__OutputArray(), rvecs.as_raw__OutputArray(), tvecs.as_raw__OutputArray(), flags, criteria.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
+}
+
+/// Performs stereo calibration
+/// 
+/// ## Parameters
+/// * objectPoints: Vector of vectors of the calibration pattern points.
+/// * imagePoints1: Vector of vectors of the projections of the calibration pattern points,
+/// observed by the first camera.
+/// * imagePoints2: Vector of vectors of the projections of the calibration pattern points,
+/// observed by the second camera.
+/// * K1: Input/output first camera intrinsic matrix:
+/// ![inline formula](https://latex.codecogs.com/png.latex?%5Cvecthreethree%7Bf%5Fx%5E%7B%28j%29%7D%7D%7B0%7D%7Bc%5Fx%5E%7B%28j%29%7D%7D%7B0%7D%7Bf%5Fy%5E%7B%28j%29%7D%7D%7Bc%5Fy%5E%7B%28j%29%7D%7D%7B0%7D%7B0%7D%7B1%7D) , ![inline formula](https://latex.codecogs.com/png.latex?j%20%3D%200%2C%5C%2C%201) . If
+/// any of @ref fisheye::CALIB_USE_INTRINSIC_GUESS , @ref fisheye::CALIB_FIX_INTRINSIC are specified,
+/// some or all of the matrix components must be initialized.
+/// * D1: Input/output vector of distortion coefficients ![inline formula](https://latex.codecogs.com/png.latex?%5Cdistcoeffsfisheye) of 4 elements.
+/// * K2: Input/output second camera intrinsic matrix. The parameter is similar to K1 .
+/// * D2: Input/output lens distortion coefficients for the second camera. The parameter is
+/// similar to D1 .
+/// * imageSize: Size of the image used only to initialize camera intrinsic matrix.
+/// * R: Output rotation matrix between the 1st and the 2nd camera coordinate systems.
+/// * T: Output translation vector between the coordinate systems of the cameras.
+/// * rvecs: Output vector of rotation vectors ( @ref Rodrigues ) estimated for each pattern view in the
+/// coordinate system of the first camera of the stereo pair (e.g. std::vector<cv::Mat>). More in detail, each
+/// i-th rotation vector together with the corresponding i-th translation vector (see the next output parameter
+/// description) brings the calibration pattern from the object coordinate space (in which object points are
+/// specified) to the camera coordinate space of the first camera of the stereo pair. In more technical terms,
+/// the tuple of the i-th rotation and translation vector performs a change of basis from object coordinate space
+/// to camera coordinate space of the first camera of the stereo pair.
+/// * tvecs: Output vector of translation vectors estimated for each pattern view, see parameter description
+/// of previous output parameter ( rvecs ).
+/// * flags: Different flags that may be zero or a combination of the following values:
+/// *    @ref fisheye::CALIB_FIX_INTRINSIC  Fix K1, K2? and D1, D2? so that only R, T matrices
+/// are estimated.
+/// *    @ref fisheye::CALIB_USE_INTRINSIC_GUESS  K1, K2 contains valid initial values of
+/// fx, fy, cx, cy that are optimized further. Otherwise, (cx, cy) is initially set to the image
+/// center (imageSize is used), and focal distances are computed in a least-squares fashion.
+/// *    @ref fisheye::CALIB_RECOMPUTE_EXTRINSIC  Extrinsic will be recomputed after each iteration
+/// of intrinsic optimization.
+/// *    @ref fisheye::CALIB_CHECK_COND  The functions will check validity of condition number.
+/// *    @ref fisheye::CALIB_FIX_SKEW  Skew coefficient (alpha) is set to zero and stay zero.
+/// *   @ref fisheye::CALIB_FIX_K1,..., @ref fisheye::CALIB_FIX_K4 Selected distortion coefficients are set to zeros and stay
+/// zero.
+/// * criteria: Termination criteria for the iterative optimization algorithm.
+/// 
+/// ## Overloaded parameters
 /// 
 /// ## C++ default parameters
 /// * flags: fisheye::CALIB_FIX_INTRINSIC
@@ -3301,7 +3377,7 @@ pub fn fisheye_stereo_calibrate(object_points: &dyn core::ToInputArray, image_po
 /// camera.
 /// * P2: Output 3x4 projection matrix in the new (rectified) coordinate systems for the second
 /// camera.
-/// * Q: Output ![inline formula](https://latex.codecogs.com/png.latex?4%20%5Ctimes%204) disparity-to-depth mapping matrix (see reprojectImageTo3D ).
+/// * Q: Output ![inline formula](https://latex.codecogs.com/png.latex?4%20%5Ctimes%204) disparity-to-depth mapping matrix (see #reprojectImageTo3D ).
 /// * flags: Operation flags that may be zero or @ref fisheye::CALIB_ZERO_DISPARITY . If the flag is set,
 /// the function makes the principal points of each camera have the same pixel coordinates in the
 /// rectified views. And if the flag is not set, the function may still shift the images in the
@@ -3518,7 +3594,7 @@ pub fn get_valid_disparity_roi(roi1: core::Rect, roi2: core::Rect, min_disparity
 /// old interface all the per-view vectors are concatenated.
 /// * imageSize: Image size in pixels used to initialize the principal point.
 /// * aspectRatio: If it is zero or negative, both ![inline formula](https://latex.codecogs.com/png.latex?f%5Fx) and ![inline formula](https://latex.codecogs.com/png.latex?f%5Fy) are estimated independently.
-/// Otherwise, ![inline formula](https://latex.codecogs.com/png.latex?f%5Fx%20%3D%20f%5Fy%20%2A%20%5Ctexttt%7BaspectRatio%7D) .
+/// Otherwise, ![inline formula](https://latex.codecogs.com/png.latex?f%5Fx%20%3D%20f%5Fy%20%5Ccdot%20%5Ctexttt%7BaspectRatio%7D) .
 /// 
 /// The function estimates and returns an initial camera intrinsic matrix for the camera calibration process.
 /// Currently, the function only supports planar calibration patterns, which are patterns where each
@@ -3634,7 +3710,7 @@ pub fn init_inverse_rectification_map(camera_matrix: &dyn core::ToInputArray, di
 /// of 4, 5, 8, 12 or 14 elements. If the vector is NULL/empty, the zero distortion coefficients are assumed.
 /// * R: Optional rectification transformation in the object space (3x3 matrix). R1 or R2 ,
 /// computed by #stereoRectify can be passed here. If the matrix is empty, the identity transformation
-/// is assumed. In cvInitUndistortMap R assumed to be an identity matrix.
+/// is assumed. In #initUndistortRectifyMap R assumed to be an identity matrix.
 /// * newCameraMatrix: New camera matrix ![inline formula](https://latex.codecogs.com/png.latex?A%27%3D%5Cbegin%7Bbmatrix%7D%20f%5Fx%27%20%26%200%20%26%20c%5Fx%27%5C%5C%200%20%26%20f%5Fy%27%20%26%20c%5Fy%27%5C%5C%200%20%26%200%20%26%201%20%5Cend%7Bbmatrix%7D).
 /// * size: Undistorted image size.
 /// * m1type: Type of the first output map that can be CV_32FC1, CV_32FC2 or CV_16SC2, see #convertMaps
@@ -3843,7 +3919,7 @@ pub fn recover_pose_2_cameras(points1: &dyn core::ToInputArray, points2: &dyn co
 }
 
 /// Recovers the relative camera rotation and the translation from an estimated essential
-/// matrix and the corresponding points in two images, using cheirality check. Returns the number of
+/// matrix and the corresponding points in two images, using chirality check. Returns the number of
 /// inliers that pass the check.
 /// 
 /// ## Parameters
@@ -3862,11 +3938,11 @@ pub fn recover_pose_2_cameras(points1: &dyn core::ToInputArray, points2: &dyn co
 /// therefore is only known up to scale, i.e. t is the direction of the translation vector and has unit
 /// length.
 /// * mask: Input/output mask for inliers in points1 and points2. If it is not empty, then it marks
-/// inliers in points1 and points2 for then given essential matrix E. Only these inliers will be used to
-/// recover pose. In the output mask only inliers which pass the cheirality check.
+/// inliers in points1 and points2 for the given essential matrix E. Only these inliers will be used to
+/// recover pose. In the output mask only inliers which pass the chirality check.
 /// 
 /// This function decomposes an essential matrix using @ref decomposeEssentialMat and then verifies
-/// possible pose hypotheses by doing cheirality check. The cheirality check means that the
+/// possible pose hypotheses by doing chirality check. The chirality check means that the
 /// triangulated 3D points should have positive depth. Some details can be found in [Nister03](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Nister03).
 /// 
 /// This function can be used to process the output E and mask from @ref findEssentialMat. In this
@@ -3913,7 +3989,7 @@ pub fn recover_pose_estimated(e: &dyn core::ToInputArray, points1: &dyn core::To
 }
 
 /// Recovers the relative camera rotation and the translation from an estimated essential
-/// matrix and the corresponding points in two images, using cheirality check. Returns the number of
+/// matrix and the corresponding points in two images, using chirality check. Returns the number of
 /// inliers that pass the check.
 /// 
 /// ## Parameters
@@ -3932,11 +4008,11 @@ pub fn recover_pose_estimated(e: &dyn core::ToInputArray, points1: &dyn core::To
 /// therefore is only known up to scale, i.e. t is the direction of the translation vector and has unit
 /// length.
 /// * mask: Input/output mask for inliers in points1 and points2. If it is not empty, then it marks
-/// inliers in points1 and points2 for then given essential matrix E. Only these inliers will be used to
-/// recover pose. In the output mask only inliers which pass the cheirality check.
+/// inliers in points1 and points2 for the given essential matrix E. Only these inliers will be used to
+/// recover pose. In the output mask only inliers which pass the chirality check.
 /// 
 /// This function decomposes an essential matrix using @ref decomposeEssentialMat and then verifies
-/// possible pose hypotheses by doing cheirality check. The cheirality check means that the
+/// possible pose hypotheses by doing chirality check. The chirality check means that the
 /// triangulated 3D points should have positive depth. Some details can be found in [Nister03](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Nister03).
 /// 
 /// This function can be used to process the output E and mask from @ref findEssentialMat. In this
@@ -3983,12 +4059,12 @@ pub fn recover_pose_estimated(e: &dyn core::ToInputArray, points1: &dyn core::To
 /// * distanceThresh: threshold distance which is used to filter out far away points (i.e. infinite
 /// points).
 /// * mask: Input/output mask for inliers in points1 and points2. If it is not empty, then it marks
-/// inliers in points1 and points2 for then given essential matrix E. Only these inliers will be used to
-/// recover pose. In the output mask only inliers which pass the cheirality check.
+/// inliers in points1 and points2 for the given essential matrix E. Only these inliers will be used to
+/// recover pose. In the output mask only inliers which pass the chirality check.
 /// * triangulatedPoints: 3D points which were reconstructed by triangulation.
 /// 
 /// This function differs from the one above that it outputs the triangulated 3D point that are used for
-/// the cheirality check.
+/// the chirality check.
 /// 
 /// ## C++ default parameters
 /// * mask: noArray()
@@ -4011,7 +4087,7 @@ pub fn recover_pose_triangulated(e: &dyn core::ToInputArray, points1: &dyn core:
 }
 
 /// Recovers the relative camera rotation and the translation from an estimated essential
-/// matrix and the corresponding points in two images, using cheirality check. Returns the number of
+/// matrix and the corresponding points in two images, using chirality check. Returns the number of
 /// inliers that pass the check.
 /// 
 /// ## Parameters
@@ -4030,11 +4106,11 @@ pub fn recover_pose_triangulated(e: &dyn core::ToInputArray, points1: &dyn core:
 /// therefore is only known up to scale, i.e. t is the direction of the translation vector and has unit
 /// length.
 /// * mask: Input/output mask for inliers in points1 and points2. If it is not empty, then it marks
-/// inliers in points1 and points2 for then given essential matrix E. Only these inliers will be used to
-/// recover pose. In the output mask only inliers which pass the cheirality check.
+/// inliers in points1 and points2 for the given essential matrix E. Only these inliers will be used to
+/// recover pose. In the output mask only inliers which pass the chirality check.
 /// 
 /// This function decomposes an essential matrix using @ref decomposeEssentialMat and then verifies
-/// possible pose hypotheses by doing cheirality check. The cheirality check means that the
+/// possible pose hypotheses by doing chirality check. The chirality check means that the
 /// triangulated 3D points should have positive depth. Some details can be found in [Nister03](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Nister03).
 /// 
 /// This function can be used to process the output E and mask from @ref findEssentialMat. In this
@@ -4079,8 +4155,8 @@ pub fn recover_pose_triangulated(e: &dyn core::ToInputArray, points1: &dyn core:
 /// are feature points from cameras with same focal length and principal point.
 /// * pp: principal point of the camera.
 /// * mask: Input/output mask for inliers in points1 and points2. If it is not empty, then it marks
-/// inliers in points1 and points2 for then given essential matrix E. Only these inliers will be used to
-/// recover pose. In the output mask only inliers which pass the cheirality check.
+/// inliers in points1 and points2 for the given essential matrix E. Only these inliers will be used to
+/// recover pose. In the output mask only inliers which pass the chirality check.
 /// 
 /// This function differs from the one above that it computes camera intrinsic matrix from focal length and
 /// principal point:
@@ -4632,6 +4708,15 @@ pub fn solve_pnp(object_points: &dyn core::ToInputArray, image_points: &dyn core
 /// * T: Output translation vector, see description above.
 /// * E: Output essential matrix.
 /// * F: Output fundamental matrix.
+/// * rvecs: Output vector of rotation vectors ( @ref Rodrigues ) estimated for each pattern view in the
+/// coordinate system of the first camera of the stereo pair (e.g. std::vector<cv::Mat>). More in detail, each
+/// i-th rotation vector together with the corresponding i-th translation vector (see the next output parameter
+/// description) brings the calibration pattern from the object coordinate space (in which object points are
+/// specified) to the camera coordinate space of the first camera of the stereo pair. In more technical terms,
+/// the tuple of the i-th rotation and translation vector performs a change of basis from object coordinate space
+/// to camera coordinate space of the first camera of the stereo pair.
+/// * tvecs: Output vector of translation vectors estimated for each pattern view, see parameter description
+/// of previous output parameter ( rvecs ).
 /// * perViewErrors: Output vector of the RMS re-projection error estimated for each pattern view.
 /// * flags: Different flags that may be zero or a combination of the following values:
 /// *   @ref CALIB_FIX_INTRINSIC Fix cameraMatrix? and distCoeffs? so that only R, T, E, and F
@@ -4715,7 +4800,154 @@ pub fn solve_pnp(object_points: &dyn core::ToInputArray, image_points: &dyn core
 /// * flags: CALIB_FIX_INTRINSIC
 /// * criteria: TermCriteria(TermCriteria::COUNT+TermCriteria::EPS,30,1e-6)
 #[inline]
-pub fn stereo_calibrate_extended(object_points: &dyn core::ToInputArray, image_points1: &dyn core::ToInputArray, image_points2: &dyn core::ToInputArray, camera_matrix1: &mut dyn core::ToInputOutputArray, dist_coeffs1: &mut dyn core::ToInputOutputArray, camera_matrix2: &mut dyn core::ToInputOutputArray, dist_coeffs2: &mut dyn core::ToInputOutputArray, image_size: core::Size, r: &mut dyn core::ToInputOutputArray, t: &mut dyn core::ToInputOutputArray, e: &mut dyn core::ToOutputArray, f: &mut dyn core::ToOutputArray, per_view_errors: &mut dyn core::ToOutputArray, flags: i32, criteria: core::TermCriteria) -> Result<f64> {
+pub fn stereo_calibrate_extended(object_points: &dyn core::ToInputArray, image_points1: &dyn core::ToInputArray, image_points2: &dyn core::ToInputArray, camera_matrix1: &mut dyn core::ToInputOutputArray, dist_coeffs1: &mut dyn core::ToInputOutputArray, camera_matrix2: &mut dyn core::ToInputOutputArray, dist_coeffs2: &mut dyn core::ToInputOutputArray, image_size: core::Size, r: &mut dyn core::ToInputOutputArray, t: &mut dyn core::ToInputOutputArray, e: &mut dyn core::ToOutputArray, f: &mut dyn core::ToOutputArray, rvecs: &mut dyn core::ToOutputArray, tvecs: &mut dyn core::ToOutputArray, per_view_errors: &mut dyn core::ToOutputArray, flags: i32, criteria: core::TermCriteria) -> Result<f64> {
+	input_array_arg!(object_points);
+	input_array_arg!(image_points1);
+	input_array_arg!(image_points2);
+	input_output_array_arg!(camera_matrix1);
+	input_output_array_arg!(dist_coeffs1);
+	input_output_array_arg!(camera_matrix2);
+	input_output_array_arg!(dist_coeffs2);
+	input_output_array_arg!(r);
+	input_output_array_arg!(t);
+	output_array_arg!(e);
+	output_array_arg!(f);
+	output_array_arg!(rvecs);
+	output_array_arg!(tvecs);
+	output_array_arg!(per_view_errors);
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_stereoCalibrate_const__InputArrayR_const__InputArrayR_const__InputArrayR_const__InputOutputArrayR_const__InputOutputArrayR_const__InputOutputArrayR_const__InputOutputArrayR_Size_const__InputOutputArrayR_const__InputOutputArrayR_const__OutputArrayR_const__OutputArrayR_const__OutputArrayR_const__OutputArrayR_const__OutputArrayR_int_TermCriteria(object_points.as_raw__InputArray(), image_points1.as_raw__InputArray(), image_points2.as_raw__InputArray(), camera_matrix1.as_raw__InputOutputArray(), dist_coeffs1.as_raw__InputOutputArray(), camera_matrix2.as_raw__InputOutputArray(), dist_coeffs2.as_raw__InputOutputArray(), image_size.opencv_as_extern(), r.as_raw__InputOutputArray(), t.as_raw__InputOutputArray(), e.as_raw__OutputArray(), f.as_raw__OutputArray(), rvecs.as_raw__OutputArray(), tvecs.as_raw__OutputArray(), per_view_errors.as_raw__OutputArray(), flags, criteria.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
+}
+
+/// Calibrates a stereo camera set up. This function finds the intrinsic parameters
+/// for each of the two cameras and the extrinsic parameters between the two cameras.
+/// 
+/// ## Parameters
+/// * objectPoints: Vector of vectors of the calibration pattern points. The same structure as
+/// in @ref calibrateCamera. For each pattern view, both cameras need to see the same object
+/// points. Therefore, objectPoints.size(), imagePoints1.size(), and imagePoints2.size() need to be
+/// equal as well as objectPoints[i].size(), imagePoints1[i].size(), and imagePoints2[i].size() need to
+/// be equal for each i.
+/// * imagePoints1: Vector of vectors of the projections of the calibration pattern points,
+/// observed by the first camera. The same structure as in @ref calibrateCamera.
+/// * imagePoints2: Vector of vectors of the projections of the calibration pattern points,
+/// observed by the second camera. The same structure as in @ref calibrateCamera.
+/// * cameraMatrix1: Input/output camera intrinsic matrix for the first camera, the same as in
+/// @ref calibrateCamera. Furthermore, for the stereo case, additional flags may be used, see below.
+/// * distCoeffs1: Input/output vector of distortion coefficients, the same as in
+/// @ref calibrateCamera.
+/// * cameraMatrix2: Input/output second camera intrinsic matrix for the second camera. See description for
+/// cameraMatrix1.
+/// * distCoeffs2: Input/output lens distortion coefficients for the second camera. See
+/// description for distCoeffs1.
+/// * imageSize: Size of the image used only to initialize the camera intrinsic matrices.
+/// * R: Output rotation matrix. Together with the translation vector T, this matrix brings
+/// points given in the first camera's coordinate system to points in the second camera's
+/// coordinate system. In more technical terms, the tuple of R and T performs a change of basis
+/// from the first camera's coordinate system to the second camera's coordinate system. Due to its
+/// duality, this tuple is equivalent to the position of the first camera with respect to the
+/// second camera coordinate system.
+/// * T: Output translation vector, see description above.
+/// * E: Output essential matrix.
+/// * F: Output fundamental matrix.
+/// * rvecs: Output vector of rotation vectors ( @ref Rodrigues ) estimated for each pattern view in the
+/// coordinate system of the first camera of the stereo pair (e.g. std::vector<cv::Mat>). More in detail, each
+/// i-th rotation vector together with the corresponding i-th translation vector (see the next output parameter
+/// description) brings the calibration pattern from the object coordinate space (in which object points are
+/// specified) to the camera coordinate space of the first camera of the stereo pair. In more technical terms,
+/// the tuple of the i-th rotation and translation vector performs a change of basis from object coordinate space
+/// to camera coordinate space of the first camera of the stereo pair.
+/// * tvecs: Output vector of translation vectors estimated for each pattern view, see parameter description
+/// of previous output parameter ( rvecs ).
+/// * perViewErrors: Output vector of the RMS re-projection error estimated for each pattern view.
+/// * flags: Different flags that may be zero or a combination of the following values:
+/// *   @ref CALIB_FIX_INTRINSIC Fix cameraMatrix? and distCoeffs? so that only R, T, E, and F
+/// matrices are estimated.
+/// *   @ref CALIB_USE_INTRINSIC_GUESS Optimize some or all of the intrinsic parameters
+/// according to the specified flags. Initial values are provided by the user.
+/// *   @ref CALIB_USE_EXTRINSIC_GUESS R and T contain valid initial values that are optimized further.
+/// Otherwise R and T are initialized to the median value of the pattern views (each dimension separately).
+/// *   @ref CALIB_FIX_PRINCIPAL_POINT Fix the principal points during the optimization.
+/// *   @ref CALIB_FIX_FOCAL_LENGTH Fix ![inline formula](https://latex.codecogs.com/png.latex?f%5E%7B%28j%29%7D%5Fx) and ![inline formula](https://latex.codecogs.com/png.latex?f%5E%7B%28j%29%7D%5Fy) .
+/// *   @ref CALIB_FIX_ASPECT_RATIO Optimize ![inline formula](https://latex.codecogs.com/png.latex?f%5E%7B%28j%29%7D%5Fy) . Fix the ratio ![inline formula](https://latex.codecogs.com/png.latex?f%5E%7B%28j%29%7D%5Fx%2Ff%5E%7B%28j%29%7D%5Fy)
+/// .
+/// *   @ref CALIB_SAME_FOCAL_LENGTH Enforce ![inline formula](https://latex.codecogs.com/png.latex?f%5E%7B%280%29%7D%5Fx%3Df%5E%7B%281%29%7D%5Fx) and ![inline formula](https://latex.codecogs.com/png.latex?f%5E%7B%280%29%7D%5Fy%3Df%5E%7B%281%29%7D%5Fy) .
+/// *   @ref CALIB_ZERO_TANGENT_DIST Set tangential distortion coefficients for each camera to
+/// zeros and fix there.
+/// *   @ref CALIB_FIX_K1,..., @ref CALIB_FIX_K6 Do not change the corresponding radial
+/// distortion coefficient during the optimization. If @ref CALIB_USE_INTRINSIC_GUESS is set,
+/// the coefficient from the supplied distCoeffs matrix is used. Otherwise, it is set to 0.
+/// *   @ref CALIB_RATIONAL_MODEL Enable coefficients k4, k5, and k6. To provide the backward
+/// compatibility, this extra flag should be explicitly specified to make the calibration
+/// function use the rational model and return 8 coefficients. If the flag is not set, the
+/// function computes and returns only 5 distortion coefficients.
+/// *   @ref CALIB_THIN_PRISM_MODEL Coefficients s1, s2, s3 and s4 are enabled. To provide the
+/// backward compatibility, this extra flag should be explicitly specified to make the
+/// calibration function use the thin prism model and return 12 coefficients. If the flag is not
+/// set, the function computes and returns only 5 distortion coefficients.
+/// *   @ref CALIB_FIX_S1_S2_S3_S4 The thin prism distortion coefficients are not changed during
+/// the optimization. If @ref CALIB_USE_INTRINSIC_GUESS is set, the coefficient from the
+/// supplied distCoeffs matrix is used. Otherwise, it is set to 0.
+/// *   @ref CALIB_TILTED_MODEL Coefficients tauX and tauY are enabled. To provide the
+/// backward compatibility, this extra flag should be explicitly specified to make the
+/// calibration function use the tilted sensor model and return 14 coefficients. If the flag is not
+/// set, the function computes and returns only 5 distortion coefficients.
+/// *   @ref CALIB_FIX_TAUX_TAUY The coefficients of the tilted sensor model are not changed during
+/// the optimization. If @ref CALIB_USE_INTRINSIC_GUESS is set, the coefficient from the
+/// supplied distCoeffs matrix is used. Otherwise, it is set to 0.
+/// * criteria: Termination criteria for the iterative optimization algorithm.
+/// 
+/// The function estimates the transformation between two cameras making a stereo pair. If one computes
+/// the poses of an object relative to the first camera and to the second camera,
+/// ( ![inline formula](https://latex.codecogs.com/png.latex?R%5F1),![inline formula](https://latex.codecogs.com/png.latex?T%5F1) ) and (![inline formula](https://latex.codecogs.com/png.latex?R%5F2),![inline formula](https://latex.codecogs.com/png.latex?T%5F2)), respectively, for a stereo camera where the
+/// relative position and orientation between the two cameras are fixed, then those poses definitely
+/// relate to each other. This means, if the relative position and orientation (![inline formula](https://latex.codecogs.com/png.latex?R),![inline formula](https://latex.codecogs.com/png.latex?T)) of the
+/// two cameras is known, it is possible to compute (![inline formula](https://latex.codecogs.com/png.latex?R%5F2),![inline formula](https://latex.codecogs.com/png.latex?T%5F2)) when (![inline formula](https://latex.codecogs.com/png.latex?R%5F1),![inline formula](https://latex.codecogs.com/png.latex?T%5F1)) is
+/// given. This is what the described function does. It computes (![inline formula](https://latex.codecogs.com/png.latex?R),![inline formula](https://latex.codecogs.com/png.latex?T)) such that:
+/// 
+/// ![block formula](https://latex.codecogs.com/png.latex?R%5F2%3DR%20R%5F1)
+/// ![block formula](https://latex.codecogs.com/png.latex?T%5F2%3DR%20T%5F1%20%2B%20T%2E)
+/// 
+/// Therefore, one can compute the coordinate representation of a 3D point for the second camera's
+/// coordinate system when given the point's coordinate representation in the first camera's coordinate
+/// system:
+/// 
+/// ![block formula](https://latex.codecogs.com/png.latex?%5Cbegin%7Bbmatrix%7D%0AX%5F2%20%5C%5C%0AY%5F2%20%5C%5C%0AZ%5F2%20%5C%5C%0A1%0A%5Cend%7Bbmatrix%7D%20%3D%20%5Cbegin%7Bbmatrix%7D%0AR%20%26%20T%20%5C%5C%0A0%20%26%201%0A%5Cend%7Bbmatrix%7D%20%5Cbegin%7Bbmatrix%7D%0AX%5F1%20%5C%5C%0AY%5F1%20%5C%5C%0AZ%5F1%20%5C%5C%0A1%0A%5Cend%7Bbmatrix%7D%2E)
+/// 
+/// 
+/// Optionally, it computes the essential matrix E:
+/// 
+/// ![block formula](https://latex.codecogs.com/png.latex?E%3D%20%5Cbegin%7Bbmatrix%7D%200%20%26%20%2DT%5F2%20%26%20T%5F1%5C%5C%20T%5F2%20%26%200%20%26%20%2DT%5F0%5C%5C%20%2DT%5F1%20%26%20T%5F0%20%26%200%20%5Cend%7Bbmatrix%7D%20R)
+/// 
+/// where ![inline formula](https://latex.codecogs.com/png.latex?T%5Fi) are components of the translation vector ![inline formula](https://latex.codecogs.com/png.latex?T) : ![inline formula](https://latex.codecogs.com/png.latex?T%3D%5BT%5F0%2C%20T%5F1%2C%20T%5F2%5D%5ET) .
+/// And the function can also compute the fundamental matrix F:
+/// 
+/// ![block formula](https://latex.codecogs.com/png.latex?F%20%3D%20cameraMatrix2%5E%7B%2DT%7D%5Ccdot%20E%20%5Ccdot%20cameraMatrix1%5E%7B%2D1%7D)
+/// 
+/// Besides the stereo-related information, the function can also perform a full calibration of each of
+/// the two cameras. However, due to the high dimensionality of the parameter space and noise in the
+/// input data, the function can diverge from the correct solution. If the intrinsic parameters can be
+/// estimated with high accuracy for each of the cameras individually (for example, using
+/// #calibrateCamera ), you are recommended to do so and then pass @ref CALIB_FIX_INTRINSIC flag to the
+/// function along with the computed intrinsic parameters. Otherwise, if all the parameters are
+/// estimated at once, it makes sense to restrict some parameters, for example, pass
+///  @ref CALIB_SAME_FOCAL_LENGTH and @ref CALIB_ZERO_TANGENT_DIST flags, which is usually a
+/// reasonable assumption.
+/// 
+/// Similarly to #calibrateCamera, the function minimizes the total re-projection error for all the
+/// points in all the available views from both cameras. The function returns the final value of the
+/// re-projection error.
+/// 
+/// ## Overloaded parameters
+/// 
+/// ## C++ default parameters
+/// * flags: CALIB_FIX_INTRINSIC
+/// * criteria: TermCriteria(TermCriteria::COUNT+TermCriteria::EPS,30,1e-6)
+#[inline]
+pub fn stereo_calibrate_1(object_points: &dyn core::ToInputArray, image_points1: &dyn core::ToInputArray, image_points2: &dyn core::ToInputArray, camera_matrix1: &mut dyn core::ToInputOutputArray, dist_coeffs1: &mut dyn core::ToInputOutputArray, camera_matrix2: &mut dyn core::ToInputOutputArray, dist_coeffs2: &mut dyn core::ToInputOutputArray, image_size: core::Size, r: &mut dyn core::ToInputOutputArray, t: &mut dyn core::ToInputOutputArray, e: &mut dyn core::ToOutputArray, f: &mut dyn core::ToOutputArray, per_view_errors: &mut dyn core::ToOutputArray, flags: i32, criteria: core::TermCriteria) -> Result<f64> {
 	input_array_arg!(object_points);
 	input_array_arg!(image_points1);
 	input_array_arg!(image_points2);
@@ -4766,6 +4998,15 @@ pub fn stereo_calibrate_extended(object_points: &dyn core::ToInputArray, image_p
 /// * T: Output translation vector, see description above.
 /// * E: Output essential matrix.
 /// * F: Output fundamental matrix.
+/// * rvecs: Output vector of rotation vectors ( @ref Rodrigues ) estimated for each pattern view in the
+/// coordinate system of the first camera of the stereo pair (e.g. std::vector<cv::Mat>). More in detail, each
+/// i-th rotation vector together with the corresponding i-th translation vector (see the next output parameter
+/// description) brings the calibration pattern from the object coordinate space (in which object points are
+/// specified) to the camera coordinate space of the first camera of the stereo pair. In more technical terms,
+/// the tuple of the i-th rotation and translation vector performs a change of basis from object coordinate space
+/// to camera coordinate space of the first camera of the stereo pair.
+/// * tvecs: Output vector of translation vectors estimated for each pattern view, see parameter description
+/// of previous output parameter ( rvecs ).
 /// * perViewErrors: Output vector of the RMS re-projection error estimated for each pattern view.
 /// * flags: Different flags that may be zero or a combination of the following values:
 /// *   @ref CALIB_FIX_INTRINSIC Fix cameraMatrix? and distCoeffs? so that only R, T, E, and F
@@ -4883,8 +5124,8 @@ pub fn stereo_calibrate(object_points: &dyn core::ToInputArray, image_points1: &
 /// * H2: Output rectification homography matrix for the second image.
 /// * threshold: Optional threshold used to filter out the outliers. If the parameter is greater
 /// than zero, all the point pairs that do not comply with the epipolar geometry (that is, the points
-/// for which ![inline formula](https://latex.codecogs.com/png.latex?%7C%5Ctexttt%7Bpoints2%5Bi%5D%7D%5ET%2A%5Ctexttt%7BF%7D%2A%5Ctexttt%7Bpoints1%5Bi%5D%7D%7C%3E%5Ctexttt%7Bthreshold%7D) ) are
-/// rejected prior to computing the homographies. Otherwise, all the points are considered inliers.
+/// for which ![inline formula](https://latex.codecogs.com/png.latex?%7C%5Ctexttt%7Bpoints2%5Bi%5D%7D%5ET%20%5Ccdot%20%5Ctexttt%7BF%7D%20%5Ccdot%20%5Ctexttt%7Bpoints1%5Bi%5D%7D%7C%3E%5Ctexttt%7Bthreshold%7D) )
+/// are rejected prior to computing the homographies. Otherwise, all the points are considered inliers.
 /// 
 /// The function computes the rectification transformations without knowing intrinsic parameters of the
 /// cameras and their relative position in the space, which explains the suffix "uncalibrated". Another
@@ -4980,7 +5221,9 @@ pub fn stereo_rectify_uncalibrated(points1: &dyn core::ToInputArray, points2: &d
 /// 
 ///    ![block formula](https://latex.codecogs.com/png.latex?%5Ctexttt%7BP1%7D%20%3D%20%5Cbegin%7Bbmatrix%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20f%20%26%200%20%26%20cx%5F1%20%26%200%20%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%20f%20%26%20cy%20%26%200%20%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%200%20%26%201%20%26%200%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5Cend%7Bbmatrix%7D)
 /// 
-///    ![block formula](https://latex.codecogs.com/png.latex?%5Ctexttt%7BP2%7D%20%3D%20%5Cbegin%7Bbmatrix%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20f%20%26%200%20%26%20cx%5F2%20%26%20T%5Fx%2Af%20%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%20f%20%26%20cy%20%26%200%20%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%200%20%26%201%20%26%200%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5Cend%7Bbmatrix%7D%20%2C)
+///    ![block formula](https://latex.codecogs.com/png.latex?%5Ctexttt%7BP2%7D%20%3D%20%5Cbegin%7Bbmatrix%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20f%20%26%200%20%26%20cx%5F2%20%26%20T%5Fx%20%5Ccdot%20f%20%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%20f%20%26%20cy%20%26%200%20%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%200%20%26%201%20%26%200%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5Cend%7Bbmatrix%7D%20%2C)
+/// 
+///    ![block formula](https://latex.codecogs.com/png.latex?%5Ctexttt%7BQ%7D%20%3D%20%5Cbegin%7Bbmatrix%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%201%20%26%200%20%26%200%20%26%20%2Dcx%5F1%20%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%201%20%26%200%20%26%20%2Dcy%20%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%200%20%26%200%20%26%20f%20%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%200%20%26%20%2D%5Cfrac%7B1%7D%7BT%5Fx%7D%20%26%20%5Cfrac%7Bcx%5F1%20%2D%20cx%5F2%7D%7BT%5Fx%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5Cend%7Bbmatrix%7D%20)
 /// 
 ///    where ![inline formula](https://latex.codecogs.com/png.latex?T%5Fx) is a horizontal shift between the cameras and ![inline formula](https://latex.codecogs.com/png.latex?cx%5F1%3Dcx%5F2) if
 ///    @ref CALIB_ZERO_DISPARITY is set.
@@ -4991,7 +5234,9 @@ pub fn stereo_rectify_uncalibrated(points1: &dyn core::ToInputArray, points2: &d
 /// 
 ///    ![block formula](https://latex.codecogs.com/png.latex?%5Ctexttt%7BP1%7D%20%3D%20%5Cbegin%7Bbmatrix%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20f%20%26%200%20%26%20cx%20%26%200%20%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%20f%20%26%20cy%5F1%20%26%200%20%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%200%20%26%201%20%26%200%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5Cend%7Bbmatrix%7D)
 /// 
-///    ![block formula](https://latex.codecogs.com/png.latex?%5Ctexttt%7BP2%7D%20%3D%20%5Cbegin%7Bbmatrix%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20f%20%26%200%20%26%20cx%20%26%200%20%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%20f%20%26%20cy%5F2%20%26%20T%5Fy%2Af%20%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%200%20%26%201%20%26%200%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5Cend%7Bbmatrix%7D%2C)
+///    ![block formula](https://latex.codecogs.com/png.latex?%5Ctexttt%7BP2%7D%20%3D%20%5Cbegin%7Bbmatrix%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20f%20%26%200%20%26%20cx%20%26%200%20%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%20f%20%26%20cy%5F2%20%26%20T%5Fy%20%5Ccdot%20f%20%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%200%20%26%201%20%26%200%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5Cend%7Bbmatrix%7D%2C)
+/// 
+///    ![block formula](https://latex.codecogs.com/png.latex?%5Ctexttt%7BQ%7D%20%3D%20%5Cbegin%7Bbmatrix%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%201%20%26%200%20%26%200%20%26%20%2Dcx%20%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%201%20%26%200%20%26%20%2Dcy%5F1%20%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%200%20%26%200%20%26%20f%20%5C%5C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20%26%200%20%26%20%2D%5Cfrac%7B1%7D%7BT%5Fy%7D%20%26%20%5Cfrac%7Bcy%5F1%20%2D%20cy%5F2%7D%7BT%5Fy%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5Cend%7Bbmatrix%7D%20)
 /// 
 ///    where ![inline formula](https://latex.codecogs.com/png.latex?T%5Fy) is a vertical shift between the cameras and ![inline formula](https://latex.codecogs.com/png.latex?cy%5F1%3Dcy%5F2) if
 ///    @ref CALIB_ZERO_DISPARITY is set.
@@ -5382,7 +5627,7 @@ pub trait LMSolver_CallbackConst {
 	/// ## Parameters
 	/// * param: the current vector of parameters
 	/// * err: output vector of errors: err_i = actual_f_i - ideal_f_i
-	/// * J: output Jacobian: J_ij = d(err_i)/d(param_j)
+	/// * J: output Jacobian: J_ij = d(ideal_f_i)/d(param_j)
 	/// 
 	/// when J=noArray(), it means that it does not need to be computed.
 	/// Dimensionality of error vector and param vector can be different.

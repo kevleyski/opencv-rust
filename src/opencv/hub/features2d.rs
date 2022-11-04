@@ -2843,6 +2843,15 @@ impl KeyPointsFilter {
 	}
 	
 	#[inline]
+	pub fn run_by_pixels_mask2_vector_point(keypoints: &mut core::Vector<core::KeyPoint>, remove_from: &mut core::Vector<core::Vector<core::Point>>, mask: &core::Mat) -> Result<()> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_KeyPointsFilter_runByPixelsMask2VectorPoint_vector_KeyPoint_R_vector_vector_Point__R_const_MatR(keypoints.as_raw_mut_VectorOfKeyPoint(), remove_from.as_raw_mut_VectorOfVectorOfPoint(), mask.as_raw_Mat(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		Ok(ret)
+	}
+	
+	#[inline]
 	pub fn remove_duplicated(keypoints: &mut core::Vector<core::KeyPoint>) -> Result<()> {
 		return_send!(via ocvrs_return);
 		unsafe { sys::cv_KeyPointsFilter_removeDuplicated_vector_KeyPoint_R(keypoints.as_raw_mut_VectorOfKeyPoint(), ocvrs_return.as_mut_ptr()) };
@@ -3456,6 +3465,16 @@ pub trait SimpleBlobDetectorTraitConst: crate::features2d::Feature2DTraitConst {
 		Ok(ret)
 	}
 	
+	#[inline]
+	fn get_blob_contours(&self) -> Result<core::Vector<core::Vector<core::Point>>> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_SimpleBlobDetector_getBlobContours_const(self.as_raw_SimpleBlobDetector(), ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { core::Vector::<core::Vector<core::Point>>::opencv_from_extern(ret) };
+		Ok(ret)
+	}
+	
 }
 
 pub trait SimpleBlobDetectorTrait: crate::features2d::Feature2DTrait + crate::features2d::SimpleBlobDetectorTraitConst {
@@ -3573,6 +3592,7 @@ pub struct SimpleBlobDetector_Params {
 	pub filter_by_convexity: bool,
 	pub min_convexity: f32,
 	pub max_convexity: f32,
+	pub collect_contours: bool,
 }
 
 opencv_type_simple! { crate::features2d::SimpleBlobDetector_Params }

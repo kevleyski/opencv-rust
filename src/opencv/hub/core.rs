@@ -170,10 +170,12 @@ pub const CPU_AVX_512VNNI: i32 = 23;
 pub const CPU_AVX_512VPOPCNTDQ: i32 = 25;
 pub const CPU_FMA3: i32 = 12;
 pub const CPU_FP16: i32 = 9;
+pub const CPU_LASX: i32 = 230;
 pub const CPU_MAX_FEATURE: i32 = 512;
 pub const CPU_MMX: i32 = 1;
 pub const CPU_MSA: i32 = 150;
 pub const CPU_NEON: i32 = 100;
+pub const CPU_NEON_DOTPROD: i32 = 101;
 pub const CPU_POPCNT: i32 = 8;
 pub const CPU_RISCVV: i32 = 170;
 pub const CPU_RVV: i32 = 210;
@@ -280,9 +282,11 @@ pub const CV_CPU_AVX_512VNNI: i32 = 23;
 pub const CV_CPU_AVX_512VPOPCNTDQ: i32 = 25;
 pub const CV_CPU_FMA3: i32 = 12;
 pub const CV_CPU_FP16: i32 = 9;
+pub const CV_CPU_LASX: i32 = 230;
 pub const CV_CPU_MMX: i32 = 1;
 pub const CV_CPU_MSA: i32 = 150;
 pub const CV_CPU_NEON: i32 = 100;
+pub const CV_CPU_NEON_DOTPROD: i32 = 101;
 pub const CV_CPU_NONE: i32 = 0;
 pub const CV_CPU_POPCNT: i32 = 8;
 pub const CV_CPU_RISCVV: i32 = 170;
@@ -340,6 +344,7 @@ pub const CV_IMPL_IPP: i32 = 0x04;
 pub const CV_IMPL_MT: i32 = 0x10;
 pub const CV_IMPL_OCL: i32 = 0x02;
 pub const CV_IMPL_PLAIN: i32 = 0x01;
+pub const CV_LASX: i32 = 0;
 pub const CV_LOG2: f64 = 0.69314718055994530941723212145818;
 pub const CV_LOG_LEVEL_DEBUG: i32 = 5;
 pub const CV_LOG_LEVEL_ERROR: i32 = 2;
@@ -373,11 +378,11 @@ pub const CV_STRONG_ALIGNMENT: i32 = 0;
 pub const CV_SUBMAT_FLAG: i32 = (1<<CV_SUBMAT_FLAG_SHIFT);
 pub const CV_SUBMAT_FLAG_SHIFT: i32 = 15;
 pub const CV_SUBMINOR_VERSION: i32 = CV_VERSION_REVISION;
-pub const CV_VERSION: &str = "4.6.0";
+pub const CV_VERSION: &str = "4.6.0-dev";
 pub const CV_VERSION_MAJOR: i32 = 4;
 pub const CV_VERSION_MINOR: i32 = 6;
 pub const CV_VERSION_REVISION: i32 = 0;
-pub const CV_VERSION_STATUS: &str = "";
+pub const CV_VERSION_STATUS: &str = "-dev";
 pub const CV_VSX: i32 = 0;
 pub const CV_VSX3: i32 = 0;
 pub const CV_WASM_SIMD: i32 = 0;
@@ -1011,11 +1016,13 @@ pub enum CpuFeatures {
 	CPU_AVX_5124VNNIW = 26,
 	CPU_AVX_5124FMAPS = 27,
 	CPU_NEON = 100,
+	CPU_NEON_DOTPROD = 101,
 	CPU_MSA = 150,
 	CPU_RISCVV = 170,
 	CPU_VSX = 200,
 	CPU_VSX3 = 201,
 	CPU_RVV = 210,
+	CPU_LASX = 230,
 	/// Skylake-X with AVX-512F/CD/BW/DQ/VL
 	CPU_AVX512_SKX = 256,
 	/// Common instructions AVX-512F/CD for all CPUs that support AVX-512
@@ -6584,6 +6591,23 @@ pub fn read_dmatch_vec_legacy(node: &core::FileNode, matches: &mut core::Vector<
 pub fn read_keypoint_vec_legacy(node: &core::FileNode, keypoints: &mut core::Vector<core::KeyPoint>) -> Result<()> {
 	return_send!(via ocvrs_return);
 	unsafe { sys::cv_read_const_FileNodeR_vector_KeyPoint_R(node.as_raw_FileNode(), keypoints.as_raw_mut_VectorOfKeyPoint(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
+}
+
+/// Finds out if there is any intersection between two rectangles
+/// 
+/// mainly useful for language bindings
+/// ## Parameters
+/// * rect1: First rectangle
+/// * rect2: Second rectangle
+/// ## Returns
+/// the area of the intersection
+#[inline]
+pub fn rectangle_intersection_area(a: core::Rect2d, b: core::Rect2d) -> Result<f64> {
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_rectangleIntersectionArea_const_Rect2dR_const_Rect2dR(&a, &b, ocvrs_return.as_mut_ptr()) };
 	return_receive!(unsafe ocvrs_return => ret);
 	let ret = ret.into_result()?;
 	Ok(ret)

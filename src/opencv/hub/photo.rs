@@ -286,6 +286,19 @@ pub fn create_tonemap(gamma: f32) -> Result<core::Ptr<dyn crate::photo::Tonemap>
 	Ok(ret)
 }
 
+/// ## C++ default parameters
+/// * search_window: 21
+/// * block_size: 7
+/// * stream: Stream::Null()
+#[inline]
+pub fn fast_nl_means_denoising_colored_1(src: &core::GpuMat, dst: &mut core::GpuMat, h_luminance: f32, photo_render: f32, search_window: i32, block_size: i32, stream: &mut core::Stream) -> Result<()> {
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_fastNlMeansDenoisingColored_const_GpuMatR_GpuMatR_float_float_int_int_StreamR(src.as_raw_GpuMat(), dst.as_raw_mut_GpuMat(), h_luminance, photo_render, search_window, block_size, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
+}
+
 /// Modification of fastNlMeansDenoising function for colored images
 /// 
 /// ## Parameters
@@ -322,6 +335,19 @@ pub fn fast_nl_means_denoising_colored_cuda(src: &dyn core::ToInputArray, dst: &
 	Ok(ret)
 }
 
+/// ## C++ default parameters
+/// * search_window: 21
+/// * block_size: 7
+/// * stream: Stream::Null()
+#[inline]
+pub fn fast_nl_means_denoising_1(src: &core::GpuMat, dst: &mut core::GpuMat, h: f32, search_window: i32, block_size: i32, stream: &mut core::Stream) -> Result<()> {
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_fastNlMeansDenoising_const_GpuMatR_GpuMatR_float_int_int_StreamR(src.as_raw_GpuMat(), dst.as_raw_mut_GpuMat(), h, search_window, block_size, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
+}
+
 /// Perform image denoising using Non-local Means Denoising algorithm
 /// <http://www.ipol.im/pub/algo/bcm_non_local_means_denoising> with several computational
 /// optimizations. Noise expected to be a gaussian white noise
@@ -353,6 +379,20 @@ pub fn fast_nl_means_denoising_cuda(src: &dyn core::ToInputArray, dst: &mut dyn 
 	output_array_arg!(dst);
 	return_send!(via ocvrs_return);
 	unsafe { sys::cv_cuda_fastNlMeansDenoising_const__InputArrayR_const__OutputArrayR_float_int_int_StreamR(src.as_raw__InputArray(), dst.as_raw__OutputArray(), h, search_window, block_size, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
+}
+
+/// ## C++ default parameters
+/// * search_window: 21
+/// * block_size: 7
+/// * border_mode: BORDER_DEFAULT
+/// * stream: Stream::Null()
+#[inline]
+pub fn non_local_means_1(src: &core::GpuMat, dst: &mut core::GpuMat, h: f32, search_window: i32, block_size: i32, border_mode: i32, stream: &mut core::Stream) -> Result<()> {
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_cuda_nonLocalMeans_const_GpuMatR_GpuMatR_float_int_int_int_StreamR(src.as_raw_GpuMat(), dst.as_raw_mut_GpuMat(), h, search_window, block_size, border_mode, stream.as_raw_mut_Stream(), ocvrs_return.as_mut_ptr()) };
 	return_receive!(unsafe ocvrs_return => ret);
 	let ret = ret.into_result()?;
 	Ok(ret)

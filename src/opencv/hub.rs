@@ -14,28 +14,6 @@ pub mod calib3d;
 pub mod ccalib;
 #[cfg(ocvrs_has_module_core)]
 pub mod core;
-#[cfg(ocvrs_has_module_cudaarithm)]
-pub mod cudaarithm;
-#[cfg(ocvrs_has_module_cudabgsegm)]
-pub mod cudabgsegm;
-#[cfg(ocvrs_has_module_cudacodec)]
-pub mod cudacodec;
-#[cfg(ocvrs_has_module_cudafeatures2d)]
-pub mod cudafeatures2d;
-#[cfg(ocvrs_has_module_cudafilters)]
-pub mod cudafilters;
-#[cfg(ocvrs_has_module_cudaimgproc)]
-pub mod cudaimgproc;
-#[cfg(ocvrs_has_module_cudaobjdetect)]
-pub mod cudaobjdetect;
-#[cfg(ocvrs_has_module_cudaoptflow)]
-pub mod cudaoptflow;
-#[cfg(ocvrs_has_module_cudastereo)]
-pub mod cudastereo;
-#[cfg(ocvrs_has_module_cudawarping)]
-pub mod cudawarping;
-#[cfg(ocvrs_has_module_cvv)]
-pub mod cvv;
 #[cfg(ocvrs_has_module_dnn)]
 pub mod dnn;
 #[cfg(ocvrs_has_module_dnn_superres)]
@@ -76,8 +54,6 @@ pub mod ml;
 pub mod objdetect;
 #[cfg(ocvrs_has_module_optflow)]
 pub mod optflow;
-#[cfg(ocvrs_has_module_ovis)]
-pub mod ovis;
 #[cfg(ocvrs_has_module_phase_unwrapping)]
 pub mod phase_unwrapping;
 #[cfg(ocvrs_has_module_photo)]
@@ -116,8 +92,6 @@ pub mod video;
 pub mod videoio;
 #[cfg(ocvrs_has_module_videostab)]
 pub mod videostab;
-#[cfg(ocvrs_has_module_viz)]
-pub mod viz;
 #[cfg(ocvrs_has_module_wechat_qrcode)]
 pub mod wechat_qrcode;
 #[cfg(ocvrs_has_module_xfeatures2d)]
@@ -148,28 +122,6 @@ pub mod hub_prelude {
 	pub use super::ccalib::prelude::*;
 	#[cfg(ocvrs_has_module_core)]
 	pub use super::core::prelude::*;
-	#[cfg(ocvrs_has_module_cudaarithm)]
-	pub use super::cudaarithm::prelude::*;
-	#[cfg(ocvrs_has_module_cudabgsegm)]
-	pub use super::cudabgsegm::prelude::*;
-	#[cfg(ocvrs_has_module_cudacodec)]
-	pub use super::cudacodec::prelude::*;
-	#[cfg(ocvrs_has_module_cudafeatures2d)]
-	pub use super::cudafeatures2d::prelude::*;
-	#[cfg(ocvrs_has_module_cudafilters)]
-	pub use super::cudafilters::prelude::*;
-	#[cfg(ocvrs_has_module_cudaimgproc)]
-	pub use super::cudaimgproc::prelude::*;
-	#[cfg(ocvrs_has_module_cudaobjdetect)]
-	pub use super::cudaobjdetect::prelude::*;
-	#[cfg(ocvrs_has_module_cudaoptflow)]
-	pub use super::cudaoptflow::prelude::*;
-	#[cfg(ocvrs_has_module_cudastereo)]
-	pub use super::cudastereo::prelude::*;
-	#[cfg(ocvrs_has_module_cudawarping)]
-	pub use super::cudawarping::prelude::*;
-	#[cfg(ocvrs_has_module_cvv)]
-	pub use super::cvv::prelude::*;
 	#[cfg(ocvrs_has_module_dnn)]
 	pub use super::dnn::prelude::*;
 	#[cfg(ocvrs_has_module_dnn_superres)]
@@ -210,8 +162,6 @@ pub mod hub_prelude {
 	pub use super::objdetect::prelude::*;
 	#[cfg(ocvrs_has_module_optflow)]
 	pub use super::optflow::prelude::*;
-	#[cfg(ocvrs_has_module_ovis)]
-	pub use super::ovis::prelude::*;
 	#[cfg(ocvrs_has_module_phase_unwrapping)]
 	pub use super::phase_unwrapping::prelude::*;
 	#[cfg(ocvrs_has_module_photo)]
@@ -250,8 +200,6 @@ pub mod hub_prelude {
 	pub use super::videoio::prelude::*;
 	#[cfg(ocvrs_has_module_videostab)]
 	pub use super::videostab::prelude::*;
-	#[cfg(ocvrs_has_module_viz)]
-	pub use super::viz::prelude::*;
 	#[cfg(ocvrs_has_module_wechat_qrcode)]
 	pub use super::wechat_qrcode::prelude::*;
 	#[cfg(ocvrs_has_module_xfeatures2d)]

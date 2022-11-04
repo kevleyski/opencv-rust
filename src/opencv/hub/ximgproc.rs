@@ -1337,6 +1337,35 @@ pub fn fast_global_smoother_filter(guide: &dyn core::ToInputArray, src: &dyn cor
 	Ok(ret)
 }
 
+/// Finds ellipses fastly in an image using projective invariant pruning.
+/// *
+/// * The function detects ellipses in images using projective invariant pruning.
+/// * For more details about this implementation, please see
+/// * [JIA2017FAST]  Jia, Qi et al, (2017).
+/// * A Fast Ellipse Detector using Projective Invariant Pruning. IEEE Transactions on Image Processing.
+/// *
+/// ## Parameters
+/// * image: input image, could be gray or color.
+/// * ellipses: output vector of found ellipses. each vector is encoded as five float $x, y, a, b, radius, score$.
+/// * scoreThreshold: float, the threshold of ellipse score.
+/// * reliabilityThreshold: float, the threshold of reliability.
+/// * centerDistanceThreshold: float, the threshold of center distance.
+/// 
+/// ## C++ default parameters
+/// * score_threshold: 0.7f
+/// * reliability_threshold: 0.5f
+/// * center_distance_threshold: 0.05f
+#[inline]
+pub fn find_ellipses(image: &dyn core::ToInputArray, ellipses: &mut dyn core::ToOutputArray, score_threshold: f32, reliability_threshold: f32, center_distance_threshold: f32) -> Result<()> {
+	input_array_arg!(image);
+	output_array_arg!(ellipses);
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_ximgproc_findEllipses_const__InputArrayR_const__OutputArrayR_float_float_float(image.as_raw__InputArray(), ellipses.as_raw__OutputArray(), score_threshold, reliability_threshold, center_distance_threshold, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
+}
+
 /// Fourier descriptors for planed closed curves
 /// 
 /// For more details about this implementation, please see [PersoonFu1977](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_PersoonFu1977)

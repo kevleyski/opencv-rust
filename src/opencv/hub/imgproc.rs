@@ -38,11 +38,16 @@
 //! --------------------------|----------------------
 //! CV_8U                     | -1/CV_16S/CV_32F/CV_64F
 //! CV_16U/CV_16S             | -1/CV_32F/CV_64F
-//! CV_32F                    | -1/CV_32F/CV_64F
+//! CV_32F                    | -1/CV_32F
 //! CV_64F                    | -1/CV_64F
 //! 
 //! 
 //! Note: when ddepth=-1, the output image will have the same depth as the source.
+//! 
+//! 
+//! Note: if you need double floating-point accuracy and using single floating-point input data
+//! (CV_32F input and CV_64F output depth combination), you can use @ref Mat.convertTo to convert
+//! the input data to the desired precision.
 //! 
 //!    # Geometric Image Transformations
 //! 
@@ -2145,7 +2150,7 @@ pub fn hough_circles(image: &dyn core::ToInputArray, circles: &mut dyn core::ToO
 /// line segment.
 /// * rho: Distance resolution of the accumulator in pixels.
 /// * theta: Angle resolution of the accumulator in radians.
-/// * threshold: Accumulator threshold parameter. Only those lines are returned that get enough
+/// * threshold: %Accumulator threshold parameter. Only those lines are returned that get enough
 /// votes ( ![inline formula](https://latex.codecogs.com/png.latex?%3E%5Ctexttt%7Bthreshold%7D) ).
 /// * minLineLength: Minimum line length. Line segments shorter than that are rejected.
 /// * maxLineGap: Maximum allowed gap between points on the same line to link them.
@@ -2175,13 +2180,14 @@ pub fn hough_lines_p(image: &dyn core::ToInputArray, lines: &mut dyn core::ToOut
 /// * lines: Output vector of found lines. Each vector is encoded as a vector<Vec3d> ![inline formula](https://latex.codecogs.com/png.latex?%28votes%2C%20rho%2C%20theta%29).
 /// The larger the value of 'votes', the higher the reliability of the Hough line.
 /// * lines_max: Max count of Hough lines.
-/// * threshold: Accumulator threshold parameter. Only those lines are returned that get enough
+/// * threshold: %Accumulator threshold parameter. Only those lines are returned that get enough
 /// votes ( ![inline formula](https://latex.codecogs.com/png.latex?%3E%5Ctexttt%7Bthreshold%7D) ).
 /// * min_rho: Minimum value for ![inline formula](https://latex.codecogs.com/png.latex?%5Crho) for the accumulator (Note: ![inline formula](https://latex.codecogs.com/png.latex?%5Crho) can be negative. The absolute value ![inline formula](https://latex.codecogs.com/png.latex?%7C%5Crho%7C) is the distance of a line to the origin.).
 /// * max_rho: Maximum value for ![inline formula](https://latex.codecogs.com/png.latex?%5Crho) for the accumulator.
 /// * rho_step: Distance resolution of the accumulator.
 /// * min_theta: Minimum angle value of the accumulator in radians.
-/// * max_theta: Maximum angle value of the accumulator in radians.
+/// * max_theta: Upper bound for the angle value of the accumulator in radians. The actual maximum
+/// angle may be slightly less than max_theta, depending on the parameters min_theta and theta_step.
 /// * theta_step: Angle resolution of the accumulator in radians.
 #[inline]
 pub fn hough_lines_point_set(point: &dyn core::ToInputArray, lines: &mut dyn core::ToOutputArray, lines_max: i32, threshold: i32, min_rho: f64, max_rho: f64, rho_step: f64, min_theta: f64, max_theta: f64, theta_step: f64) -> Result<()> {
@@ -2203,23 +2209,24 @@ pub fn hough_lines_point_set(point: &dyn core::ToInputArray, lines: &mut dyn cor
 /// ## Parameters
 /// * image: 8-bit, single-channel binary source image. The image may be modified by the function.
 /// * lines: Output vector of lines. Each line is represented by a 2 or 3 element vector
-/// ![inline formula](https://latex.codecogs.com/png.latex?%28%5Crho%2C%20%5Ctheta%29) or ![inline formula](https://latex.codecogs.com/png.latex?%28%5Crho%2C%20%5Ctheta%2C%20%5Ctextrm%7Bvotes%7D%29) . ![inline formula](https://latex.codecogs.com/png.latex?%5Crho) is the distance from the coordinate origin ![inline formula](https://latex.codecogs.com/png.latex?%280%2C0%29) (top-left corner of
-/// the image). ![inline formula](https://latex.codecogs.com/png.latex?%5Ctheta) is the line rotation angle in radians (
-/// ![inline formula](https://latex.codecogs.com/png.latex?0%20%5Csim%20%5Ctextrm%7Bvertical%20line%7D%2C%20%5Cpi%2F2%20%5Csim%20%5Ctextrm%7Bhorizontal%20line%7D) ).
+/// ![inline formula](https://latex.codecogs.com/png.latex?%28%5Crho%2C%20%5Ctheta%29) or ![inline formula](https://latex.codecogs.com/png.latex?%28%5Crho%2C%20%5Ctheta%2C%20%5Ctextrm%7Bvotes%7D%29), where ![inline formula](https://latex.codecogs.com/png.latex?%5Crho) is the distance from
+/// the coordinate origin ![inline formula](https://latex.codecogs.com/png.latex?%280%2C0%29) (top-left corner of the image), ![inline formula](https://latex.codecogs.com/png.latex?%5Ctheta) is the line rotation
+/// angle in radians ( ![inline formula](https://latex.codecogs.com/png.latex?0%20%5Csim%20%5Ctextrm%7Bvertical%20line%7D%2C%20%5Cpi%2F2%20%5Csim%20%5Ctextrm%7Bhorizontal%20line%7D) ), and
 /// ![inline formula](https://latex.codecogs.com/png.latex?%5Ctextrm%7Bvotes%7D) is the value of accumulator.
 /// * rho: Distance resolution of the accumulator in pixels.
 /// * theta: Angle resolution of the accumulator in radians.
-/// * threshold: Accumulator threshold parameter. Only those lines are returned that get enough
+/// * threshold: %Accumulator threshold parameter. Only those lines are returned that get enough
 /// votes ( ![inline formula](https://latex.codecogs.com/png.latex?%3E%5Ctexttt%7Bthreshold%7D) ).
-/// * srn: For the multi-scale Hough transform, it is a divisor for the distance resolution rho .
+/// * srn: For the multi-scale Hough transform, it is a divisor for the distance resolution rho.
 /// The coarse accumulator distance resolution is rho and the accurate accumulator resolution is
-/// rho/srn . If both srn=0 and stn=0 , the classical Hough transform is used. Otherwise, both these
+/// rho/srn. If both srn=0 and stn=0, the classical Hough transform is used. Otherwise, both these
 /// parameters should be positive.
 /// * stn: For the multi-scale Hough transform, it is a divisor for the distance resolution theta.
 /// * min_theta: For standard and multi-scale Hough transform, minimum angle to check for lines.
 /// Must fall between 0 and max_theta.
-/// * max_theta: For standard and multi-scale Hough transform, maximum angle to check for lines.
-/// Must fall between min_theta and CV_PI.
+/// * max_theta: For standard and multi-scale Hough transform, an upper bound for the angle.
+/// Must fall between min_theta and CV_PI. The actual maximum angle in the accumulator may be slightly
+/// less than max_theta, depending on the parameters min_theta and theta.
 /// 
 /// ## C++ default parameters
 /// * srn: 0
@@ -2311,7 +2318,7 @@ pub fn hu_moments(moments: core::Moments, hu: &mut [f64; 7]) -> Result<()> {
 /// ## Parameters
 /// * src: Source image.
 /// * dst: Destination image of the same size and the same number of channels as src .
-/// * ddepth: Desired depth of the destination image.
+/// * ddepth: Desired depth of the destination image, see @ref filter_depths "combinations".
 /// * ksize: Aperture size used to compute the second-derivative filters. See #getDerivKernels for
 /// details. The size must be positive and odd.
 /// * scale: Optional scale factor for the computed Laplacian values. By default, no scaling is
@@ -2993,6 +3000,13 @@ pub fn calc_back_project(images: &dyn core::ToInputArray, channels: &core::Vecto
 /// arrays, or to update the histogram in time.
 /// 
 /// ## Overloaded parameters
+/// 
+/// 
+/// this variant supports only uniform histograms.
+/// 
+/// ranges argument is either empty vector or a flattened vector of histSize.size()*2 elements
+/// (histSize.size() element pairs). The first and second elements of each pair specify the lower and
+/// upper boundaries.
 /// 
 /// ## C++ default parameters
 /// * accumulate: false
@@ -3870,7 +3884,7 @@ pub fn demosaicing(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArr
 /// * src: input image; the number of channels can be arbitrary, but the depth should be one of
 /// CV_8U, CV_16U, CV_16S, CV_32F or CV_64F.
 /// * dst: output image of the same size and type as src.
-/// * kernel: structuring element used for dilation; if elemenat=Mat(), a 3 x 3 rectangular
+/// * kernel: structuring element used for dilation; if element=Mat(), a 3 x 3 rectangular
 /// structuring element is used. Kernel can be created using #getStructuringElement
 /// * anchor: position of the anchor within the element; default value (-1, -1) means that the
 /// anchor is at the element center.
@@ -5445,7 +5459,7 @@ pub fn grab_cut(img: &dyn core::ToInputArray, mask: &mut dyn core::ToInputOutput
 /// example. In case of multi-channel images, sums for each channel are accumulated independently.
 /// 
 /// As a practical example, the next figure shows the calculation of the integral of a straight
-/// rectangle Rect(3,3,3,2) and of a tilted rectangle Rect(5,1,2,3) . The selected pixels in the
+/// rectangle Rect(4,4,3,2) and of a tilted rectangle Rect(5,1,2,3) . The selected pixels in the
 /// original image are shown, as well as the relative pixels in the integral images sum and tilted .
 /// 
 /// ![integral calculation example](https://docs.opencv.org/4.6.0/integral.png)
@@ -5496,7 +5510,7 @@ pub fn integral3(src: &dyn core::ToInputArray, sum: &mut dyn core::ToOutputArray
 /// example. In case of multi-channel images, sums for each channel are accumulated independently.
 /// 
 /// As a practical example, the next figure shows the calculation of the integral of a straight
-/// rectangle Rect(3,3,3,2) and of a tilted rectangle Rect(5,1,2,3) . The selected pixels in the
+/// rectangle Rect(4,4,3,2) and of a tilted rectangle Rect(5,1,2,3) . The selected pixels in the
 /// original image are shown, as well as the relative pixels in the integral images sum and tilted .
 /// 
 /// ![integral calculation example](https://docs.opencv.org/4.6.0/integral.png)
@@ -5548,7 +5562,7 @@ pub fn integral2(src: &dyn core::ToInputArray, sum: &mut dyn core::ToOutputArray
 /// example. In case of multi-channel images, sums for each channel are accumulated independently.
 /// 
 /// As a practical example, the next figure shows the calculation of the integral of a straight
-/// rectangle Rect(3,3,3,2) and of a tilted rectangle Rect(5,1,2,3) . The selected pixels in the
+/// rectangle Rect(4,4,3,2) and of a tilted rectangle Rect(5,1,2,3) . The selected pixels in the
 /// original image are shown, as well as the relative pixels in the integral images sum and tilted .
 /// 
 /// ![integral calculation example](https://docs.opencv.org/4.6.0/integral.png)
@@ -6593,6 +6607,32 @@ pub fn sqr_box_filter(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutput
 	output_array_arg!(dst);
 	return_send!(via ocvrs_return);
 	unsafe { sys::cv_sqrBoxFilter_const__InputArrayR_const__OutputArrayR_int_Size_Point_bool_int(src.as_raw__InputArray(), dst.as_raw__OutputArray(), ddepth, ksize.opencv_as_extern(), anchor.opencv_as_extern(), normalize, border_type, ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
+}
+
+/// Blurs an image using the stackBlur.
+/// 
+/// The function applies and stackBlur to an image.
+/// stackBlur can generate similar results as Gaussian blur, and the time consumption does not increase with the increase of kernel size.
+/// It creates a kind of moving stack of colors whilst scanning through the image. Thereby it just has to add one new block of color to the right side
+/// of the stack and remove the leftmost color. The remaining colors on the topmost layer of the stack are either added on or reduced by one,
+/// depending on if they are on the right or on the left side of the stack. The only supported borderType is BORDER_REPLICATE.
+/// Original paper was proposed by Mario Klingemann, which can be found http://underdestruction.com/2004/02/25/stackblur-2004.
+/// 
+/// ## Parameters
+/// * src: input image. The number of channels can be arbitrary, but the depth should be one of
+/// CV_8U, CV_16U, CV_16S or CV_32F.
+/// * dst: output image of the same size and type as src.
+/// * ksize: stack-blurring kernel size. The ksize.width and ksize.height can differ but they both must be
+/// positive and odd.
+#[inline]
+pub fn stack_blur(src: &dyn core::ToInputArray, dst: &mut dyn core::ToOutputArray, ksize: core::Size) -> Result<()> {
+	input_array_arg!(src);
+	output_array_arg!(dst);
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_stackBlur_const__InputArrayR_const__OutputArrayR_Size(src.as_raw__InputArray(), dst.as_raw__OutputArray(), ksize.opencv_as_extern(), ocvrs_return.as_mut_ptr()) };
 	return_receive!(unsafe ocvrs_return => ret);
 	let ret = ret.into_result()?;
 	Ok(ret)

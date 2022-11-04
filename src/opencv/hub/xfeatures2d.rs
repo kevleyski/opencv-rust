@@ -25,7 +25,7 @@
 //!    - LOGOS: Local geometric support for high-outlier spatial verification, [Lowry2018LOGOSLG](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Lowry2018LOGOSLG)
 use crate::{mod_prelude::*, core, sys, types};
 pub mod prelude {
-	pub use { super::SURFConst, super::SURF, super::FREAKTraitConst, super::FREAKTrait, super::StarDetectorTraitConst, super::StarDetectorTrait, super::BriefDescriptorExtractorTraitConst, super::BriefDescriptorExtractorTrait, super::LUCIDTraitConst, super::LUCIDTrait, super::LATCHTraitConst, super::LATCHTrait, super::BEBLIDTraitConst, super::BEBLIDTrait, super::DAISYConst, super::DAISY, super::MSDDetectorTraitConst, super::MSDDetectorTrait, super::VGGConst, super::VGG, super::BoostDescConst, super::BoostDesc, super::PCTSignaturesConst, super::PCTSignatures, super::PCTSignaturesSQFDConst, super::PCTSignaturesSQFD, super::Elliptic_KeyPointTraitConst, super::Elliptic_KeyPointTrait, super::HarrisLaplaceFeatureDetectorTraitConst, super::HarrisLaplaceFeatureDetectorTrait, super::AffineFeature2DConst, super::AffineFeature2D, super::TBMRConst, super::TBMR, super::SURF_CUDATraitConst, super::SURF_CUDATrait };
+	pub use { super::SURFConst, super::SURF, super::FREAKTraitConst, super::FREAKTrait, super::StarDetectorTraitConst, super::StarDetectorTrait, super::BriefDescriptorExtractorTraitConst, super::BriefDescriptorExtractorTrait, super::LUCIDTraitConst, super::LUCIDTrait, super::LATCHTraitConst, super::LATCHTrait, super::BEBLIDTraitConst, super::BEBLIDTrait, super::TEBLIDTraitConst, super::TEBLIDTrait, super::DAISYConst, super::DAISY, super::MSDDetectorTraitConst, super::MSDDetectorTrait, super::VGGConst, super::VGG, super::BoostDescConst, super::BoostDesc, super::PCTSignaturesConst, super::PCTSignatures, super::PCTSignaturesSQFDConst, super::PCTSignaturesSQFD, super::Elliptic_KeyPointTraitConst, super::Elliptic_KeyPointTrait, super::HarrisLaplaceFeatureDetectorTraitConst, super::HarrisLaplaceFeatureDetectorTrait, super::AffineFeature2DConst, super::AffineFeature2D, super::TBMRConst, super::TBMR, super::SURF_CUDATraitConst, super::SURF_CUDATrait };
 }
 
 pub const BoostDesc_BGM: i32 = 100;
@@ -126,6 +126,17 @@ pub enum SURF_CUDA_KeypointLayout {
 }
 
 opencv_type_enum! { crate::xfeatures2d::SURF_CUDA_KeypointLayout }
+
+/// Descriptor number of bits, each bit is a box average difference.
+/// The user can choose between 256 or 512 bits.
+#[repr(C)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum TEBLID_TeblidSize {
+	SIZE_256_BITS = 102,
+	SIZE_512_BITS = 103,
+}
+
+opencv_type_enum! { crate::xfeatures2d::TEBLID_TeblidSize }
 
 pub type SurfDescriptorExtractor = dyn crate::xfeatures2d::SURF;
 pub type SurfFeatureDetector = dyn crate::xfeatures2d::SURF;
@@ -2789,6 +2800,122 @@ impl dyn TBMR + '_ {
 	}
 	
 }
+/// Class implementing TEBLID (Triplet-based Efficient Binary Local Image Descriptor),
+///  described in [Suarez2021TEBLID](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Suarez2021TEBLID).
+/// 
+/// TEBLID stands for Triplet-based Efficient Binary Local Image Descriptor, although originally it was called BAD
+/// \cite Suarez2021TEBLID. It is an improvement over BEBLID \cite Suarez2020BEBLID, that uses triplet loss,
+/// hard negative mining, and anchor swap to improve the image matching results.
+/// It is able to describe keypoints from any detector just by changing the scale_factor parameter.
+/// TEBLID is as efficient as ORB, BEBLID or BRISK, but the triplet-based training objective selected more
+/// discriminative features that explain the accuracy gain. It is also more compact than BEBLID,
+/// when running the [AKAZE example](https://github.com/opencv/opencv/blob/4.x/samples/cpp/tutorial_code/features2D/AKAZE_match.cpp)
+/// with 10000 keypoints detected by ORB, BEBLID obtains 561 inliers (75%) with 512 bits, whereas
+/// TEBLID obtains 621 (75.2%) with 256 bits. ORB obtains only 493 inliers (63%).
+/// 
+/// If you find this code useful, please add a reference to the following paper:
+/// <BLOCKQUOTE> Iago Suárez, José M. Buenaposada, and Luis Baumela.
+/// Revisiting Binary Local Image Description for Resource Limited Devices.
+/// IEEE Robotics and Automation Letters, vol. 6, no. 4, pp. 8317-8324, Oct. 2021. </BLOCKQUOTE>
+/// 
+/// The descriptor was trained in Liberty split of the UBC datasets \cite winder2007learning .
+pub trait TEBLIDTraitConst: crate::features2d::Feature2DTraitConst {
+	fn as_raw_TEBLID(&self) -> *const c_void;
+
+}
+
+pub trait TEBLIDTrait: crate::features2d::Feature2DTrait + crate::xfeatures2d::TEBLIDTraitConst {
+	fn as_raw_mut_TEBLID(&mut self) -> *mut c_void;
+
+}
+
+/// Class implementing TEBLID (Triplet-based Efficient Binary Local Image Descriptor),
+///  described in [Suarez2021TEBLID](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Suarez2021TEBLID).
+/// 
+/// TEBLID stands for Triplet-based Efficient Binary Local Image Descriptor, although originally it was called BAD
+/// \cite Suarez2021TEBLID. It is an improvement over BEBLID \cite Suarez2020BEBLID, that uses triplet loss,
+/// hard negative mining, and anchor swap to improve the image matching results.
+/// It is able to describe keypoints from any detector just by changing the scale_factor parameter.
+/// TEBLID is as efficient as ORB, BEBLID or BRISK, but the triplet-based training objective selected more
+/// discriminative features that explain the accuracy gain. It is also more compact than BEBLID,
+/// when running the [AKAZE example](https://github.com/opencv/opencv/blob/4.x/samples/cpp/tutorial_code/features2D/AKAZE_match.cpp)
+/// with 10000 keypoints detected by ORB, BEBLID obtains 561 inliers (75%) with 512 bits, whereas
+/// TEBLID obtains 621 (75.2%) with 256 bits. ORB obtains only 493 inliers (63%).
+/// 
+/// If you find this code useful, please add a reference to the following paper:
+/// <BLOCKQUOTE> Iago Suárez, José M. Buenaposada, and Luis Baumela.
+/// Revisiting Binary Local Image Description for Resource Limited Devices.
+/// IEEE Robotics and Automation Letters, vol. 6, no. 4, pp. 8317-8324, Oct. 2021. </BLOCKQUOTE>
+/// 
+/// The descriptor was trained in Liberty split of the UBC datasets \cite winder2007learning .
+pub struct TEBLID {
+	ptr: *mut c_void
+}
+
+opencv_type_boxed! { TEBLID }
+
+impl Drop for TEBLID {
+	fn drop(&mut self) {
+		extern "C" { fn cv_TEBLID_delete(instance: *mut c_void); }
+		unsafe { cv_TEBLID_delete(self.as_raw_mut_TEBLID()) };
+	}
+}
+
+unsafe impl Send for TEBLID {}
+
+impl core::AlgorithmTraitConst for TEBLID {
+	#[inline] fn as_raw_Algorithm(&self) -> *const c_void { self.as_raw() }
+}
+
+impl core::AlgorithmTrait for TEBLID {
+	#[inline] fn as_raw_mut_Algorithm(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::features2d::Feature2DTraitConst for TEBLID {
+	#[inline] fn as_raw_Feature2D(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::features2d::Feature2DTrait for TEBLID {
+	#[inline] fn as_raw_mut_Feature2D(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl crate::xfeatures2d::TEBLIDTraitConst for TEBLID {
+	#[inline] fn as_raw_TEBLID(&self) -> *const c_void { self.as_raw() }
+}
+
+impl crate::xfeatures2d::TEBLIDTrait for TEBLID {
+	#[inline] fn as_raw_mut_TEBLID(&mut self) -> *mut c_void { self.as_raw_mut() }
+}
+
+impl TEBLID {
+	/// Creates the TEBLID descriptor.
+	/// ## Parameters
+	/// * scale_factor: Adjust the sampling window around detected keypoints:
+	/// - <b> 1.00f </b> should be the scale for ORB keypoints
+	/// - <b> 6.75f </b> should be the scale for SIFT detected keypoints
+	/// - <b> 6.25f </b> is default and fits for KAZE, SURF detected keypoints
+	/// - <b> 5.00f </b> should be the scale for AKAZE, MSD, AGAST, FAST, BRISK keypoints
+	/// * n_bits: Determine the number of bits in the descriptor. Should be either
+	///  TEBLID::SIZE_256_BITS or TEBLID::SIZE_512_BITS.
+	/// 
+	/// ## C++ default parameters
+	/// * n_bits: TEBLID::SIZE_256_BITS
+	#[inline]
+	pub fn create(scale_factor: f32, n_bits: i32) -> Result<core::Ptr<crate::xfeatures2d::TEBLID>> {
+		return_send!(via ocvrs_return);
+		unsafe { sys::cv_xfeatures2d_TEBLID_create_float_int(scale_factor, n_bits, ocvrs_return.as_mut_ptr()) };
+		return_receive!(unsafe ocvrs_return => ret);
+		let ret = ret.into_result()?;
+		let ret = unsafe { core::Ptr::<crate::xfeatures2d::TEBLID>::opencv_from_extern(ret) };
+		Ok(ret)
+	}
+	
+}
+
+boxed_cast_base! { TEBLID, core::Algorithm, cv_TEBLID_to_Algorithm }
+
+boxed_cast_base! { TEBLID, crate::features2d::Feature2D, cv_TEBLID_to_Feature2D }
+
 /// Class implementing VGG (Oxford Visual Geometry Group) descriptor trained end to end
 /// using "Descriptor Learning Using Convex Optimisation" (DLCO) aparatus described in [Simonyan14](https://docs.opencv.org/4.6.0/d0/de3/citelist.html#CITEREF_Simonyan14).
 /// 
