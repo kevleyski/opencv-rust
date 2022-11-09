@@ -806,22 +806,22 @@ pub fn interpolate_corners_charuco(marker_corners: &dyn core::ToInputArray, mark
 /// * check_all_orders: true
 /// * recovered_idxs: noArray()
 /// * parameters: DetectorParameters::create()
-// #[deprecated = "Use class ArucoDetector"]
-// #[inline]
-// pub fn refine_detected_markers(image: &dyn core::ToInputArray, board: &core::Ptr<crate::aruco::Board>, detected_corners: &mut dyn core::ToInputOutputArray, detected_ids: &mut dyn core::ToInputOutputArray, rejected_corners: &mut dyn core::ToInputOutputArray, camera_matrix: &dyn core::ToInputArray, dist_coeffs: &dyn core::ToInputArray, min_rep_distance: f32, error_correction_rate: f32, check_all_orders: bool, recovered_idxs: &mut dyn core::ToOutputArray, parameters: &core::Ptr<crate::aruco_detector::DetectorParameters>) -> Result<()> {
-// 	input_array_arg!(image);
-// 	input_output_array_arg!(detected_corners);
-// 	input_output_array_arg!(detected_ids);
-// 	input_output_array_arg!(rejected_corners);
-// 	input_array_arg!(camera_matrix);
-// 	input_array_arg!(dist_coeffs);
-// 	output_array_arg!(recovered_idxs);
-// 	return_send!(via ocvrs_return);
-// 	unsafe { sys::cv_aruco_refineDetectedMarkers_const__InputArrayR_const_Ptr_Board_R_const__InputOutputArrayR_const__InputOutputArrayR_const__InputOutputArrayR_const__InputArrayR_const__InputArrayR_float_float_bool_const__OutputArrayR_const_Ptr_DetectorParameters_R(image.as_raw__InputArray(), board.as_raw_PtrOfBoard(), detected_corners.as_raw__InputOutputArray(), detected_ids.as_raw__InputOutputArray(), rejected_corners.as_raw__InputOutputArray(), camera_matrix.as_raw__InputArray(), dist_coeffs.as_raw__InputArray(), min_rep_distance, error_correction_rate, check_all_orders, recovered_idxs.as_raw__OutputArray(), parameters.as_raw_PtrOfDetectorParameters(), ocvrs_return.as_mut_ptr()) };
-// 	return_receive!(unsafe ocvrs_return => ret);
-// 	let ret = ret.into_result()?;
-// 	Ok(ret)
-// }
+#[deprecated = "Use class ArucoDetector"]
+#[inline]
+pub fn refine_detected_markers(image: &dyn core::ToInputArray, board: &core::Ptr<crate::aruco::Board>, detected_corners: &mut dyn core::ToInputOutputArray, detected_ids: &mut dyn core::ToInputOutputArray, rejected_corners: &mut dyn core::ToInputOutputArray, camera_matrix: &dyn core::ToInputArray, dist_coeffs: &dyn core::ToInputArray, min_rep_distance: f32, error_correction_rate: f32, check_all_orders: bool, recovered_idxs: &mut dyn core::ToOutputArray, parameters: &core::Ptr<crate::aruco_detector::DetectorParameters>) -> Result<()> {
+	input_array_arg!(image);
+	input_output_array_arg!(detected_corners);
+	input_output_array_arg!(detected_ids);
+	input_output_array_arg!(rejected_corners);
+	input_array_arg!(camera_matrix);
+	input_array_arg!(dist_coeffs);
+	output_array_arg!(recovered_idxs);
+	return_send!(via ocvrs_return);
+	unsafe { sys::cv_aruco_refineDetectedMarkers_const__InputArrayR_const_Ptr_Board_R_const__InputOutputArrayR_const__InputOutputArrayR_const__InputOutputArrayR_const__InputArrayR_const__InputArrayR_float_float_bool_const__OutputArrayR_const_Ptr_DetectorParameters_R(image.as_raw__InputArray(), board.as_raw_PtrOfBoard(), detected_corners.as_raw__InputOutputArray(), detected_ids.as_raw__InputOutputArray(), rejected_corners.as_raw__InputOutputArray(), camera_matrix.as_raw__InputArray(), dist_coeffs.as_raw__InputArray(), min_rep_distance, error_correction_rate, check_all_orders, recovered_idxs.as_raw__OutputArray(), parameters.as_raw_PtrOfDetectorParameters(), ocvrs_return.as_mut_ptr()) };
+	return_receive!(unsafe ocvrs_return => ret);
+	let ret = ret.into_result()?;
+	Ok(ret)
+}
 
 /// test whether the ChArUco markers are collinear
 /// 
