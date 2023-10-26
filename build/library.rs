@@ -7,42 +7,49 @@ use std::{env, fmt, iter};
 use dunce::canonicalize;
 use semver::Version;
 
-use super::{cleanup_lib_filename, cmake_probe::CmakeProbe, get_version_from_headers, Result, MANIFEST_DIR, OUT_DIR};
+use super::cmake_probe::CmakeProbe;
+use super::{
+	cleanup_lib_filename, get_version_from_headers, Result, MANIFEST_DIR, OUT_DIR, TARGET_OS_WINDOWS, TARGET_VENDOR_APPLE,
+};
 
 struct PackageName;
 
 impl PackageName {
-	pub fn env() -> Option<Cow<'static, str>> {
-		env::var("OPENCV_PACKAGE_NAME").ok().map(|x| x.into())
+	pub fn env() -> Option<String> {
+		env::var("OPENCV_PACKAGE_NAME").ok()
 	}
 
-	pub fn env_pkg_config() -> Option<Cow<'static, str>> {
-		env::var("OPENCV_PKGCONFIG_NAME").ok().map(|x| x.into())
+	pub fn env_pkg_config() -> Option<String> {
+		env::var("OPENCV_PKGCONFIG_NAME").ok()
 	}
 
-	pub fn env_cmake() -> Option<Cow<'static, str>> {
-		env::var("OPENCV_CMAKE_NAME").ok().map(|x| x.into())
+	pub fn env_cmake() -> Option<String> {
+		env::var("OPENCV_CMAKE_NAME").ok()
 	}
 
-	pub fn env_vcpkg() -> Option<Cow<'static, str>> {
-		env::var("OPENCV_VCPKG_NAME").ok().map(|x| x.into())
+	pub fn env_vcpkg() -> Option<String> {
+		env::var("OPENCV_VCPKG_NAME").ok()
 	}
 
 	pub fn pkg_config() -> Vec<Cow<'static, str>> {
 		if let Some(env_name) = Self::env().or_else(Self::env_pkg_config) {
-			vec![env_name]
+			vec![env_name.into()]
 		} else {
 			vec!["opencv4".into(), "opencv".into()]
 		}
 	}
 
 	pub fn cmake() -> Cow<'static, str> {
-		Self::env().or_else(Self::env_cmake).unwrap_or_else(|| "OpenCV".into())
+		if let Some(env_name) = Self::env().or_else(Self::env_cmake) {
+			env_name.into()
+		} else {
+			"OpenCV".into()
+		}
 	}
 
 	pub fn vcpkg() -> Vec<Cow<'static, str>> {
 		if let Some(env_name) = Self::env().or_else(Self::env_vcpkg) {
-			vec![env_name]
+			vec![env_name.into()]
 		} else {
 			vec!["opencv4".into(), "opencv3".into()]
 		}
@@ -89,26 +96,25 @@ pub struct Library {
 }
 
 impl Library {
-	fn process_library_list(libs: impl IntoIterator<Item = impl Into<PathBuf>>) -> impl Iterator<Item = String> {
+	fn process_library_list(libs: impl IntoIterator<Item = impl AsRef<Path>>) -> impl Iterator<Item = String> {
 		libs.into_iter().filter_map(|x| {
-			let mut path: PathBuf = x.into();
+			let path: &Path = x.as_ref();
 			let is_framework = path
 				.extension()
 				.and_then(OsStr::to_str)
 				.map_or(false, |e| e.eq_ignore_ascii_case("framework"));
-			if let Some(filename) = path.file_name().and_then(cleanup_lib_filename) {
-				let filename = filename.to_owned();
-				path.set_file_name(filename);
-			}
-			path.file_name().and_then(|f| {
-				f.to_str().map(|f| {
+			if let Some(filename) = path.file_name() {
+				let filename = cleanup_lib_filename(filename).unwrap_or(filename);
+				filename.to_str().map(|f| {
 					if is_framework {
-						format!("framework={}", f)
+						format!("framework={f}")
 					} else {
 						f.to_owned()
 					}
 				})
-			})
+			} else {
+				None
+			}
 		})
 	}
 
@@ -120,7 +126,7 @@ impl Library {
 	fn emit_link_search(path: &Path, typ: Option<&str>) -> String {
 		format!(
 			"cargo:rustc-link-search={}{}",
-			typ.map_or_else(|| "".to_string(), |t| format!("{}=", t)),
+			typ.map_or_else(|| "".to_string(), |t| format!("{t}=")),
 			path.to_str().expect("Can't convert link search path to UTF-8 string")
 		)
 	}
@@ -129,20 +135,20 @@ impl Library {
 	fn emit_link_lib(lib: &str, typ: Option<&str>) -> String {
 		format!(
 			"cargo:rustc-link-lib={}{}",
-			typ.map_or_else(|| "".to_string(), |t| format!("{}=", t)),
+			typ.map_or_else(|| "".to_string(), |t| format!("{t}=")),
 			lib
 		)
 	}
 
 	fn process_env_var_list<'a, T: From<&'a str>>(env_list: Option<EnvList<'a>>, sys_list: Vec<T>) -> Vec<T> {
-		if let Some(include_paths) = env_list {
-			let mut includes = if include_paths.is_extend() {
+		if let Some(env_list) = env_list {
+			let mut paths = if env_list.is_extend() {
 				sys_list
 			} else {
 				vec![]
 			};
-			includes.extend(include_paths.iter().filter(|v| !v.is_empty()).map(T::from));
-			includes
+			paths.extend(env_list.iter().filter(|v| !v.is_empty()).map(T::from));
+			paths
 		} else {
 			sys_list
 		}
@@ -156,15 +162,8 @@ impl Library {
 		Self::process_env_var_list(link_paths, sys_link_paths)
 			.into_iter()
 			.flat_map(move |path| {
-				let out = iter::once(Self::emit_link_search(&path, typ));
-				#[cfg(target_vendor = "apple")]
-				{
-					out.chain(iter::once(Self::emit_link_search(&path, Some("framework"))))
-				}
-				#[cfg(not(target_vendor = "apple"))]
-				{
-					out
-				}
+				iter::once(Self::emit_link_search(&path, typ))
+					.chain(TARGET_VENDOR_APPLE.then(|| Self::emit_link_search(&path, Some("framework"))))
 			})
 	}
 
@@ -173,8 +172,7 @@ impl Library {
 		sys_link_libs: Vec<String>,
 		typ: Option<&'a str>,
 	) -> impl Iterator<Item = String> + 'a {
-		Self::process_library_list(Self::process_env_var_list(link_libs, sys_link_libs).into_iter())
-			.map(move |l| Self::emit_link_lib(&l, typ))
+		Self::process_library_list(Self::process_env_var_list(link_libs, sys_link_libs)).map(move |l| Self::emit_link_lib(&l, typ))
 	}
 
 	fn find_vcpkg_tool(vcpkg_root: &Path, tool_name: &str) -> Option<PathBuf> {
@@ -199,7 +197,7 @@ impl Library {
 			.filter(|p| p.is_dir())
 			.flat_map(|p| p.read_dir().into_iter().flatten().flatten()) // all subdirs inside those dirs
 			.map(|e| e.path())
-			.flat_map(|p| [p.join(format!("bin/{}", tool_name)), p.join(format!("bin/{}.exe", tool_name))])
+			.flat_map(|p| [p.join(format!("bin/{tool_name}")), p.join(format!("bin/{tool_name}.exe"))])
 			.filter_map(|p| canonicalize(p).ok())
 			.find(|p| p.is_file())
 	}
@@ -214,9 +212,9 @@ impl Library {
 				return Err("Some environment variables extend the system default paths (i.e. start with '+')".into());
 			}
 			eprintln!("=== Configuring OpenCV library from the environment:");
-			eprintln!("===   include_paths: {}", include_paths);
-			eprintln!("===   link_paths: {}", link_paths);
-			eprintln!("===   link_libs: {}", link_libs);
+			eprintln!("===   include_paths: {include_paths}");
+			eprintln!("===   link_paths: {link_paths}");
+			eprintln!("===   link_libs: {link_libs}");
 			let mut cargo_metadata = Vec::with_capacity(64);
 			let include_paths: Vec<_> = include_paths.iter().map(PathBuf::from).collect();
 
@@ -289,9 +287,7 @@ impl Library {
 	) -> Result<Self> {
 		eprintln!(
 			"=== Probing OpenCV library using cmake{}",
-			toolchain
-				.map(|tc| format!(" with toolchain: {}", tc.display()))
-				.unwrap_or_else(|| "".to_string())
+			toolchain.map_or_else(|| "".to_string(), |tc| format!(" with toolchain: {}", tc.display()))
 		);
 
 		let src_dir = MANIFEST_DIR.join("cmake");
@@ -309,17 +305,11 @@ impl Library {
 		let mut probe_result = cmake
 			.probe_ninja(ninja_bin)
 			.or_else(|e| {
-				eprintln!(
-					"=== Probing with cmake ninja generator failed, will try Makefile generator, error: {}",
-					e
-				);
+				eprintln!("=== Probing with cmake ninja generator failed, will try Makefile generator, error: {e}");
 				cmake.probe_makefile()
 			})
 			.or_else(|e| {
-				eprintln!(
-					"=== Probing with cmake Makefile generator failed, will try deprecated find_package, error: {}",
-					e
-				);
+				eprintln!("=== Probing with cmake Makefile generator failed, will try deprecated find_package, error: {e}");
 				cmake.probe_find_package()
 			})?;
 
@@ -425,10 +415,9 @@ impl Library {
 			|| env::var_os("OPENCV_CMAKE_NAME").is_some()
 			|| env::var_os("CMAKE_PREFIX_PATH").is_some()
 			|| env::var_os("OPENCV_CMAKE_BIN").is_some();
-		let explicit_vcpkg = env::var_os("VCPKG_ROOT").is_some() || cfg!(target_os = "windows");
+		let explicit_vcpkg = env::var_os("VCPKG_ROOT").is_some() || *TARGET_OS_WINDOWS;
 		eprintln!(
-			"=== Detected probe priority based on environment vars: pkg_config: {}, cmake: {}, vcpkg: {}",
-			explicit_pkg_config, explicit_cmake, explicit_vcpkg
+			"=== Detected probe priority based on environment vars: pkg_config: {explicit_pkg_config}, cmake: {explicit_cmake}, vcpkg: {explicit_vcpkg}"
 		);
 
 		let disabled_probes = env::var("OPENCV_DISABLE_PROBES");
@@ -480,7 +469,7 @@ impl Library {
 		}
 
 		let probe_list = probes.iter().map(|(name, _)| *name).collect::<Vec<_>>().join(", ");
-		eprintln!("=== Probing the OpenCV library in the following order: {}", probe_list);
+		eprintln!("=== Probing the OpenCV library in the following order: {probe_list}");
 
 		let mut out = None;
 		for &(name, probe) in &probes {
@@ -488,17 +477,15 @@ impl Library {
 				match probe() {
 					Ok(lib) => {
 						out = Some(lib);
+						eprintln!("=== Successfully probed using: {name}");
 						break;
 					}
 					Err(e) => {
-						eprintln!(
-							"=== Can't probe using: {}, continuing with other methods because: {}",
-							name, e
-						);
+						eprintln!("=== Can't probe using: {name}, continuing with other methods because: {e}");
 					}
 				}
 			} else {
-				eprintln!("=== Skipping probe: {} because of the environment configuration", name);
+				eprintln!("=== Skipping probe: {name} because it's disabled using OPENCV_DISABLE_PROBES");
 			}
 		}
 		out.ok_or_else(|| {
@@ -508,7 +495,7 @@ impl Library {
 				.filter(|&name| !disabled_probes.contains(name))
 				.collect::<Vec<_>>()
 				.join(", ");
-			format!("Failed to find OpenCV package using probes: {}", methods).into()
+			format!("Failed to find installed OpenCV package using probes: {methods}, refer to https://github.com/twistedfall/opencv-rust#getting-opencv for help").into()
 		})
 	}
 
@@ -524,7 +511,7 @@ impl Library {
 
 	pub fn emit_cargo_metadata(&self) {
 		self.cargo_metadata.iter().for_each(|meta| {
-			println!("{}", meta);
+			println!("{meta}");
 		});
 	}
 }
