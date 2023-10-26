@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -vex
+set -xeu
 
-choco install -y llvm --version 15.0.1
+choco install -y llvm --version "$CHOCO_LLVM_VERSION"
 choco install -y opencv --version "$OPENCV_VERSION"

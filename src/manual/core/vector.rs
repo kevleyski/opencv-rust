@@ -1,13 +1,17 @@
-use std::{borrow::Borrow, ffi::c_void, fmt, iter::FromIterator, marker::PhantomData, mem::ManuallyDrop, slice};
+use std::borrow::Borrow;
+use std::ffi::c_void;
+use std::iter::FromIterator;
+use std::marker::PhantomData;
+use std::mem::ManuallyDrop;
+use std::{fmt, slice};
 
 pub use iter::{VectorIterator, VectorRefIterator};
 pub use vector_extern::{VectorElement, VectorExtern, VectorExternCopyNonBool};
 
-use crate::{
-	platform_types::size_t,
-	traits::{Boxed, OpenCVType, OpenCVTypeArg, OpenCVTypeExternContainer},
-	Result,
-};
+use crate::platform_types::size_t;
+use crate::traits::OpenCVTypeExternContainerMove;
+use crate::traits::{Boxed, OpenCVType, OpenCVTypeArg, OpenCVTypeExternContainer};
+use crate::Result;
 
 mod iter;
 mod vector_extern;
@@ -282,7 +286,7 @@ where
 {
 	#[inline]
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		f.debug_list().entries(self.iter()).finish()
+		f.debug_list().entries(self).finish()
 	}
 }
 
@@ -344,12 +348,6 @@ where
 {
 	type Arg = Self;
 	type ExternReceive = *mut c_void;
-	type ExternContainer = Self;
-
-	#[inline]
-	fn opencv_into_extern_container_nofail(self) -> Self::ExternContainer {
-		self
-	}
 
 	#[inline]
 	unsafe fn opencv_from_extern(s: Self::ExternReceive) -> Self {
@@ -385,7 +383,12 @@ where
 	fn opencv_as_extern_mut(&mut self) -> Self::ExternSendMut {
 		self.as_raw_mut()
 	}
+}
 
+impl<T: VectorElement> OpenCVTypeExternContainerMove for Vector<T>
+where
+	Self: VectorExtern<T>,
+{
 	#[inline]
 	fn opencv_into_extern(self) -> Self::ExternSendMut {
 		self.into_raw()
@@ -397,7 +400,7 @@ fn vector_index_check(index: size_t, len: size_t) -> Result<()> {
 	if index >= len {
 		Err(crate::Error::new(
 			crate::core::StsOutOfRange,
-			format!("Index: {} out of bounds: 0..{}", index, len),
+			format!("Index: {index} out of bounds: 0..{len}"),
 		))
 	} else {
 		Ok(())

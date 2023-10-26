@@ -1,25 +1,18 @@
-use std::{
-	env,
-	error::Error,
-	sync::{
-		atomic::{AtomicBool, Ordering},
-		Arc, Mutex,
-	},
-};
+use std::env;
+use std::error::Error;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 
-use opencv::{
-	calib3d,
-	core::{self, Point, Scalar, Size},
-	highgui, imgcodecs, imgproc,
-	prelude::*,
-	types::VectorOfPoint,
-};
+use opencv::core::{Point, Size};
+use opencv::prelude::*;
+use opencv::types::VectorOfPoint;
+use opencv::{calib3d, core, highgui, imgcodecs, imgproc};
 
 opencv::opencv_branch_4! {
-	use self::imgproc::LINE_8;
+	use opencv::imgproc::LINE_8;
 }
 opencv::not_opencv_branch_4! {
-	use self::core::LINE_8;
+	use opencv::core::LINE_8;
 }
 
 fn help() {
@@ -53,11 +46,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 	let validation_needed = Arc::new(AtomicBool::new(true));
 
 	help();
-	let filename = env::args().skip(1).next().unwrap_or("data/right.jpg".into());
-	opencv::not_opencv_branch_32! {
-		let filename = core::find_file(&filename, true, false)?;
-	}
-	let original_image = imgcodecs::imread(&filename, imgcodecs::IMREAD_COLOR)?;
+	let filename = env::args().nth(1).unwrap_or_else(|| "data/right.jpg".to_string());
+	let filename = core::find_file_def(&filename)?;
+	let original_image = imgcodecs::imread_def(&filename)?;
 	let mut image;
 	let original_image_cols = original_image.cols() as f32;
 	let original_image_rows = original_image.rows() as f32;
@@ -81,7 +72,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 		));
 	}
 	highgui::named_window(WINDOW_TITLE, highgui::WINDOW_NORMAL)?;
-	highgui::named_window("Warped Image", highgui::WINDOW_AUTOSIZE)?;
+	highgui::named_window_def("Warped Image")?;
 	highgui::move_window("Warped Image", 20, 20)?;
 	highgui::move_window(WINDOW_TITLE, 330, 20)?;
 	highgui::set_mouse_callback(
@@ -96,11 +87,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 					let mut roi_corners = roi_corners.lock().unwrap();
 					// Action when left button is pressed
 					if roi_corners.len() == 4 {
-						for i in 0..4 {
-							if event == highgui::EVENT_LBUTTONDOWN
-								&& (roi_corners.get(i).unwrap().x - x).abs() < 10
-								&& (roi_corners.get(i).unwrap().y - y).abs() < 10
-							{
+						for (i, roi_corner) in roi_corners.iter().enumerate() {
+							if event == highgui::EVENT_LBUTTONDOWN && (roi_corner.x - x).abs() < 10 && (roi_corner.y - y).abs() < 10 {
 								selected_corner_index = i;
 								dragging = true;
 							}
@@ -130,42 +118,26 @@ fn main() -> Result<(), Box<dyn Error>> {
 			image = original_image.clone();
 			{
 				let roi_corners = roi_corners.lock().unwrap();
-				for i in 0..roi_corners_len {
-					imgproc::circle(
-						&mut image,
-						roi_corners.get(i)?,
-						5,
-						Scalar::new(0., 255., 0., 0.),
-						3,
-						LINE_8,
-						0,
-					)?;
+				for (i, roi_corner) in roi_corners.iter().enumerate() {
+					imgproc::circle(&mut image, roi_corner, 5, (0, 255, 0).into(), 3, LINE_8, 0)?;
 					if i > 0 {
 						imgproc::line(
 							&mut image,
 							roi_corners.get(i - 1)?,
-							roi_corners.get(i)?,
-							Scalar::new(0., 0., 255., 0.),
+							roi_corner,
+							(0, 0, 255).into(),
 							2,
 							LINE_8,
 							0,
 						)?;
-						imgproc::circle(
-							&mut image,
-							roi_corners.get(i)?,
-							5,
-							Scalar::new(0., 255., 0., 0.),
-							3,
-							LINE_8,
-							0,
-						)?;
+						imgproc::circle(&mut image, roi_corner, 5, (0, 255, 0).into(), 3, LINE_8, 0)?;
 						imgproc::put_text(
 							&mut image,
 							LABELS[i],
-							roi_corners.get(i)?,
+							roi_corner,
 							highgui::QT_FONT_NORMAL,
 							0.8,
-							Scalar::new(255., 0., 0., 0.),
+							(255, 0, 0).into(),
 							2,
 							LINE_8,
 							false,
@@ -179,32 +151,24 @@ fn main() -> Result<(), Box<dyn Error>> {
 			image = original_image.clone();
 			{
 				let roi_corners = roi_corners.lock().unwrap();
-				for i in 0..4 {
+				for (i, roi_corner) in roi_corners.iter().enumerate() {
 					imgproc::line(
 						&mut image,
-						roi_corners.get(i)?,
+						roi_corner,
 						roi_corners.get((i + 1) % 4)?,
-						Scalar::new(0., 0., 255., 0.),
+						(0, 0, 255).into(),
 						2,
 						LINE_8,
 						0,
 					)?;
-					imgproc::circle(
-						&mut image,
-						roi_corners.get(i)?,
-						5,
-						Scalar::new(0., 255., 0., 0.),
-						3,
-						LINE_8,
-						0,
-					)?;
+					imgproc::circle(&mut image, roi_corner, 5, (0, 255, 0).into(), 3, LINE_8, 0)?;
 					imgproc::put_text(
 						&mut image,
 						LABELS[i],
-						roi_corners.get(i)?,
+						roi_corner,
 						highgui::QT_FONT_NORMAL,
 						0.8,
-						Scalar::new(255., 0., 0., 0.),
+						(255, 0, 0).into(),
 						2,
 						LINE_8,
 						false,
@@ -244,17 +208,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 				let warped_image_size = Size::new(dst_corners.get(2)?.x, dst_corners.get(2)?.y);
 				let roi_corners_mat = Mat::from_exact_iter(roi_corners.iter())?;
 				let dst_corners_mat = Mat::from_exact_iter(dst_corners.iter())?;
-				let h = calib3d::find_homography(&roi_corners_mat, &dst_corners_mat, &mut Mat::default(), 0, 3.)?; //get homography
+				let h = calib3d::find_homography_def(&roi_corners_mat, &dst_corners_mat, &mut Mat::default())?; //get homography
 				let mut warped_image = Mat::default();
-				imgproc::warp_perspective(
-					&original_image,
-					&mut warped_image,
-					&h,
-					warped_image_size,
-					imgproc::INTER_LINEAR,
-					core::BORDER_CONSTANT,
-					Scalar::default(),
-				)?; // do perspective transformation
+				imgproc::warp_perspective_def(&original_image, &mut warped_image, &h, warped_image_size)?; // do perspective transformation
 				highgui::imshow("Warped Image", &warped_image)?;
 			}
 		}

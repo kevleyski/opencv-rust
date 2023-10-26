@@ -1,14 +1,15 @@
-use std::{convert::TryInto, ffi::c_void, fmt, marker::PhantomData, ops::Deref, slice};
+use std::convert::TryInto;
+use std::ffi::c_void;
+use std::marker::PhantomData;
+use std::ops::Deref;
+use std::{fmt, slice};
 
 pub use mat_::*;
 
-use crate::{
-	core::{self, MatConstIterator, MatExpr, MatSize, MatStep, Point, Scalar, UMat},
-	input_output_array,
-	platform_types::size_t,
-	prelude::*,
-	sys, Error, Result,
-};
+use crate::core::{MatConstIterator, MatExpr, MatSize, MatStep, Point, Scalar, UMat};
+use crate::platform_types::size_t;
+use crate::prelude::*;
+use crate::{core, input_output_array, Error, Result};
 
 mod mat_;
 
@@ -24,7 +25,7 @@ unsafe fn convert_ptr_mut<'r, T>(r: *mut u8) -> &'r mut T {
 
 #[inline]
 fn match_format<T: DataType>(mat_type: i32) -> Result<()> {
-	let out_type = T::typ();
+	let out_type = T::opencv_type();
 	if mat_type == out_type {
 		Ok(())
 	} else {
@@ -34,7 +35,7 @@ fn match_format<T: DataType>(mat_type: i32) -> Result<()> {
 		let out_type = core::type_to_string(out_type)?;
 		Err(Error::new(
 			core::StsUnmatchedFormats,
-			format!("Mat type is: {}, but requested type is: {}", mat_type, out_type),
+			format!("Mat type is: {mat_type}, but requested type is: {out_type}"),
 		))
 	}
 }
@@ -47,7 +48,7 @@ fn match_dims(mat: &(impl MatTraitConst + ?Sized), dims: usize) -> Result<()> {
 	} else {
 		Err(Error::new(
 			core::StsUnmatchedSizes,
-			format!("Mat dims is: {}, but requested dims is: {}", mat_dims, dims),
+			format!("Mat dims is: {mat_dims}, but requested dims is: {dims}"),
 		))
 	}
 }
@@ -77,7 +78,7 @@ fn match_total(mat: &(impl MatTraitConst + ?Sized), idx: i32) -> Result<()> {
 	} else {
 		Err(Error::new(
 			core::StsOutOfRange,
-			format!("Index: {} out of bounds: 0..{}", idx, size),
+			format!("Index: {idx} out of bounds: 0..{size}"),
 		))
 	}
 }
@@ -111,46 +112,91 @@ fn idx_to_row_col(mat: &(impl MatTraitConst + ?Sized), i0: i32) -> Result<(i32, 
 	})
 }
 
+#[inline]
+fn row_count_i32(row_count: usize) -> Result<i32> {
+	i32::try_from(row_count).map_err(|_| Error::new(core::StsBadArg, format!("Row count: {row_count} is too high")))
+}
+
+#[inline]
+fn col_count_i32(col_count: usize) -> Result<i32> {
+	i32::try_from(col_count).map_err(|_| Error::new(core::StsBadArg, format!("Column count: {col_count} is too high")))
+}
+
 impl Mat {
 	/// Create new `Mat` from the iterator of known size
 	pub fn from_exact_iter<T: DataType>(s: impl ExactSizeIterator<Item = T>) -> Result<Self> {
-		let mut out = unsafe { Self::new_rows_cols(s.len() as _, 1, T::typ()) }?;
+		let mut out = unsafe { Self::new_rows_cols(row_count_i32(s.len())?, 1, T::opencv_type()) }?;
 		for (i, x) in s.enumerate() {
-			unsafe { ({ out.at_unchecked_mut::<T>(i as _) }? as *mut T).write(x) };
+			// safe because `row_count_i32` ensures that len of `s` fits `i32`
+			let i = i as i32;
+			unsafe { ({ out.at_unchecked_mut::<T>(i) }? as *mut T).write(x) };
 		}
 		Ok(out)
 	}
 
+	/// Create a new `Mat` by copying the data from a single-dimensional slice
 	#[inline]
 	pub fn from_slice<T: DataType>(s: &[T]) -> Result<Self> {
 		Self::from_slice_2d(&[s])
 	}
 
+	/// Create a new `Mat` by copying the data from a 2-dimensional slice (slice of slices)
 	pub fn from_slice_2d<T: DataType>(s: &[impl AsRef<[T]>]) -> Result<Self> {
-		let row_count: i32 = s.len() as _;
-		let col_count: i32 = if row_count > 0 {
-			s[0].as_ref().len() as _
+		let col_count = if let Some(first_row) = s.first() {
+			col_count_i32(first_row.as_ref().len())?
 		} else {
 			0
 		};
-		let mut out = unsafe { Self::new_rows_cols(row_count, col_count, T::typ()) }?;
-		for (row_n, row) in s.iter().enumerate() {
-			let trg = out.at_row_mut(row_n as _)?;
-			let src = row.as_ref();
-			if trg.len() != src.len() {
-				return Err(Error::new(
-					core::StsUnmatchedSizes,
-					format!(
-						"Unexpected number of items: {} in a row index: {}, expected: {}",
-						trg.len(),
-						row_n,
-						src.len()
-					),
-				));
+		let row_count = if col_count > 0 {
+			row_count_i32(s.len())?
+		} else {
+			0
+		};
+		let mut out = Self::new_rows_cols_with_default(row_count, col_count, T::opencv_type(), Scalar::all(0.))?;
+		if row_count > 0 && col_count > 0 {
+			for (row_n, row) in s.iter().enumerate() {
+				// safe because `row_count_i32` ensures that len of `s` fits `i32`
+				let row_n = row_n as i32;
+				let trg = out.at_row_mut(row_n)?;
+				let src = row.as_ref();
+				if trg.len() != src.len() {
+					return Err(Error::new(
+						core::StsUnmatchedSizes,
+						format!(
+							"Unexpected number of items: {} in a row index: {row_n}, expected: {}",
+							trg.len(),
+							src.len()
+						),
+					));
+				}
+				trg.copy_from_slice(src);
 			}
-			trg.copy_from_slice(src);
 		}
 		Ok(out)
+	}
+
+	/// Create a new `Mat` by copying the data from a single-dimensional slice with custom shape
+	#[inline]
+	pub fn from_slice_rows_cols<T: DataType>(s: &[T], row_count: usize, col_count: usize) -> Result<Self> {
+		if row_count * col_count != s.len() {
+			return Err(Error::new(
+				core::StsUnmatchedSizes,
+				format!(
+					"The length of the slice: {} must match the passed row count: {row_count} and column count: {col_count} exactly",
+					s.len()
+				),
+			));
+		}
+		unsafe {
+			Self::new_rows_cols_with_data(
+				row_count_i32(row_count)?,
+				col_count_i32(col_count)?,
+				T::opencv_type(),
+				s.as_ptr() as *mut c_void,
+				core::Mat_AUTO_STEP,
+			)
+		}?
+		.try_clone()
 	}
 
 	#[inline]
@@ -165,15 +211,22 @@ impl Mat {
 	#[inline]
 	pub fn iter<T: DataType>(&self) -> Result<MatIter<T>> {
 		match_format::<T>(self.typ())?;
-		Ok(MatIter {
-			iter: MatConstIterator::over(self)?,
-			_d: PhantomData,
+		Ok(if self.empty() {
+			MatIter {
+				iter: None,
+				_d: PhantomData,
+			}
+		} else {
+			MatIter {
+				iter: Some(MatConstIterator::over(self)?),
+				_d: PhantomData,
+			}
 		})
 	}
 }
 
 pub struct MatIter<'m, T> {
-	iter: MatConstIterator,
+	iter: Option<MatConstIterator>,
 	_d: PhantomData<&'m T>,
 }
 
@@ -181,14 +234,16 @@ impl<T: DataType> Iterator for MatIter<'_, T> {
 	type Item = (Point, T);
 
 	fn next(&mut self) -> Option<Self::Item> {
-		if self.iter.has_elements() {
-			let cur = self.iter.current().ok()?;
-			let out = (self.iter.pos().ok()?, *cur);
-			self.iter.seek(1, true).ok()?;
-			Some(out)
-		} else {
-			None
-		}
+		self.iter.as_mut().and_then(|iter| {
+			if iter.has_elements() {
+				let cur = iter.current().ok()?;
+				let out = (iter.pos().ok()?, *cur);
+				iter.seek(1, true).ok()?;
+				Some(out)
+			} else {
+				None
+			}
+		})
 	}
 }
 
@@ -248,14 +303,14 @@ pub(crate) mod mat_forward {
 	}
 
 	#[inline]
-	pub fn at_nd<'s, T: core::DataType>(mat: &'s (impl MatTraitConst + ?Sized), idx: &[i32]) -> Result<&'s T> {
+	pub fn at_nd<'s, T: DataType>(mat: &'s (impl MatTraitConst + ?Sized), idx: &[i32]) -> Result<&'s T> {
 		match_format::<T>(mat.typ())
 			.and_then(|_| match_indices(mat, idx))
 			.and_then(|_| unsafe { mat.at_nd_unchecked(idx) })
 	}
 
 	#[inline]
-	pub fn at_nd_mut<'s, T: core::DataType>(mat: &'s mut (impl MatTrait + ?Sized), idx: &[i32]) -> Result<&'s mut T> {
+	pub fn at_nd_mut<'s, T: DataType>(mat: &'s mut (impl MatTrait + ?Sized), idx: &[i32]) -> Result<&'s mut T> {
 		match_format::<T>(mat.typ()).and_then(|_| match_indices(mat, idx))?;
 		unsafe { mat.at_nd_unchecked_mut(idx) }
 	}
@@ -308,7 +363,7 @@ pub trait MatTraitConstManual: MatTraitConst {
 	/// # Safety
 	/// Caller must ensure that indices are within Mat bounds
 	#[inline]
-	unsafe fn at_nd_unchecked<T: core::DataType>(&self, idx: &[i32]) -> Result<&T> {
+	unsafe fn at_nd_unchecked<T: DataType>(&self, idx: &[i32]) -> Result<&T> {
 		self.ptr_nd(idx).map(|ptr| convert_ptr(ptr))
 	}
 
@@ -330,28 +385,8 @@ pub trait MatTraitConstManual: MatTraitConst {
 	}
 
 	#[inline]
-	fn size(&self) -> Result<core::Size> {
-		extern "C" {
-			fn cv_manual_Mat_size(instance: *const c_void, ocvrs_return: *mut sys::Result<core::Size>);
-		}
-		return_send!(via ocvrs_return);
-		unsafe { cv_manual_Mat_size(self.as_raw_Mat(), ocvrs_return.as_mut_ptr()) };
-		return_receive!(unsafe ocvrs_return => ret);
-		ret.into_result()
-	}
-
-	#[inline]
 	fn is_allocated(&self) -> bool {
 		!self.data().is_null()
-	}
-
-	/// Raw pointer to the underlying data array, can be NULL
-	#[inline]
-	fn data(&self) -> *const u8 {
-		extern "C" {
-			fn cv_manual_Mat_data(instance: *const c_void) -> *const u8;
-		}
-		unsafe { cv_manual_Mat_data(self.as_raw_Mat()) }
 	}
 
 	/// Returns underlying data array as byte slice, Mat must be continuous.
@@ -453,7 +488,7 @@ pub trait MatTraitManual: MatTraitConstManual + MatTrait {
 	/// # Safety
 	/// Caller must ensure that indices are within Mat bounds
 	#[inline]
-	unsafe fn at_nd_unchecked_mut<T: core::DataType>(&mut self, idx: &[i32]) -> Result<&mut T> {
+	unsafe fn at_nd_unchecked_mut<T: DataType>(&mut self, idx: &[i32]) -> Result<&mut T> {
 		self.ptr_nd_mut(idx).map(|ptr| convert_ptr_mut(ptr))
 	}
 
@@ -475,21 +510,6 @@ pub trait MatTraitManual: MatTraitConstManual + MatTrait {
 			.map(|x| slice::from_raw_parts_mut(convert_ptr_mut(x), width))
 	}
 
-	/// Sets all or some of the array elements to the specified value.
-	///
-	/// ## Parameters
-	/// * s: Assigned scalar converted to the actual array type.
-	#[inline]
-	fn set(&mut self, s: Scalar) -> Result<()> {
-		extern "C" {
-			fn cv_manual_Mat_set(instance: *mut c_void, s: *const Scalar, ocvrs_returl: *mut sys::Result_void);
-		}
-		return_send!(via ocvrs_return);
-		unsafe { cv_manual_Mat_set(self.as_raw_mut_Mat(), &s, ocvrs_return.as_mut_ptr()) }
-		return_receive!(unsafe ocvrs_return => ret);
-		ret.into_result()
-	}
-
 	/// Returns underlying data array as mutable byte slice, Mat must be continuous.
 	#[inline]
 	fn data_bytes_mut(&mut self) -> Result<&mut [u8]> {
@@ -508,7 +528,7 @@ pub trait MatTraitManual: MatTraitConstManual + MatTrait {
 	#[inline]
 	unsafe fn data_typed_unchecked_mut<T: DataType>(&mut self) -> Result<&mut [T]> {
 		let total = self.total();
-		Ok(slice::from_raw_parts_mut(self.data_mut() as *mut u8 as *mut T, total))
+		Ok(slice::from_raw_parts_mut(self.data_mut() as *mut T, total))
 	}
 }
 
@@ -544,36 +564,7 @@ impl fmt::Debug for Mat {
 	}
 }
 
-pub trait UMatTraitConstManual: UMatTraitConst {
-	#[inline]
-	fn size(&self) -> Result<core::Size> {
-		extern "C" {
-			fn cv_manual_UMat_size(instance: *const c_void, ocvrs_return: *mut sys::Result<core::Size>);
-		}
-		return_send!(via ocvrs_return);
-		unsafe { cv_manual_UMat_size(self.as_raw_UMat(), ocvrs_return.as_mut_ptr()) }
-		return_receive!(unsafe ocvrs_return => ret);
-		ret.into_result()
-	}
-}
-
-impl<T: UMatTraitConst> UMatTraitConstManual for T {}
-
 input_output_array! { UMat, from_umat, from_umat_mut }
-
-#[cfg(ocvrs_opencv_branch_32)]
-pub trait MatSizeTraitConstManual: MatSizeTraitConst {
-	#[inline]
-	fn dims(&self) -> i32 {
-		extern "C" {
-			fn cv_manual_MatSize_dims(instance: *const c_void) -> i32;
-		}
-		unsafe { cv_manual_MatSize_dims(self.as_raw_MatSize()) }
-	}
-}
-
-#[cfg(ocvrs_opencv_branch_32)]
-impl<T: MatSizeTraitConst> MatSizeTraitConstManual for T {}
 
 impl Deref for MatSize {
 	type Target = [i32];
@@ -610,22 +601,6 @@ impl fmt::Debug for MatStep {
 }
 
 pub trait MatConstIteratorTraitManual: MatConstIteratorTrait {
-	#[inline]
-	fn typ(&self) -> i32 {
-		extern "C" {
-			fn cv_manual_MatConstIterator_type(instance: *const c_void) -> i32;
-		}
-		unsafe { cv_manual_MatConstIterator_type(self.as_raw_MatConstIterator()) }
-	}
-
-	#[inline]
-	fn has_elements(&self) -> bool {
-		extern "C" {
-			fn cv_manual_MatConstIterator_has_elements(instance: *const c_void) -> bool;
-		}
-		unsafe { cv_manual_MatConstIterator_has_elements(self.as_raw_MatConstIterator()) }
-	}
-
 	#[inline]
 	fn current<T: DataType>(&self) -> Result<&T> {
 		match_format::<T>(self.typ())?;

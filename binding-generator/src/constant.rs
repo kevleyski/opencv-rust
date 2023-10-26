@@ -5,8 +5,10 @@ use std::fmt::Write;
 use clang::token::{Token, TokenKind};
 use clang::{Entity, EntityKind, EvaluationResult};
 
-use crate::type_ref::FishStyle;
-use crate::{settings, DefaultElement, Element, EntityElement};
+use crate::debug::LocationName;
+use crate::element::ExcludeKind;
+use crate::type_ref::CppNameStyle;
+use crate::{settings, DefaultElement, Element, EntityElement, NameDebug};
 
 pub fn render_constant_rust<'f>(tokens: impl IntoIterator<Item = Token<'f>>) -> Option<Value> {
 	let mut out = Value {
@@ -16,20 +18,16 @@ pub fn render_constant_rust<'f>(tokens: impl IntoIterator<Item = Token<'f>>) -> 
 	for t in tokens {
 		match t.get_kind() {
 			TokenKind::Comment => {
-				write!(&mut out.value, "/* {} */", t.get_spelling()).expect("write! to String shouldn't fail");
+				write!(out.value, "/* {} */", t.get_spelling()).expect("write! to String shouldn't fail");
 			}
 			TokenKind::Identifier => {
 				let spelling = t.get_spelling();
 				if let Some(entity) = t.get_location().get_entity() {
-					#[allow(clippy::single_match)] // using the single pattern for future extensibility
-					match entity.get_kind() {
-						EntityKind::MacroExpansion => {
-							let cnst = Const::new(entity);
-							if cnst.is_excluded() {
-								return None;
-							}
+					if let EntityKind::MacroExpansion = entity.get_kind() {
+						let cnst = Const::new(entity);
+						if cnst.exclude_kind().is_excluded() {
+							return None;
 						}
-						_ => {}
 					}
 				}
 				if spelling.starts_with("CV_") {
@@ -43,7 +41,7 @@ pub fn render_constant_rust<'f>(tokens: impl IntoIterator<Item = Token<'f>>) -> 
 			}
 			TokenKind::Literal => {
 				let spelling = t.get_spelling();
-				if spelling.contains('"') {
+				if spelling.contains(|c| c == '"' || c == '\'') {
 					out.kind = ValueKind::String;
 				} else if spelling.contains('.') {
 					out.kind = ValueKind::Float;
@@ -147,58 +145,37 @@ impl<'tu> EntityElement<'tu> for Const<'tu> {
 }
 
 impl Element for Const<'_> {
-	fn is_excluded(&self) -> bool {
-		DefaultElement::is_excluded(self)
-			|| (self.entity.is_function_like_macro()
-				&& !settings::IMPLEMENTED_FUNCTION_LIKE_MACROS.contains(self.cpp_fullname().as_ref()))
+	fn exclude_kind(&self) -> ExcludeKind {
+		DefaultElement::exclude_kind(self).with_is_excluded(|| {
+			self.entity.is_function_like_macro()
+				&& !settings::IMPLEMENTED_FUNCTION_LIKE_MACROS.contains(self.cpp_name(CppNameStyle::Reference).as_ref())
+		})
 	}
 
 	fn is_system(&self) -> bool {
-		DefaultElement::is_system(self)
+		DefaultElement::is_system(self.entity)
 	}
 
 	fn is_public(&self) -> bool {
-		DefaultElement::is_public(self)
+		DefaultElement::is_public(self.entity)
 	}
 
-	fn usr(&self) -> Cow<str> {
-		DefaultElement::usr(self)
-	}
-
-	fn rendered_doc_comment_with_prefix(&self, prefix: &str, opencv_version: &str) -> String {
-		DefaultElement::rendered_doc_comment_with_prefix(self, prefix, opencv_version)
+	fn doc_comment(&self) -> Cow<str> {
+		self.entity.get_comment().unwrap_or_default().into()
 	}
 
 	fn cpp_namespace(&self) -> Cow<str> {
-		DefaultElement::cpp_namespace(self).into()
+		DefaultElement::cpp_namespace(self.entity).into()
 	}
 
-	fn cpp_localname(&self) -> Cow<str> {
-		DefaultElement::cpp_localname(self)
-	}
-
-	fn rust_module(&self) -> Cow<str> {
-		DefaultElement::rust_module(self)
-	}
-
-	fn rust_leafname(&self, _fish_style: FishStyle) -> Cow<str> {
-		self.cpp_localname()
-	}
-
-	fn rust_localname(&self, fish_style: FishStyle) -> Cow<str> {
-		let mut out = DefaultElement::rust_localname(self, fish_style);
-		const SUFFIX: &str = "_OCVRS_OVERRIDE";
-		if out.ends_with(SUFFIX) {
-			let suffix_start = out.len() - SUFFIX.len();
-			out.to_mut().drain(suffix_start..);
-		}
-		out
+	fn cpp_name(&self, style: CppNameStyle) -> Cow<str> {
+		DefaultElement::cpp_name(self, self.entity(), style)
 	}
 }
 
-impl fmt::Display for Const<'_> {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		write!(f, "{}", self.entity.get_display_name().expect("Can't get display name"))
+impl<'me> NameDebug<'me> for &'me Const<'_> {
+	fn file_line_name(self) -> LocationName<'me> {
+		self.entity.file_line_name()
 	}
 }
 

@@ -1,14 +1,11 @@
-use std::{ffi::c_void, fmt, mem::ManuallyDrop};
+use std::fmt;
 
 use num_traits::{One, Zero};
 
-use crate::{
-	core::{self, ToInputArray, ToInputOutputArray, ToOutputArray, _InputArray, _InputOutputArray, _OutputArray},
-	manual::core::sized::*,
-	sys,
-	traits::{Boxed, OpenCVType, OpenCVTypeArg, OpenCVTypeExternContainer},
-	Error, Result,
-};
+use crate::core::{ToInputArray, ToInputOutputArray, ToOutputArray, _InputArray, _InputOutputArray, _OutputArray};
+use crate::manual::core::sized::*;
+use crate::traits::{Boxed, OpenCVType, OpenCVTypeArg, OpenCVTypeExternContainer};
+use crate::{core, extern_receive, extern_send, sys, Error, Result};
 
 fn index_check(idx: (usize, usize), rows: usize, cols: usize) -> Result<()> {
 	if idx.0 >= rows {
@@ -112,7 +109,8 @@ pub struct Matx<T, A: SizedArray<T>> {
 
 impl<T, A: SizedArray<T>> Matx<T, A> {
 	#[inline]
-	pub fn from(s: A::Storage) -> Self {
+	// todo: make const when MSRV allows 1.61?
+	pub fn from_array(s: A::Storage) -> Self {
 		Self { val: s }
 	}
 }
@@ -180,12 +178,7 @@ impl<T, A: SizedArray<T>> std::ops::IndexMut<(usize, usize)> for Matx<T, A> {
 impl<T, A: SizedArray<T>> OpenCVType<'_> for Matx<T, A> {
 	type Arg = Self;
 	type ExternReceive = Self;
-	type ExternContainer = Self;
 
-	#[inline]
-	fn opencv_into_extern_container_nofail(self) -> Self::ExternContainer {
-		self
-	}
 	#[inline]
 	unsafe fn opencv_from_extern(s: Self) -> Self {
 		s
@@ -213,10 +206,6 @@ impl<T, A: SizedArray<T>> OpenCVTypeExternContainer for Matx<T, A> {
 	fn opencv_as_extern_mut(&mut self) -> Self::ExternSendMut {
 		self
 	}
-	#[inline]
-	fn opencv_into_extern(self) -> Self::ExternSendMut {
-		&mut *ManuallyDrop::new(self) as _
-	}
 }
 
 impl<T: PartialEq, A: SizedArray<T>> PartialEq for Matx<T, A> {
@@ -239,7 +228,7 @@ impl<T, A: SizedArray<T>> fmt::Debug for Matx<T, A> {
 
 impl<T, A: SizedArray<T>> ToInputArray for Matx<T, A>
 where
-	Self: MatxExtern<T, A>,
+	Self: MatxExtern,
 {
 	#[inline]
 	fn input_array(&self) -> Result<_InputArray> {
@@ -251,7 +240,7 @@ where
 
 impl<T, A: SizedArray<T>> ToInputArray for &Matx<T, A>
 where
-	Matx<T, A>: MatxExtern<T, A>,
+	Matx<T, A>: MatxExtern,
 {
 	#[inline]
 	fn input_array(&self) -> Result<_InputArray> {
@@ -261,7 +250,7 @@ where
 
 impl<T, A: SizedArray<T>> ToOutputArray for Matx<T, A>
 where
-	Self: MatxExtern<T, A>,
+	Self: MatxExtern,
 {
 	#[inline]
 	fn output_array(&mut self) -> Result<_OutputArray> {
@@ -273,7 +262,7 @@ where
 
 impl<T, A: SizedArray<T>> ToOutputArray for &mut Matx<T, A>
 where
-	Matx<T, A>: MatxExtern<T, A>,
+	Matx<T, A>: MatxExtern,
 {
 	#[inline]
 	fn output_array(&mut self) -> Result<_OutputArray> {
@@ -283,7 +272,7 @@ where
 
 impl<T, A: SizedArray<T>> ToInputOutputArray for Matx<T, A>
 where
-	Self: MatxExtern<T, A>,
+	Self: MatxExtern,
 {
 	#[inline]
 	fn input_output_array(&mut self) -> Result<_InputOutputArray> {
@@ -295,7 +284,7 @@ where
 
 impl<T, A: SizedArray<T>> ToInputOutputArray for &mut Matx<T, A>
 where
-	Matx<T, A>: MatxExtern<T, A>,
+	Matx<T, A>: MatxExtern,
 {
 	#[inline]
 	fn input_output_array(&mut self) -> Result<_InputOutputArray> {
@@ -304,21 +293,26 @@ where
 }
 
 #[doc(hidden)]
-pub trait MatxExtern<T, A: SizedArray<T>> {
+pub trait MatxExtern {
 	#[doc(hidden)]
-	unsafe fn extern_input_array(&self) -> sys::Result<*mut c_void>;
+	unsafe fn extern_input_array(&self) -> sys::Result<extern_receive!(_InputArray)>;
 	#[doc(hidden)]
-	unsafe fn extern_output_array(&mut self) -> sys::Result<*mut c_void>;
+	unsafe fn extern_output_array(&mut self) -> sys::Result<extern_receive!(_OutputArray)>;
 	#[doc(hidden)]
-	unsafe fn extern_input_output_array(&mut self) -> sys::Result<*mut c_void>;
+	unsafe fn extern_input_output_array(&mut self) -> sys::Result<extern_receive!(_InputOutputArray)>;
 }
 
 macro_rules! matx_extern {
 	($type: ty, $array: ty, $extern_input_array: ident, $extern_ouput_array: ident, $extern_input_array_output: ident) => {
-		impl $crate::manual::core::MatxExtern<$type, $array> for $crate::manual::core::Matx<$type, $array> {
+		extern "C" {
+			fn $extern_input_array(instance: extern_send!($crate::core::Matx<$type, $array>), ocvrs_return: *mut $crate::sys::Result<extern_receive!($crate::core::_InputArray)>);
+			fn $extern_ouput_array(instance: extern_send!(mut $crate::core::Matx<$type, $array>), ocvrs_return: *mut $crate::sys::Result<extern_receive!($crate::core::_OutputArray)>);
+			fn $extern_input_array_output(instance: extern_send!(mut $crate::core::Matx<$type, $array>), ocvrs_return: *mut $crate::sys::Result<extern_receive!($crate::core::_InputOutputArray)>);
+		}
+
+		impl $crate::core::MatxExtern for $crate::core::Matx<$type, $array> {
 			#[inline]
-			unsafe fn extern_input_array(&self) -> $crate::sys::Result<*mut ::std::ffi::c_void> {
-				extern "C" { fn $extern_input_array(instance: *const $crate::manual::core::Matx<$type, $array>, ocvrs_return: *mut $crate::sys::Result<*mut ::std::ffi::c_void>); }
+			unsafe fn extern_input_array(&self) -> $crate::sys::Result<extern_receive!($crate::core::_InputArray)> {
 				return_send!(via ocvrs_return);
 				$extern_input_array(self, ocvrs_return.as_mut_ptr());
 				return_receive!(ocvrs_return => ret);
@@ -326,8 +320,7 @@ macro_rules! matx_extern {
 			}
 
 			#[inline]
-			unsafe fn extern_output_array(&mut self) -> $crate::sys::Result<*mut ::std::ffi::c_void> {
-				extern "C" { fn $extern_ouput_array(instance: *mut $crate::manual::core::Matx<$type, $array>, ocvrs_return: *mut $crate::sys::Result<*mut ::std::ffi::c_void>); }
+			unsafe fn extern_output_array(&mut self) -> $crate::sys::Result<extern_receive!($crate::core::_OutputArray)> {
 				return_send!(via ocvrs_return);
 				$extern_ouput_array(self, ocvrs_return.as_mut_ptr());
 				return_receive!(ocvrs_return => ret);
@@ -335,8 +328,7 @@ macro_rules! matx_extern {
 			}
 
 			#[inline]
-			unsafe fn extern_input_output_array(&mut self) -> $crate::sys::Result<*mut ::std::ffi::c_void> {
-				extern "C" { fn $extern_input_array_output(instance: *mut $crate::manual::core::Matx<$type, $array>, ocvrs_return: *mut $crate::sys::Result<*mut ::std::ffi::c_void>); }
+			unsafe fn extern_input_output_array(&mut self) -> $crate::sys::Result<extern_receive!($crate::core::_InputOutputArray)> {
 				return_send!(via ocvrs_return);
 				$extern_input_array_output(self, ocvrs_return.as_mut_ptr());
 				return_receive!(ocvrs_return => ret);

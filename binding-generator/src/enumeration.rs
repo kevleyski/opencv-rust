@@ -1,15 +1,19 @@
 use std::borrow::Cow;
 use std::fmt;
+use std::rc::Rc;
 
 use clang::{Entity, EntityKind, EntityVisitResult};
 
-use crate::type_ref::FishStyle;
-use crate::{Const, DefaultElement, Element, EntityElement, EntityExt, StrExt};
+use crate::debug::LocationName;
+use crate::element::ExcludeKind;
+use crate::entity::WalkAction;
+use crate::type_ref::CppNameStyle;
+use crate::{Const, DefaultElement, Element, EntityElement, EntityExt, NameDebug, StrExt};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Enum<'tu> {
 	entity: Entity<'tu>,
-	custom_fullname: Option<String>,
+	custom_fullname: Option<Rc<str>>,
 }
 
 impl<'tu> Enum<'tu> {
@@ -20,11 +24,15 @@ impl<'tu> Enum<'tu> {
 		}
 	}
 
-	pub fn new_ext(entity: Entity<'tu>, custom_fullname: String) -> Self {
+	pub fn new_ext(entity: Entity<'tu>, custom_fullname: impl Into<Rc<str>>) -> Self {
 		Self {
 			entity,
-			custom_fullname: Some(custom_fullname),
+			custom_fullname: Some(custom_fullname.into()),
 		}
+	}
+
+	pub fn is_anonymous(&self) -> bool {
+		self.entity.is_anonymous() || /* clang-6 quirk */ self.cpp_name(CppNameStyle::Declaration).starts_with("(anonymous enum")
 	}
 
 	pub fn as_typedefed(&self) -> Option<Entity> {
@@ -32,7 +40,7 @@ impl<'tu> Enum<'tu> {
 			let mut child = None;
 			self.entity.walk_children_while(|c| {
 				child = Some(c);
-				false
+				WalkAction::Interrupt
 			});
 			Some(child.expect("Invalid anonymous typedefed enum"))
 		} else {
@@ -59,66 +67,42 @@ impl<'tu> EntityElement<'tu> for Enum<'tu> {
 }
 
 impl Element for Enum<'_> {
+	fn exclude_kind(&self) -> ExcludeKind {
+		DefaultElement::exclude_kind(self).with_is_excluded(|| self.as_typedefed().is_some())
+	}
+
 	fn is_system(&self) -> bool {
-		DefaultElement::is_system(self)
+		DefaultElement::is_system(self.entity)
 	}
 
 	fn is_public(&self) -> bool {
-		DefaultElement::is_public(self)
+		DefaultElement::is_public(self.entity)
 	}
 
-	fn usr(&self) -> Cow<str> {
-		DefaultElement::usr(self)
-	}
-
-	fn rendered_doc_comment_with_prefix(&self, prefix: &str, opencv_version: &str) -> String {
-		DefaultElement::rendered_doc_comment_with_prefix(self, prefix, opencv_version)
+	fn doc_comment(&self) -> Cow<str> {
+		self.entity.get_comment().unwrap_or_default().into()
 	}
 
 	fn cpp_namespace(&self) -> Cow<str> {
-		if self.custom_fullname.is_some() {
-			self.cpp_fullname().namespace().to_string().into()
-		} else {
-			DefaultElement::cpp_namespace(self).into()
-		}
-	}
-
-	fn cpp_localname(&self) -> Cow<str> {
-		if self.custom_fullname.is_some() {
-			self.cpp_fullname().localname().to_string().into()
-		} else {
-			DefaultElement::cpp_localname(self)
-		}
-	}
-
-	fn cpp_fullname(&self) -> Cow<str> {
 		if let Some(custom_fullname) = &self.custom_fullname {
-			custom_fullname.into()
+			custom_fullname.namespace().into()
 		} else {
-			DefaultElement::cpp_fullname(self)
+			DefaultElement::cpp_namespace(self.entity).into()
 		}
 	}
 
-	fn rust_module(&self) -> Cow<str> {
-		DefaultElement::rust_module(self)
-	}
-
-	fn rust_leafname(&self, _fish_style: FishStyle) -> Cow<str> {
-		self.cpp_localname()
-	}
-
-	fn rust_localname(&self, fish_style: FishStyle) -> Cow<str> {
-		DefaultElement::rust_localname(self, fish_style)
+	fn cpp_name(&self, style: CppNameStyle) -> Cow<str> {
+		if let Some(custom_fullname) = self.custom_fullname.as_deref() {
+			custom_fullname.cpp_name_from_fullname(style).into()
+		} else {
+			DefaultElement::cpp_name(self, self.entity(), style)
+		}
 	}
 }
 
-impl fmt::Display for Enum<'_> {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		write!(
-			f,
-			"{}",
-			self.entity.get_display_name().unwrap_or_else(|| "unnamed".to_string())
-		)
+impl<'me> NameDebug<'me> for &'me Enum<'_> {
+	fn file_line_name(self) -> LocationName<'me> {
+		self.entity.file_line_name()
 	}
 }
 

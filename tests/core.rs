@@ -22,7 +22,6 @@ fn moments() -> Result<()> {
 }
 
 #[test]
-#[cfg(not(ocvrs_opencv_branch_32))]
 fn cpu_features_line() -> Result<()> {
 	let cpu_feats = core::get_cpu_features_line()?;
 	assert!(cpu_feats.is_ascii());
@@ -49,7 +48,7 @@ fn in_range() -> Result<()> {
 	let mut m = Mat::default();
 	core::merge(&cs, &mut m)?;
 	let mut out = Mat::default();
-	core::in_range(&m, &Scalar::new(2., 10., 0., 0.), &Scalar::new(6., 15., 0., 0.), &mut out)?;
+	core::in_range(&m, &Scalar::from((2, 10)), &Scalar::from((6, 15)), &mut out)?;
 	assert_eq!(&[0, 255, 255, 255, 255, 0, 0, 0, 0], &out.data_typed::<u8>()?);
 	Ok(())
 }
@@ -60,13 +59,13 @@ fn file_storage() -> Result<()> {
 	use opencv::core::{FileStorage, FileStorage_Mode};
 
 	{
-		let mut st = FileStorage::new(".yml", FileStorage_Mode::WRITE as i32 | FileStorage_Mode::MEMORY as i32, "")?;
+		let mut st = FileStorage::new_def(".yml", FileStorage_Mode::WRITE as i32 | FileStorage_Mode::MEMORY as i32)?;
 		st.write_i32("test_int", 98)?;
 		core::write_f64(&mut st, "test_double", 123.45)?;
 		st.write_str("test_str", "test string")?;
 		let serialized = st.release_and_get_string()?;
 
-		let st = FileStorage::new(&serialized, FileStorage_Mode::MEMORY as _, "")?;
+		let st = FileStorage::new_def(&serialized, FileStorage_Mode::MEMORY as _)?;
 		let int_node = st.get("test_int")?;
 		assert!(int_node.is_int()?);
 		assert_eq!(98, int_node.to_i32()?);
@@ -90,7 +89,7 @@ fn file_storage() -> Result<()> {
 /// Make sure that arguments to min_max_loc are nullable
 #[test]
 fn min_max_loc() -> Result<()> {
-	let mut m = Mat::new_rows_cols_with_default(10, 10, Vec3b::typ(), Scalar::all(5.))?;
+	let mut m = Mat::new_rows_cols_with_default(10, 10, Vec3b::opencv_type(), Scalar::all(5.))?;
 	let (mut min_val, mut max_val) = (90., 90.);
 	*m.at_2d_mut(5, 5)? = Vec3b::from([10, 20, 30]);
 	core::min_max_loc(&m, Some(&mut min_val), Some(&mut max_val), None, None, &core::no_array())?;

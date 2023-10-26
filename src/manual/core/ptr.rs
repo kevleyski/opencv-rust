@@ -1,12 +1,17 @@
-use std::{ffi::c_void, marker::PhantomData, mem::ManuallyDrop};
+use std::ffi::c_void;
+use std::marker::PhantomData;
+use std::mem::ManuallyDrop;
 
 pub use ptr_extern::{PtrExtern, PtrExternCtor};
 
-use crate::traits::{Boxed, OpenCVType, OpenCVTypeArg, OpenCVTypeExternContainer};
+use crate::traits::{Boxed, OpenCVType, OpenCVTypeArg, OpenCVTypeExternContainer, OpenCVTypeExternContainerMove};
 
 mod ptr_extern;
 mod ptr_f32;
 
+/// This is similar to Rust `Box`, but handled by the C++. Some OpenCV functions insist on accepting `Ptr` instead of a heap
+/// allocated object so we need to satisfy those.
+///
 /// [docs.opencv.org 3.x](https://docs.opencv.org/3.4/d0/de7/structcv_1_1Ptr.html)
 /// [docs.opencv.org 4.x](https://en.cppreference.com/w/cpp/memory/shared_ptr)
 pub struct Ptr<T: ?Sized>
@@ -21,12 +26,12 @@ impl<T: ?Sized> Ptr<T>
 where
 	Self: PtrExtern,
 {
+	/// Create a new `Ptr` from the object
 	pub fn new(val: T) -> Self
 	where
-		T: Sized + for<'a> OpenCVType<'a>,
+		T: OpenCVTypeExternContainerMove + Sized,
 		Self: PtrExternCtor<T>,
 	{
-		let val = val.opencv_into_extern_container_nofail();
 		unsafe { Self::from_raw(Self::extern_new(val.opencv_into_extern())) }
 	}
 
@@ -72,12 +77,6 @@ where
 {
 	type Arg = Self;
 	type ExternReceive = *mut c_void;
-	type ExternContainer = Self;
-
-	#[inline]
-	fn opencv_into_extern_container_nofail(self) -> Self::ExternContainer {
-		self
-	}
 
 	#[inline]
 	unsafe fn opencv_from_extern(s: Self::ExternReceive) -> Self {
@@ -113,7 +112,13 @@ where
 	fn opencv_as_extern_mut(&mut self) -> Self::ExternSendMut {
 		self.as_raw_mut()
 	}
+}
 
+impl<T: ?Sized> OpenCVTypeExternContainerMove for Ptr<T>
+where
+	Self: PtrExtern,
+{
+	#[inline]
 	fn opencv_into_extern(self) -> Self::ExternSendMut {
 		self.into_raw()
 	}
