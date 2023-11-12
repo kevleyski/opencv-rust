@@ -56,7 +56,7 @@ fn gen_rust_class(c: &Class, opencv_version: &str) -> String {
 	let type_ref = c.type_ref();
 	let is_trait = c.is_trait();
 	let class_kind = c.kind();
-	let doc_comment = c.rendered_doc_comment(opencv_version);
+	let doc_comment = c.rendered_doc_comment("///", opencv_version);
 
 	let mut out = String::new();
 
@@ -239,7 +239,7 @@ fn gen_rust_class(c: &Class, opencv_version: &str) -> String {
 					}
 				}
 				SIMPLE_FIELD_TPL.interpolate(&HashMap::from([
-					("doc_comment", Cow::Owned(f.rendered_doc_comment(opencv_version))),
+					("doc_comment", Cow::Owned(f.rendered_doc_comment("///", opencv_version))),
 					("visibility", "pub ".into()),
 					("name", f.rust_leafname(FishStyle::No)),
 					("type", typ),
@@ -412,11 +412,9 @@ impl RustElement for Class<'_, '_> {
 		}
 	}
 
-	fn rendered_doc_comment_with_prefix(&self, prefix: &str, opencv_version: &str) -> String {
+	fn rendered_doc_comment(&self, comment_marker: &str, opencv_version: &str) -> String {
 		match self {
-			&Self::Clang { entity, .. } => {
-				DefaultRustNativeElement::rendered_doc_comment_with_prefix(entity, prefix, opencv_version)
-			}
+			&Self::Clang { entity, .. } => DefaultRustNativeElement::rendered_doc_comment(entity, comment_marker, opencv_version),
 			Self::Desc(_) => "".to_string(),
 		}
 	}
@@ -538,7 +536,7 @@ fn method_implicit_clone<'tu, 'ge>(class: Class<'tu, 'ge>, type_ref: TypeRef<'tu
 		"implicitClone",
 		"<unused>",
 		vec![],
-		FuncCppBody::ManualFull(format!("return {};", cpp_return_map(&type_ref, "*instance", false).0).into()),
+		FuncCppBody::ManualCallReturn(format!("return {};", cpp_return_map(&type_ref, "*instance", false).0).into()),
 		FuncRustBody::Auto,
 		type_ref,
 	))
@@ -553,7 +551,7 @@ fn method_cast_to_base<'tu, 'ge>(class: Class<'tu, 'ge>, base_class: Class<'tu, 
 		format!("to_{base_rust_local}"),
 		"<unused>",
 		vec![],
-		FuncCppBody::ManualFull("return dynamic_cast<{{ret_type}}*>(instance);".into()),
+		FuncCppBody::ManualCallReturn("return dynamic_cast<{{ret_type}}*>(instance);".into()),
 		FuncRustBody::Auto,
 		TypeRef::new_class(base_class),
 	))
@@ -568,7 +566,7 @@ fn method_cast_to_descendant<'tu, 'ge>(class: Class<'tu, 'ge>, descendant_class:
 		format!("to_{descendant_rust_local}"),
 		"<unused>",
 		vec![],
-		FuncCppBody::ManualFull("return dynamic_cast<{{ret_type}}*>(instance);".into()),
+		FuncCppBody::ManualCallReturn("return dynamic_cast<{{ret_type}}*>(instance);".into()),
 		FuncRustBody::Auto,
 		TypeRef::new_class(descendant_class),
 	))

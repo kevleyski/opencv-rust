@@ -48,11 +48,9 @@ impl RustElement for SmartPtr<'_, '_> {
 		.into()
 	}
 
-	fn rendered_doc_comment_with_prefix(&self, prefix: &str, opencv_version: &str) -> String {
+	fn rendered_doc_comment(&self, comment_marker: &str, opencv_version: &str) -> String {
 		match self {
-			&Self::Clang { entity, .. } => {
-				DefaultRustNativeElement::rendered_doc_comment_with_prefix(entity, prefix, opencv_version)
-			}
+			&Self::Clang { entity, .. } => DefaultRustNativeElement::rendered_doc_comment(entity, comment_marker, opencv_version),
 			Self::Desc(_) => "".to_string(),
 		}
 	}
@@ -274,7 +272,7 @@ fn method_new<'tu, 'ge>(
 		"new",
 		"<unused>",
 		vec![Field::new_desc(FieldDesc::new("val", pointee_type))],
-		FuncCppBody::ManualFull(format!("return new {{{{ret_type}}}}({val});").into()),
+		FuncCppBody::ManualCallReturn(format!("return new {{{{ret_type}}}}({val});").into()),
 		FuncRustBody::Auto,
 		smartptr_type_ref,
 	))
@@ -292,7 +290,7 @@ fn method_cast_to_base<'tu, 'ge>(
 		format!("to_PtrOf{base_rust_local}"),
 		"<unused>",
 		vec![],
-		FuncCppBody::ManualFull(
+		FuncCppBody::ManualCallReturn(
 			format!(
 				"return new {{{{ret_type}}}}(instance->dynamicCast<{base_type}>());",
 				base_type = base_type_ref.cpp_name(CppNameStyle::Reference)
@@ -334,7 +332,7 @@ fn method_get_inner_ptr<'tu, 'ge>(
 		format!("getInnerPtr{name_suffix}"),
 		"<unused>",
 		vec![],
-		FuncCppBody::ManualFull("return instance->get();".into()),
+		FuncCppBody::ManualCallReturn("return instance->get();".into()),
 		FuncRustBody::Auto,
 		return_type_ref,
 	))

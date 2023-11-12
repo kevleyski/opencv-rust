@@ -46,7 +46,7 @@ impl RustElement for Vector<'_, '_> {
 		.into()
 	}
 
-	fn rendered_doc_comment_with_prefix(&self, _prefix: &str, _opencv_version: &str) -> String {
+	fn rendered_doc_comment(&self, _comment_marker: &str, _opencv_version: &str) -> String {
 		"".to_string()
 	}
 }
@@ -513,7 +513,7 @@ fn method_from_slice<'tu, 'ge>(vec_type_ref: TypeRef<'tu, 'ge>, element_type: Ty
 			)),
 			Field::new_desc(FieldDesc::new("len", TypeRefDesc::size_t())),
 		],
-		FuncCppBody::ManualFull("return new {{ret_type}}(data, data + len);".into()),
+		FuncCppBody::ManualCallReturn("return new {{ret_type}}(data, data + len);".into()),
 		FuncRustBody::Auto,
 		vec_type_ref,
 	))

@@ -8,13 +8,14 @@ use std::rc::Rc;
 use clang::token::TokenKind;
 use clang::{Entity, EntityKind, EntityVisitResult};
 
+use crate::comment::strip_comment_markers;
 use crate::debug::{DefinitionLocation, LocationName, NameDebug};
 use crate::element::{ExcludeKind, UNNAMED};
 use crate::settings::ArgOverride;
 use crate::type_ref::{Constness, CppNameStyle, TypeRef, TypeRefTypeHint};
 use crate::{constant, DefaultElement, Element, GeneratorEnv, StrExt};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum FieldTypeHint {
 	None,
 	ArgOverride(ArgOverride),
@@ -54,10 +55,15 @@ impl<'tu, 'ge> Field<'tu, 'ge> {
 		}
 	}
 
-	pub fn type_ref(&self) -> TypeRef<'tu, 'ge> {
+	pub fn type_ref(&self) -> Cow<TypeRef<'tu, 'ge>> {
 		match self {
-			&Self::Clang { entity, gen_env, .. } => {
-				let type_hint = match self.type_hint() {
+			&Self::Clang {
+				entity,
+				type_hint,
+				gen_env,
+				..
+			} => {
+				let type_hint = match type_hint {
 					FieldTypeHint::ArgOverride(over) => TypeRefTypeHint::ArgOverride(over),
 					_ => {
 						let default_value_string = self
@@ -70,10 +76,14 @@ impl<'tu, 'ge> Field<'tu, 'ge> {
 						}
 					}
 				};
-
-				TypeRef::new_ext(entity.get_type().expect("Can't get type"), type_hint, Some(entity), gen_env)
+				Cow::Owned(TypeRef::new_ext(
+					entity.get_type().expect("Can't get type"),
+					type_hint,
+					Some(entity),
+					gen_env,
+				))
 			}
-			Self::Desc(desc) => desc.type_ref.clone(),
+			Self::Desc(desc) => Cow::Borrowed(&desc.type_ref),
 		}
 	}
 
@@ -104,13 +114,12 @@ impl<'tu, 'ge> Field<'tu, 'ge> {
 				});
 
 				if let Some(range) = entity.get_range() {
-					let mut tokens = range.tokenize();
+					let tokens = range.tokenize();
 					let equal_pos = tokens
 						.iter()
 						.position(|t| t.get_kind() == TokenKind::Punctuation && t.get_spelling() == "=");
 					if let Some(equal_pos) = equal_pos {
-						tokens.drain(..equal_pos + 1);
-						return Some(constant::render_constant_cpp(tokens).into());
+						return Some(constant::render_constant_cpp(&tokens[equal_pos + 1..]).into());
 					}
 				}
 				None
@@ -156,7 +165,7 @@ impl Element for Field<'_, '_> {
 
 	fn doc_comment(&self) -> Cow<str> {
 		match self {
-			Field::Clang { entity, .. } => entity.get_comment().unwrap_or_default().into(),
+			Field::Clang { entity, .. } => strip_comment_markers(&entity.get_comment().unwrap_or_default()).into(),
 			Field::Desc(_) => "".into(),
 		}
 	}

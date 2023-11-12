@@ -1,3 +1,11 @@
+* 0.86.1
+  * Provide a clearer message for the case when `libclang` can't be loaded.
+
+* 0.86.0
+  * Add support for `operator =` via `set` method.
+  * Improve documentation generation.
+  * Fix several automatically functions.
+
 * 0.85.3
   * Fix https://github.com/twistedfall/opencv-rust/issues/506, https://github.com/twistedfall/opencv-rust/issues/505 and
     https://github.com/twistedfall/opencv-rust/issues/479

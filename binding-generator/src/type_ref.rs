@@ -97,12 +97,20 @@ impl<'tu, 'ge> TypeRef<'tu, 'ge> {
 		Self::new_desc(TypeRefDesc::new(TypeRefKind::Class(cls)))
 	}
 
+	pub fn new_array(inner: TypeRef<'tu, 'ge>, size: Option<usize>) -> Self {
+		Self::new_desc(TypeRefDesc::new(TypeRefKind::Array(inner, size)))
+	}
+
 	pub fn new_vector(vector: Vector<'tu, 'ge>) -> Self {
 		Self::new_desc(TypeRefDesc::new(TypeRefKind::StdVector(vector)))
 	}
 
 	pub fn new_smartptr(smart_ptr: SmartPtr<'tu, 'ge>) -> Self {
 		Self::new_desc(TypeRefDesc::new(TypeRefKind::SmartPtr(smart_ptr)))
+	}
+
+	pub fn new_generic(name: impl Into<String>) -> Self {
+		Self::new_desc(TypeRefDesc::new(TypeRefKind::Generic(name.into())))
 	}
 
 	/// Create a [TypeRef] from a textual C++ representation
@@ -142,27 +150,27 @@ impl<'tu, 'ge> TypeRef<'tu, 'ge> {
 	}
 
 	pub fn with_type_hint(self, type_hint: TypeRefTypeHint) -> Self {
-		match self {
-			Self::Clang {
-				type_ref,
-				parent_entity,
-				gen_env,
-				..
-			} => Self::Clang {
-				type_ref,
-				type_hint,
-				parent_entity,
-				gen_env,
-			},
-			Self::Desc(desc) => {
-				if desc.type_hint != type_hint {
+		if self.type_hint() != type_hint {
+			match self {
+				Self::Clang {
+					type_ref,
+					parent_entity,
+					gen_env,
+					..
+				} => Self::Clang {
+					type_ref,
+					type_hint,
+					parent_entity,
+					gen_env,
+				},
+				Self::Desc(desc) => {
 					let mut desc = Rc::try_unwrap(desc).unwrap_or_else(|desc| desc.as_ref().clone());
 					desc.type_hint = type_hint;
 					Self::Desc(Rc::new(desc))
-				} else {
-					Self::Desc(desc)
 				}
 			}
+		} else {
+			self
 		}
 	}
 
@@ -895,7 +903,7 @@ impl<'tu, 'ge> TemplateArg<'tu, 'ge> {
 	}
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum Constness {
 	Const,
 	Mut,
@@ -951,6 +959,7 @@ impl Constness {
 		}
 	}
 
+	/// Returns `"const "` or `""` for usage in C++ code
 	pub fn cpp_qual(self) -> &'static str {
 		if self.is_const() {
 			"const "
